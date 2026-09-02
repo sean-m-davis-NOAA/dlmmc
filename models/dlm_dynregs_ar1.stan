@@ -26,8 +26,7 @@ transformed data {
     int nx = nreg+7;
     
     // Declare F-vector (observation projection vector)
-    vector[nx] F[N+1];
-    
+    array[N+1] vector[nx] F;
     // Initialize
     for(t in 1:N+1){
         F[t] = rep_vector(0, nx);
@@ -71,12 +70,12 @@ parameters {
 transformed parameters{
 
     // Declare intermediate Kalman objects
-    vector[nx] x_hat[N+1];
-    vector[nx] x_bar[N+1];
-    matrix[nx,nx] C_hat[N+1];
+    array[N+1] vector[nx] x_hat;
+    array[N+1] vector[nx] x_bar;
+    array[N+1] matrix[nx,nx] C_hat;
     vector[N+1] C_y;
-    vector[nx] K[N+1];
-    matrix[nx,nx] C_bar[N+1];
+    array[N+1] vector[nx] K;
+    array[N+1] matrix[nx,nx] C_bar;
     vector[N+1] v;
 
     // Declare state-space model matrices
@@ -190,23 +189,22 @@ generated quantities {
     vector[N] trend;
     vector[N] slope;
     vector[N] seasonal;
-    vector[4] seasonal_components[N];
+    array[N] vector[4] seasonal_components;
     vector[N] ar;
-    vector[nreg] beta[N];
-    vector[nx] x[N];
-    vector[nx] x_realization[N+1];
-    vector[nx] x_ubar[N+1];
-    vector[nx] x_realization_hat[N+1];
+    array[N] vector[nreg] beta;
+    array[N] vector[nx] x;
+    array[N+1] vector[nx] x_realization;
+    array[N+1] vector[nx] x_ubar;
+    array[N+1] vector[nx] x_realization_hat;
     vector[N+1] y_realization;
     vector[N+1] v_realization;
-    vector[nx] r[N+2];
-    vector[nx] r_realization[N+2];
-    matrix[nx,nx] L[N+2];
-    matrix[nx,nx] M[N+2];
-    matrix[nx,nx] C_twidle[N+1];
-    vector[nx] x_twidle[N+1];
-    vector[nx] x_realization_twidle[N+1];
-    
+    array[N+2] vector[nx] r;
+    array[N+2] vector[nx] r_realization;
+    array[N+2] matrix[nx,nx] L;
+    array[N+2] matrix[nx,nx] M;
+    array[N+1] matrix[nx,nx] C_twidle;
+    array[N+1] vector[nx] x_twidle;
+    array[N+1] vector[nx] x_realization_twidle;
     // Initialize matrix quantities and end points of Kalman smoothing vectors
     for(t in 1:N+1){
         L[t] = rep_matrix(0, nx, nx);
