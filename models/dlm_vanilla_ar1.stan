@@ -175,7 +175,9 @@ model {
     
     // Construct target density
     for(t in 2:N+1){
-        target += normal_lpdf(v[t] | 0, sqrt(C_y[t]));
+        // Defensive floor to avoid non-finite or non-positive scales from C_y
+        real safe_scale = sqrt(fmax(C_y[t], 1e-12));
+        target += normal_lpdf(v[t] | 0, safe_scale);
     }
 }
 

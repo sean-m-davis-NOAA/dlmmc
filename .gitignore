@@ -26,3 +26,4 @@ models/dlm_vanilla_ar2_noseasonal
 results/
 *.nc
 *.csv
+*.nbconvert.ipynb
