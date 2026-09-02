@@ -1,5 +1,9 @@
 # Import stuff
-import pystan
+try:
+    import pystan
+    HAVE_PYSTAN = True
+except Exception:
+    HAVE_PYSTAN = False
 import numpy as np
 import sys
 import scipy.interpolate as interpolate
@@ -25,7 +29,13 @@ nprocs=comm.Get_size()
 myrank=comm.Get_rank()
 
 # Import the DLM model
-model_kalman_ar1 = pickle.load(open('models/dlm_vanilla_ar1.pkl', 'rb'))
+# The pickled file may be a PyStan-compiled model (legacy) or a marker dict produced by
+# compile_stan_models.py indicating a stan file to compile with cmdstanpy at runtime.
+model_obj = pickle.load(open('models/dlm_vanilla_ar1.pkl', 'rb'))
+if isinstance(model_obj, dict) and model_obj.get('backend') == 'cmdstanpy':
+    model_kalman_ar1 = model_obj
+else:
+    model_kalman_ar1 = model_obj
 
 # Import the data
 
@@ -132,9 +142,56 @@ for ind in indicies:
                          'rhoAR1':0.1,
                         }
 
-        # Run the model
+        # Run the model (supports both PyStan and cmdstanpy marker produced by compile_stan_models.py)
         with suppress_stdout_stderr():
-            fit = model_kalman_ar1.sampling(data=input_data, iter=iterations, warmup=warmup, chains=n_chains, init = [initial_state for i in range(n_chains)], verbose=False, pars=('sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1', 'trend', 'slope', 'beta', 'seasonal'))
+            if isinstance(model_kalman_ar1, dict) and model_kalman_ar1.get('backend')=='cmdstanpy':
+                try:
+                    from cmdstanpy import CmdStanModel
+                except Exception:
+                    raise ImportError("cmdstanpy is required for cmdstanpy backend. Install via pip: pip install cmdstanpy")
+
+                # Compile/run with cmdstanpy
+                model = CmdStanModel(stan_file=model_kalman_ar1['stan_file'])
+                iter_sampling = max(1, iterations - warmup)
+                mcmc = model.sample(data=input_data, chains=n_chains, iter_sampling=iter_sampling, iter_warmup=warmup)
+
+                # Convert CmdStanMCMC to a pyStan-like fit with extract()
+                try:
+                    # Preferred: use draws_pd() to build arrays for each variable
+                    df = mcmc.draws_pd()
+                    import re, numpy as _np
+                    var_dict = {}
+                    for col in df.columns:
+                        m = re.match(r'(?P<name>[^\[]+)(\[(?P<index>.+)\])?', col)
+                        name = m.group('name')
+                        if name not in var_dict:
+                            var_dict[name] = []
+                        var_dict[name].append(df[col].values)
+                    extract_dict = {}
+                    for name, arrs in var_dict.items():
+                        arr = _np.vstack(arrs).T
+                        if arr.shape[1] == 1:
+                            extract_dict[name] = arr[:,0]
+                        else:
+                            extract_dict[name] = arr
+                except Exception:
+                    # Fallback: try stan_variable for a list of expected names
+                    extract_dict = {}
+                    for name in ('sigma_trend','sigma_seas','sigma_AR','rhoAR1','trend','slope','beta','seasonal'):
+                        try:
+                            extract_dict[name] = mcmc.stan_variable(name)
+                        except Exception:
+                            pass
+
+                class FitShim:
+                    def __init__(self, extract_dict):
+                        self._extract = extract_dict
+                    def extract(self):
+                        return self._extract
+
+                fit = FitShim(extract_dict)
+            else:
+                fit = model_kalman_ar1.sampling(data=input_data, iter=iterations, warmup=warmup, chains=n_chains, init = [initial_state for i in range(n_chains)], verbose=False, pars=('sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1', 'trend', 'slope', 'beta', 'seasonal'))
 
         # Put the relevant bits into the netCDF...
         save_results(results_dir, results_filename, fit, pressure, latitude)
