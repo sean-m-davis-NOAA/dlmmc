@@ -17,12 +17,39 @@ The code is python3 and has the following dependencies: [numpy](http://www.numpy
 
 **Installation with conda (recommended)**
 
-The most painless way to get set up is using the [Anaconda python distribution](https://www.anaconda.com/distribution/) (recommended), which comes with most of the dependencies as default. The remaining dependencies can then be installed using `conda install` and the DLM models compiled by running:
+The most painless way to get set up is using the [Anaconda python distribution](https://www.anaconda.com/distribution/) (recommended). Two supported installation routes are provided below.
+
+1) PyStan (legacy)
+
+If you need to run the original PyStan-based workflow (compatibility with older environments), install as follows:
 
 ```
 conda install pystan netCDF4
 python3 compile_stan_models.py
 ```
+
+2) CmdStan / cmdstanpy (recommended modern backend)
+
+CmdStan produces native compiled Stan executables and cmdstanpy is a lightweight, well-maintained Python interface. This combination is generally faster and more robust than older PyStan workflows. Example setup (using conda):
+
+```
+# create and activate a modern environment
+conda create -n dlmmc-cmdstanpy python=3.10 -y
+conda activate dlmmc-cmdstanpy
+# install numeric and IO deps
+conda install -y numpy scipy matplotlib jupyter netCDF4
+# install the Python wrapper
+pip install cmdstanpy
+# install CmdStan (downloads + builds CmdStan into ~/.cmdstan)
+python -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
+# compile the models
+python3 compile_stan_models.py
+```
+
+Notes:
+- CmdStan requires a C++ toolchain to compile models. On macOS install Xcode command-line tools (`xcode-select --install`) or use a conda-provided compiler on CI.
+- To keep a macOS laptop awake while compiling/sampling use `caffeinate -i <command>` or run the job on a remote server or in a tmux session.
+- The repository includes both workflows; use the `stan_backend.py` adapter to switch between PyStan and cmdstanpy where applicable.
 
 This second line compiles all of the DLM models on your machine, saves them in `models/`, and then you're ready to start DLMing! Jump straight into the jupyter notebook tutorial `dlm_tutorial.ipynb` (see below), or if you prefer you can run a test suite to check that the install worked and all models run smoothly by executing (this will take some minutes to run through):
 
