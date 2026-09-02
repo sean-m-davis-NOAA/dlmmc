@@ -5,10 +5,16 @@ utils/__pycache__
 *.DS_store
 
 # Stan compilation artifacts
+# Ignore compiled model binaries and build artifacts but keep .stan sources
+models/*
+!models/*.stan
 models/*.hpp
 models/*.o
 models/*.d
 models/*.exe
+models/*.dll
+models/*.so
+# Previously ignored specific model binaries (kept for compatibility)
 models/dlm_vanilla_ar1
 models/dlm_vanilla_ar2
 models/dlm_noregs_ar1
