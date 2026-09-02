@@ -82,3 +82,34 @@ Iteration: 3000 / 3000 [100%]  (Sampling)
 ```
 
 The notebook completed without error! You're now ready to start using the code.
+
+
+## Optional: CmdStan / cmdstanpy (POC) installation
+
+A cmdstan-based workflow is provided and recommended for the migration POC. A reproducible conda environment spec is included in `environment-cmdstanpy.yml` that creates an environment named `dlmmc-cmdstanpy`.
+
+Example quick-start (from the repository root):
+
+```
+# create and activate the cmdstanpy environment
+conda env create -f environment-cmdstanpy.yml -n dlmmc-cmdstanpy
+conda activate dlmmc-cmdstanpy
+
+# (first-time) install cmdstan toolchain via cmdstanpy if needed
+python -c "from cmdstanpy import install_cmdstan; install_cmdstan()"
+
+# compile the Stan models (will create compiled binaries under models/)
+python3 compile_stan_models.py
+
+# run a short validation or the benchmark notebook
+# (short validation: single-chain, warmup=50, sample=200)
+python3 -c "print('See scripts/run_short_benchmark.py or the dlm_benchmark_pystan_vs_cmdstanpy.ipynb notebook for examples')"
+
+# to run the benchmark notebook non-interactively
+jupyter-nbconvert --to notebook --execute dlm_benchmark_pystan_vs_cmdstanpy.ipynb
+```
+
+Notes:
+- The `dlmmc-cmdstanpy` environment is intended for testing and benchmarking cmdstanpy. Legacy PyStan comparisons require a separate environment (older Python) and are not performed in this env.
+- Results and temporary run artifacts are written to `results/` and are git-ignored by default.
+

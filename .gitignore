@@ -4,3 +4,28 @@ utils/__pycache__
 .ipynb_checkpoints
 *.DS_store
 
+# CmdStan / cmdstanpy build artifacts and run outputs
+# Ignore compiled Stan executables (may have no extension on Unix)
+models/*
+# keep tracked model pickles and source
+!models/*.pkl
+!models/stan_dlm_models.py
+!models/model_descriptions/
+
+# Compiled object files, debug symbols
+models/*.o
+models/*.dSYM
+
+# Results, temporary outputs and logs
+results/
+results/**
+
+# Notebook outputs
+*.nbconvert.ipynb
+.ipynb_checkpoints
+
+# Cmdstan/cmdstanpy CSV and json outputs
+*.csv
+*.json
+
+

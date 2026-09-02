@@ -11,6 +11,10 @@ Note: some basic working knowledge of python and jupyter notebooks is required t
 
 ### Installation
 
+Note: cmdstan/cmdstanpy support
+
+An alternate workflow using CmdStan and the `cmdstanpy` Python wrapper is provided and is recommended for the cmdstanpy migration POC. A conda environment spec (`environment-cmdstanpy.yml`) is included to create a reproducible testing environment named `dlmmc-cmdstanpy`. See `INSTALL.md` for quick commands to create the environment, install CmdStan, compile the models, and run the benchmark notebook.
+
 Once you have downloaded the code from this repository you're ready to install dependencies and get set-up.
 
 The code is python3 and has the following dependencies: [numpy](http://www.numpy.org), [scipy](https://www.scipy.org), [matplotlib](https://matplotlib.org), [jupyter](https://jupyter.org/install), [ipython](https://ipython.org/install.html), [netCDF4](https://pypi.org/project/netcdf/), [pystan](https://pystan.readthedocs.io/en/latest/).
