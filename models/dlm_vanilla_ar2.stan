@@ -6,7 +6,7 @@ data {
     real sampling; // sampling of data: daily = 0, monthly = 1, annual = 2
     vector[N] time_series; // n-composites vectors of N-time-steps -- the data
     vector[N] stddev; // corresponding std deviation for each data point
-    array[N] vector[nreg] regressors; // nreg regressors of N-time-steps
+    vector[nreg] regressors[N]; // nreg regressors of N-time-steps
     real<lower=0> sigma_trend_prior;
     real<lower=0> sigma_seas_prior;
     real<lower=0> sigma_AR_prior;
@@ -25,7 +25,7 @@ transformed data {
     int nx = nreg+8;
     
     // Declare F-vector (observation projection vector)
-    array[N+1] vector[nx] F;
+    vector[nx] F[N+1];
     
     // Initialize
     for(t in 1:N+1){
@@ -70,12 +70,12 @@ parameters {
 transformed parameters{
 
     // Declare intermediate Kalman objects
-    array[N+1] vector[nx] x_hat;
-    array[N+1] vector[nx] x_bar;
-    array[N+1] matrix[nx,nx] C_hat;
+    vector[nx] x_hat[N+1];
+    vector[nx] x_bar[N+1];
+    matrix[nx,nx] C_hat[N+1];
     vector[N+1] C_y;
-    array[N+1] vector[nx] K;
-    array[N+1] matrix[nx,nx] C_bar;
+    vector[nx] K[N+1];
+    matrix[nx,nx] C_bar[N+1];
     vector[N+1] v;
 
     // Declare state-space model matrices
@@ -195,19 +195,19 @@ generated quantities {
     vector[N] seasonal;
     vector[N] ar;
     vector[nreg] beta;
-    array[N] vector[nx] x;
-    array[N+1] vector[nx] x_realization;
-    array[N+1] vector[nx] x_ubar;
-    array[N+1] vector[nx] x_realization_hat;
+    vector[nx] x[N];
+    vector[nx] x_realization[N+1];
+    vector[nx] x_ubar[N+1];
+    vector[nx] x_realization_hat[N+1];
     vector[N+1] y_realization;
     vector[N+1] v_realization;
-    array[N+2] vector[nx] r;
-    array[N+2] vector[nx] r_realization;
-    array[N+2] matrix[nx,nx] L;
-    array[N+2] matrix[nx,nx] M;
-    array[N+1] matrix[nx,nx] C_twidle;
-    array[N+1] vector[nx] x_twidle;
-    array[N+1] vector[nx] x_realization_twidle;
+    vector[nx] r[N+2];
+    vector[nx] r_realization[N+2];
+    matrix[nx,nx] L[N+2];
+    matrix[nx,nx] M[N+2];
+    matrix[nx,nx] C_twidle[N+1];
+    vector[nx] x_twidle[N+1];
+    vector[nx] x_realization_twidle[N+1];
     
     // Initialize matrix quantities and end points of Kalman smoothing vectors
     for(t in 1:N+1){

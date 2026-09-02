@@ -198,9 +198,9 @@ generated quantities {
     array[N+2] vector[nx] r_realization;
     array[N+2] matrix[nx,nx] L;
     array[N+2] matrix[nx,nx] M;
-    array[N+1] matrix[nx,nx] C_twidle;
-    array[N+1] vector[nx] x_twidle;
-    array[N+1] vector[nx] x_realization_twidle;
+    matrix[nx,nx] C_twidle[N+1];
+    vector[nx] x_twidle[N+1];
+    vector[nx] x_realization_twidle[N+1];
     
     // Initialize matrix quantities and end points of Kalman smoothing vectors
     for(t in 1:N+1){
