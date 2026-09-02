@@ -6,7 +6,7 @@ data {
     real sampling; // sampling of data: daily = 0, monthly = 1, annual = 2
     vector[N] time_series; // n-composites vectors of N-time-steps -- the data
     vector[N] stddev; // corresponding std deviation for each data point
-    vector[nreg] regressors[N]; // nreg regressors of N-time-steps
+    array[N] vector[nreg] regressors;
     real<lower=0> sigma_trend_prior;
     real<lower=0> sigma_AR_prior;
     real<lower=0> S;
@@ -25,6 +25,7 @@ transformed data {
     
     // Declare F-vector (observation projection vector)
     array[N+1] vector[nx] F;
+    
     // Initialize
     for(t in 1:N+1){
         F[t] = rep_vector(0, nx);
@@ -171,6 +172,7 @@ generated quantities {
     array[N+1] matrix[nx,nx] C_twidle;
     array[N+1] vector[nx] x_twidle;
     array[N+1] vector[nx] x_realization_twidle;
+    
     // Initialize matrix quantities and end points of Kalman smoothing vectors
     for(t in 1:N+1){
         L[t] = rep_matrix(0, nx, nx);

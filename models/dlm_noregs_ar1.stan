@@ -25,6 +25,7 @@ transformed data {
     
     // Declare F-vector (observation projection vector)
     array[N+1] vector[nx] F;
+    
     // Initialize
     for(t in 1:N+1){
         F[t] = rep_vector(0, nx);
@@ -184,6 +185,7 @@ generated quantities {
     array[N+1] matrix[nx,nx] C_twidle;
     array[N+1] vector[nx] x_twidle;
     array[N+1] vector[nx] x_realization_twidle;
+    
     // Initialize matrix quantities and end points of Kalman smoothing vectors
     for(t in 1:N+1){
         L[t] = rep_matrix(0, nx, nx);
