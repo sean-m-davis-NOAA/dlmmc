@@ -4,3 +4,19 @@ utils/__pycache__
 .ipynb_checkpoints
 *.DS_store
 
+# Stan compilation artifacts
+models/*.hpp
+models/*.o
+models/*.d
+models/*.exe
+models/dlm_vanilla_ar1
+models/dlm_vanilla_ar2
+models/dlm_noregs_ar1
+models/dlm_dynregs_ar1
+models/dlm_vanilla_ar1_noseasonal
+models/dlm_vanilla_ar2_noseasonal
+
+# Analysis outputs / generated data
+results/
+*.nc
+*.csv
