@@ -20,10 +20,23 @@ B) Recommended: CmdStan + cmdstanpy (modern, faster, more robust)
 conda create -n dlmmc-cmdstanpy python=3.10 -y
 conda activate dlmmc-cmdstanpy
 # install runtime dependencies; cmdstanpy is installed via pip
-conda install -y numpy scipy matplotlib jupyter netCDF4
+conda install -y numpy scipy matplotlib jupyter netCDF4 pandas
+conda install -c conda-forge cxx-compiler make
 pip install cmdstanpy
 # Install CmdStan (downloads and compiles CmdStan; requires a C++ toolchain)
 python -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
+# (Optional) Install/set up jupyterlab in your new environment (conda-forge channel recommended) in order to use notebooks.
+# NOTE - IF you have jupyterlab installed in another conda environment, follow the option B directions
+Option A. Follow this if you want to install jupyterlab in the new environment
+	conda install -c conda-forge jupyterlab
+Option B. Follow this if you already have jupyterlab in another environment (e.g., in "base"). This will register the new env so that it can be used by jupyterlab installs in other envs
+	conda install -c conda-forge ipykernel
+	python -m ipykernel install --user --name dlmmc-cmdstanpy --display-name "Python (dlmmc-cmdstanpy)"
+# NOTE - if you attempt to run the benchmark and get an error about the needing a rebuild, like this
+# 		WARNING - CmdStan's precompiled header (PCH) files may need to be rebuilt.Please run cmdstanpy.rebuild_cmdstan()
+# Then you need to do this
+python -c "import cmdstanpy; cmdstanpy.rebuild_cmdstan()"
+
 ```
 
 Notes:
