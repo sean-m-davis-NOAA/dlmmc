@@ -6,21 +6,10 @@ utils/__pycache__
 
 # Stan compilation artifacts
 # Ignore compiled model binaries and build artifacts but keep .stan sources
-models/*
-!models/*.stan
-models/*.hpp
-models/*.o
-models/*.d
-models/*.exe
-models/*.dll
-models/*.so
-# Previously ignored specific model binaries (kept for compatibility)
-models/dlm_vanilla_ar1
-models/dlm_vanilla_ar2
-models/dlm_noregs_ar1
-models/dlm_dynregs_ar1
-models/dlm_vanilla_ar1_noseasonal
-models/dlm_vanilla_ar2_noseasonal
+models/*.pkl
+models/*.cmdstanpy
+models/*.pystan2
+models/*.pyc
 
 # Analysis outputs / generated data
 results/

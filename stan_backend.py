@@ -63,13 +63,13 @@ def _extract_from_cmdstan(mcmc):
 def write_model_files(model_defs):
     os.makedirs('models', exist_ok=True)
     written = []
-    for name, code in model_defs:
-        stan_path = os.path.join('models', name + '.stan')
+    for name, code, stanversion in model_defs:
+        stan_path = os.path.join('models', name + '.' + stanversion)
         with open(stan_path, 'w') as fh:
             fh.write(code)
 
-        pkl_path = os.path.join('models', name + '.pkl')
-        if HAVE_PYSTAN:
+        pkl_path = os.path.join('models', name + '_' + stanversion + '.pkl')
+        if stanversion == 'pystan2':
             model = pystan.StanModel(model_code=code)
             with open(pkl_path, 'wb') as fh:
                 pickle.dump(model, fh)
