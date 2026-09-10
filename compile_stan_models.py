@@ -26,45 +26,47 @@ def get_models_to_write(module, stanversion):
         models_to_write.append( (name, value, stanversion) )
     return models_to_write
     
-# %% Do this on OSX to get pystan2 to compile - likely unnecessary on other platforms?!!?
-import sys
-if sys.platform == "darwin":
-    import subprocess
-    import os
-    import pystan
-    
-    # 1. Locate the broken PyStan math file. This error is due to Apple's compiler being strict and crashing when it sees the "trt.derived()" typo
-    pystan_dir = os.path.dirname(pystan.__file__)
-    buggy_file = os.path.join(pystan_dir, "stan", "lib", "stan_math", "lib", "eigen_3.3.3", "Eigen", "src", "Core", "Transpositions.h")
-    
-    # 2. Open the file and fix the typo (trt.derived() -> trt)
-    with open(buggy_file, "r") as f:
-        content = f.read()
-    
-    if "trt.derived()" in content:
-        print("Found Eigen 3.3.3 bug. Patching file...")
-        content = content.replace("trt.derived()", "trt")
-        with open(buggy_file, "w") as f:
-            f.write(content)
-        print("Patch applied successfully!\n")
-    else:
-        print("Eigen 3.3.3 bug is already patched.\n")
 
-    # 3. Setup the compiler environment we successfully tested (MAC only!)
-    sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path']).decode('utf-8').strip()
-    cpp_include = os.path.join(sdk_path, "usr", "include", "c++", "v1")
-
-    os.environ["CC"] = "/usr/bin/clang++"
-    os.environ["CXX"] = "/usr/bin/clang++"
-    os.environ["MACOSX_DEPLOYMENT_TARGET"] = "15.0"
-
-    cflags = f"-isysroot {sdk_path} -I{cpp_include} -stdlib=libc++ -std=c++14 -O3"
-    os.environ["CFLAGS"] = cflags
-    os.environ["CXXFLAGS"] = cflags
 
 # %% Now lets compile
 if HAVE_PYSTAN:
     print('Pystan2 detected. Compiling pystan models')
+    # %% Do this on OSX to get pystan2 to compile - likely unnecessary on other platforms?!!?
+    import sys
+    if sys.platform == "darwin":
+        import subprocess
+        import os
+        import pystan
+        
+        # 1. Locate the broken PyStan math file. This error is due to Apple's compiler being strict and crashing when it sees the "trt.derived()" typo
+        pystan_dir = os.path.dirname(pystan.__file__)
+        buggy_file = os.path.join(pystan_dir, "stan", "lib", "stan_math", "lib", "eigen_3.3.3", "Eigen", "src", "Core", "Transpositions.h")
+        
+        # 2. Open the file and fix the typo (trt.derived() -> trt)
+        with open(buggy_file, "r") as f:
+            content = f.read()
+        
+        if "trt.derived()" in content:
+            print("Found Eigen 3.3.3 bug. Patching file...")
+            content = content.replace("trt.derived()", "trt")
+            with open(buggy_file, "w") as f:
+                f.write(content)
+            print("Patch applied successfully!\n")
+        else:
+            print("Eigen 3.3.3 bug is already patched.\n")
+
+        # 3. Setup the compiler environment we successfully tested (MAC only!)
+        sdk_path = subprocess.check_output(['xcrun', '--show-sdk-path']).decode('utf-8').strip()
+        cpp_include = os.path.join(sdk_path, "usr", "include", "c++", "v1")
+
+        os.environ["CC"] = "/usr/bin/clang++"
+        os.environ["CXX"] = "/usr/bin/clang++"
+        os.environ["MACOSX_DEPLOYMENT_TARGET"] = "15.0"
+
+        cflags = f"-isysroot {sdk_path} -I{cpp_include} -stdlib=libc++ -std=c++14 -O3"
+        os.environ["CFLAGS"] = cflags
+        os.environ["CXXFLAGS"] = cflags
+    # %% now compile
     import models.pystan2_dlm_models as stanmodels
     models_to_write = get_models_to_write(stanmodels, 'pystan2')
     write_model_files(models_to_write)

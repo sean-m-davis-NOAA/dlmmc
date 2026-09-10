@@ -6,10 +6,8 @@ utils/__pycache__
 
 # Stan compilation artifacts
 # Ignore compiled model binaries and build artifacts but keep .stan sources
-models/*.pkl
-models/*.cmdstanpy
-models/*.pystan2
-models/*.pyc
+models/*
+!models/*.py
 
 # Analysis outputs / generated data
 results/

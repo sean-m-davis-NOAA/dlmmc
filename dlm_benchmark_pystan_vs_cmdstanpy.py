@@ -161,8 +161,15 @@ def main():
                 cs_res['n_divergent'] = None
             # basic R_hat/ESS via summary if available
             try:
-                summary = mcmc.summary()
-                cs_res['summary'] = summary.to_dict()
+                summary_df = mcmc.summary()
+                # List the specific parameters you want to keep
+                pars_to_keep = ['sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1', 'lp__']
+                
+                # Filter the pandas dataframe to only include these rows
+                trimmed_summary = summary_df.loc[summary_df.index.isin(pars_to_keep)]
+                
+                # Convert the trimmed dataframe to a dict for the JSON file
+                cs_res['summary'] = trimmed_summary.to_dict()                
             except Exception as e:
                 cs_res['summary_error'] = str(e)
         except Exception as e:

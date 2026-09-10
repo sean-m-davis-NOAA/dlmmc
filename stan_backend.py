@@ -64,7 +64,7 @@ def write_model_files(model_defs):
     os.makedirs('models', exist_ok=True)
     written = []
     for name, code, stanversion in model_defs:
-        stan_path = os.path.join('models', name + '.' + stanversion)
+        stan_path = os.path.join('models', name + '_' + stanversion + '.stan')
         with open(stan_path, 'w') as fh:
             fh.write(code)
 
