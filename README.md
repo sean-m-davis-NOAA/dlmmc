@@ -3,6 +3,8 @@
 
 # DLMMC
 
+### Note: This package is an updated version of [dlmmc](https://github.com/justinalsing/dlmmc) that uses python3 and cmdstanpy (or optionally, pystan)
+
 **Dynamical Linear Modelling** (DLM) regression code in python for analysis of time-series data. The code is targeted at atmospheric time-series analysis, with a detailed worked example (and data) included for stratospheric ozone, but is a fairly general suite of state space model that can be applied or extended to a wide range of problems.
 
 The core of this package is a suite of DLM models implemented in [stan](https://mc-stan.org), using a combination of HMC sampling and Kalman filtering to infer the DLM model parameters (trend, seasonal cycle, auto-regressive processes etc) given some time-series data. To make the code as accessible as possible, I provide a step-by-step tutorial in python for how to read in your data, run the DLM model(s), and process the outputs to make nice plots. Once you've worked through this tutorial you should have all the tools you need to apply DLM to your own data!
@@ -19,16 +21,8 @@ The code is python3 and has the following dependencies: [numpy](http://www.numpy
 
 The most painless way to get set up is using the [Anaconda python distribution](https://www.anaconda.com/distribution/) (recommended). Two supported installation routes are provided below.
 
-1) PyStan (legacy)
 
-If you need to run the original PyStan-based workflow (compatibility with older environments), install as follows:
-
-```
-conda install pystan netCDF4
-python3 compile_stan_models.py
-```
-
-2) CmdStan / cmdstanpy (recommended modern backend)
+1) CmdStan / cmdstanpy (recommended modern backend)
 
 CmdStan produces native compiled Stan executables and cmdstanpy is a lightweight, well-maintained Python interface. This combination is generally faster and more robust than older PyStan workflows. Example setup (using conda):
 
@@ -45,6 +39,16 @@ python -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
 # compile the models
 python3 compile_stan_models.py
 ```
+
+2) PyStan (legacy)
+
+If you need to run the original PyStan-based workflow (compatibility with older environments), install as follows:
+
+```
+conda install pystan netCDF4
+python3 compile_stan_models.py
+```
+
 
 Notes:
 - CmdStan requires a C++ toolchain to compile models. On macOS install Xcode command-line tools (`xcode-select --install`) or use a conda-provided compiler on CI.
