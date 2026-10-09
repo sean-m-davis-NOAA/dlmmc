@@ -1,0 +1,30 @@
+name: dlmmc-cmdstanpy
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - scipy
+  - matplotlib
+  - netcdf4
+  - ipython
+  - jupyter
+  - pip
+  - mpi4py
+  - tqdm
+  - pytest
+  - pkg-config
+  - cmake
+  - make
+  - zlib
+  - libssh2
+  - xz
+  - openssl
+  - pip:
+    - cmdstanpy
+    - arviz
+    - xarray
+    - pandas
+    - cloudpickle
+    - tqdm

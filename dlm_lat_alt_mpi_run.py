@@ -1,5 +1,4 @@
 # Import stuff
-import pystan
 import numpy as np
 import sys
 import scipy.interpolate as interpolate
@@ -7,6 +6,7 @@ import netCDF4
 import tqdm
 from mpi4py import MPI
 import pickle
+from stan_backend import load_model_object, sample_with_backend
 from utils.utils import *
 
 # Results directory and run name
@@ -25,7 +25,9 @@ nprocs=comm.Get_size()
 myrank=comm.Get_rank()
 
 # Import the DLM model
-model_kalman_ar1 = pickle.load(open('models/dlm_vanilla_ar1.pkl', 'rb'))
+# The pickled file may be a PyStan-compiled model (legacy) or a marker dict produced by
+# compile_stan_models.py indicating a stan file to compile with cmdstanpy at runtime.
+model_kalman_ar1 = load_model_object('models/dlm_vanilla_ar1.pkl')
 
 # Import the data
 
@@ -132,9 +134,17 @@ for ind in indicies:
                          'rhoAR1':0.1,
                         }
 
-        # Run the model
+        # Run the model through the backend adapter so PyStan and cmdstanpy are handled uniformly.
         with suppress_stdout_stderr():
-            fit = model_kalman_ar1.sampling(data=input_data, iter=iterations, warmup=warmup, chains=n_chains, init = [initial_state for i in range(n_chains)], verbose=False, pars=('sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1', 'trend', 'slope', 'beta', 'seasonal'))
+            fit = sample_with_backend(
+                model_obj=model_kalman_ar1,
+                input_data=input_data,
+                iterations=iterations,
+                warmup=warmup,
+                chains=n_chains,
+                init=[initial_state for i in range(n_chains)],
+                params=('sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1', 'trend', 'slope', 'beta', 'seasonal'),
+            )
 
         # Put the relevant bits into the netCDF...
         save_results(results_dir, results_filename, fit, pressure, latitude)

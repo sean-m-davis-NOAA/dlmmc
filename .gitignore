@@ -4,3 +4,13 @@ utils/__pycache__
 .ipynb_checkpoints
 *.DS_store
 
+# Stan compilation artifacts
+# Ignore compiled model binaries and build artifacts but keep .stan sources
+models/*
+!models/*.py
+
+# Analysis outputs / generated data
+results/
+*.nc
+*.csv
+*.nbconvert.ipynb
