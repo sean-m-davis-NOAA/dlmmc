@@ -33,7 +33,7 @@ conda create -n dlmmc-cmdstanpy python=3 cmdstanpy xarray netCDF4 -y
 conda activate dlmmc-cmdstanpy
 # compile the models
 python compile_stan_models.py
-# Run the benchmark to ensure
+# Run the benchmark to see if it works
 python dlm_benchmark.py
 
 ```
@@ -45,7 +45,7 @@ conda create -n dlmmc-pystan python=3 pystan xarray netCDF4 -y
 conda activate dlmmc-pystan
 # compile the models
 python compile_stan_models.py
-# Run the benchmark to ensure
+# Run the benchmark to see if it works
 python dlm_benchmark.py
 ```
 
