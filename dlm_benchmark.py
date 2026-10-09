@@ -8,7 +8,7 @@ Created on Tue Sep  8 16:29:35 2026
 
 import time, json, os, pickle, traceback
 import numpy as np
-import netCDF4
+import xarray as xr
 from utils.utils import prepare_missing_data, sampling_rate
 import stan_backend
 from datetime import datetime
@@ -27,42 +27,31 @@ def main():
     ds_path = 'data/BASIC_V1_2017_lotus_seascyc_gcsw2017_fac2.nc'
     if not os.path.exists(ds_path):
         raise SystemExit(f'data file not found: {ds_path}')
-    ds = netCDF4.Dataset(ds_path)
-    
-    # Heuristic: find a variable that depends on time and select first pressure/lat index if present
-    time_dim = None
-    for name, var in ds.variables.items():
-        if 'time' in var.dimensions:
-            time_dim = 'time'
-            break
-    # Choose a data variable (not the time coordinate)
-    data_var = None
-    for name, var in ds.variables.items():
-        if name.lower() in ('time','latitude','longitude','lat','lon','pressure','plev'):
-            continue
-        if 'time' in var.dimensions:
-            data_var = var
-            data_name = name
-            break
-    if data_var is None:
-        raise SystemExit('Could not find a suitable data variable in the netCDF file')
-    print('Using data variable:', data_name, 'with dimensions', data_var.dimensions)
-    # Build a 1D time-series by indexing other dims at 0 where necessary
-    idx = []
-    for dim in data_var.dimensions:
-        if dim == 'time':
-            idx.append(slice(None))
-        else:
-            idx.append(0)
-    arr = data_var[tuple(idx)]
-    d = np.array(arr, dtype=float).squeeze()
-    # Try to find a corresponding stddev variable (heuristic)
-    s = None
-    for cand in ('stddev','std','error','uncertainty','sigma'):
-        if cand in ds.variables:
-            v = ds.variables[cand]
-            if 'time' in v.dimensions:
-                s = np.array(v[tuple(idx)], dtype=float).squeeze(); break
+    with xr.open_dataset(ds_path) as ds:
+        # Choose a data variable (not the time coordinate)
+        data_var = None
+        for name, var in ds.variables.items():
+            if name.lower() in ('time','latitude','longitude','lat','lon','pressure','plev'):
+                continue
+            if 'time' in var.dims:
+                data_var = var
+                data_name = name
+                break
+        if data_var is None:
+            raise SystemExit('Could not find a suitable data variable in the netCDF file')
+        print('Using data variable:', data_name, 'with dimensions', data_var.dims)
+        # Select the first index of every non-time dimension.
+        indexers = {dim: 0 for dim in data_var.dims if dim != 'time'}
+        d = np.asarray(data_var.isel(indexers).to_numpy(), dtype=float).squeeze()
+        # Try to find a corresponding stddev variable (heuristic)
+        s = None
+        for cand in ('stddev','std','error','uncertainty','sigma'):
+            if cand in ds.variables:
+                v = ds.variables[cand]
+                if 'time' in v.dims:
+                    std_indexers = {dim: 0 for dim in v.dims if dim != 'time'}
+                    s = np.asarray(v.isel(std_indexers).to_numpy(), dtype=float).squeeze()
+                    break
     # Fallback: tiny constant stddev
     if s is None:
         s = np.ones_like(d) * 1e-3
