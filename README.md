@@ -33,7 +33,7 @@ conda create -n dlmmc-cmdstanpy -c conda-forge python=3 cmdstanpy netCDF4 numpy 
 conda activate dlmmc-cmdstanpy
 # compile the models
 python compile_stan_models.py
-# Run the benchmark to ensure
+# Run the benchmark to see if it works
 python dlm_benchmark.py
 
 ```
@@ -41,11 +41,11 @@ python dlm_benchmark.py
 2) PyStan3 (legacy)
 ```
 # create and activate a modern environment
-conda create -n dlmmc-pystan python=3 pystan netCDF4 -y
+conda create -n dlmmc-pystan python=3 pystan xarray netCDF4 -y
 conda activate dlmmc-pystan
 # compile the models
 python compile_stan_models.py
-# Run the benchmark to ensure
+# Run the benchmark to see if it works
 python dlm_benchmark.py
 ```
 
@@ -58,7 +58,7 @@ Notes:
 - The CmdStanPy environment command includes the dependencies for the MPI example. On HPC systems such as NOAA Hera, use the site-provided MPI implementation and ensure `mpi4py` is built against it instead of mixing in a separate Conda MPI implementation.
 - To keep a macOS laptop awake while compiling/sampling use `caffeinate -i <command>` or run the job on a remote server or in a tmux session.
 - The repository includes both workflows; importing the `stan_backend.py` will automatically detect and load either PyStan or cmdstanpy.
-- dlmmc v1 used pystan2, which is incompatible with python 3. This example is for pystan3.
+- dlmmc v1 assumes pystan version 2, which is incompatible with python >3.8. Newer versions of pystan (3.x), as used here, use a different syntax for the code and sampling.
   
 Finally, if you want to see what a successful installation looks like, see [INSTALL.md](INSTALL.md)
 
