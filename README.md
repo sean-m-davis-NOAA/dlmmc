@@ -55,7 +55,7 @@ jupyter-nbconvert --to notebook --execute --ExecutePreprocessor.timeout=100000 d
 ```
 Notes:
 - CmdStan requires a C++ toolchain to compile models. On macOS install Xcode command-line tools (`xcode-select --install`) or use a conda-provided compiler on CI.
-- The CmdStanPy environment command includes the dependencies for the MPI example. On HPC systems such as NOAA Hera, use the site-provided MPI implementation and ensure `mpi4py` is built against it instead of mixing in a separate Conda MPI implementation.
+- The CmdStanPy environment command includes the dependencies for the MPI example. On HPC systems, use the site-provided MPI implementation and ensure `mpi4py` is built against it instead of mixing in a separate Conda MPI implementation.
 - To keep a macOS laptop awake while compiling/sampling use `caffeinate -i <command>` or run the job on a remote server or in a tmux session.
 - The repository includes both workflows; importing the `stan_backend.py` will automatically detect and load either PyStan or cmdstanpy.
 - dlmmc v1 assumes pystan version 2, which is incompatible with python >3.8. Newer versions of pystan (3.x), as used here, use a different syntax for the code and sampling.
