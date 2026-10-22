@@ -6,4 +6,12 @@ The python script `dlm_lat_alt_mpi_run.py` is a template for how to run the DLM 
 
 `mpirun --use-hwthread-cpus -np 4 python3 dlm_lat_alt_mpi_run.py`
 
+The example runs fits in parallel but uses MPI rank 0 as the sole writer of the
+shared NetCDF file. Worker ranks send each completed pressure/latitude result to
+rank 0, which writes it immediately; with multiple ranks, rank 0 is reserved for
+writing. This avoids concurrent writes to a NetCDF/HDF5 file, which are only
+safe when the libraries and file are configured for parallel I/O. The output is
+readable with xarray. Its `fit_status` variable is 1 for completed fits, 0 for
+skipped cells, and -1 for failed fits.
+
 I recommend you run this with a very small number of samples first (eg set `iter=3` and `warmup=1` at the top of the python script `dlm_lat_alt_mpi_run.py`) to check it runs through, before embarking on a long run. Note: this will run very short MCMC chains (only 3 samples!) so stan will throw lots of warnings about lack of convergence, which you can ignore for this test - as long as you get no errors, you're good to go.

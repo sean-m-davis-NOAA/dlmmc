@@ -29,7 +29,7 @@ CmdStan produces native compiled Stan executables and cmdstanpy is a lightweight
 1) CmdStan / CmdStanPy (recommended modern backend)
 ```
 # create and activate a modern environment
-conda create -n dlmmc-cmdstanpy python=3 cmdstanpy netCDF4 -y
+conda create -n dlmmc-cmdstanpy -c conda-forge python=3 cmdstanpy netCDF4 numpy scipy xarray tqdm mpi4py openmpi -y
 conda activate dlmmc-cmdstanpy
 # compile the models
 python compile_stan_models.py
@@ -55,6 +55,7 @@ jupyter-nbconvert --to notebook --execute --ExecutePreprocessor.timeout=100000 d
 ```
 Notes:
 - CmdStan requires a C++ toolchain to compile models. On macOS install Xcode command-line tools (`xcode-select --install`) or use a conda-provided compiler on CI.
+- The CmdStanPy environment command includes the dependencies for the MPI example. On HPC systems such as NOAA Hera, use the site-provided MPI implementation and ensure `mpi4py` is built against it instead of mixing in a separate Conda MPI implementation.
 - To keep a macOS laptop awake while compiling/sampling use `caffeinate -i <command>` or run the job on a remote server or in a tmux session.
 - The repository includes both workflows; importing the `stan_backend.py` will automatically detect and load either PyStan or cmdstanpy.
 - dlmmc v1 used pystan2, which is incompatible with python 3. This example is for pystan3.
