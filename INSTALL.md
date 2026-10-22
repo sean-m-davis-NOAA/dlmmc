@@ -38,19 +38,14 @@ From the repository root, generate the CmdStanPy model sources and marker files:
 python compile_stan_models.py
 ```
 
-Generated files use the `_cmdstanpy` suffix. The benchmark and MPI example load `models/dlm_vanilla_ar1.pkl`, so create that expected marker from the generated CmdStanPy marker:
-
-```bash
-cp models/dlm_vanilla_ar1_cmdstanpy.pkl models/dlm_vanilla_ar1.pkl
-```
-
-The marker points to the generated Stan source. CmdStanPy compiles the native executable when the model is first instantiated. Run the benchmark as an end-to-end check; it samples one example series with four chains, 100 warmup iterations, and 100 sampling iterations:
+The generator writes versioned files with the `_cmdstanpy` suffix and canonical model files such as `models/dlm_vanilla_ar1.pkl`, which the benchmark and MPI example load. The marker points to the generated Stan source. CmdStanPy compiles the native executable when the model is first instantiated. Run the benchmark as an end-to-end check; it samples one example series with four chains, 100 warmup iterations, and 100 sampling iterations:
 
 ```bash
 python dlm_benchmark.py
 ```
 
 The benchmark writes a JSON result under `results/`. It may take several minutes on the first run while CmdStan compiles the model.
+To verify success, open the newest `results/benchmark_*.json` file and confirm `backends.cmdstanpy` contains `compile_time` and `sample_time`, with no `backends.cmdstanpy_error` entry.
 
 ## Test the MPI example
 

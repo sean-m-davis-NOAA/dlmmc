@@ -1,6 +1,7 @@
 import os
 import pickle
 import re
+import shutil
 
 try:
     import pystan
@@ -77,6 +78,7 @@ def write_model_files(model_defs):
             marker = {'stan_file': stan_path, 'backend': 'cmdstanpy'}
             with open(pkl_path, 'wb') as fh:
                 pickle.dump(marker, fh)
+        shutil.copyfile(pkl_path, os.path.join('models', name + '.pkl'))
         written.append((name, stan_path, pkl_path))
     return written
 
