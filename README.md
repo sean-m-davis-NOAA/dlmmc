@@ -29,7 +29,7 @@ CmdStan produces native compiled Stan executables and cmdstanpy is a lightweight
 1) CmdStan / CmdStanPy (recommended modern backend)
 ```
 # create and activate a modern environment
-conda create -n dlmmc-cmdstanpy -c conda-forge python=3 cmdstanpy netCDF4 numpy scipy xarray tqdm mpi4py openmpi -y
+conda create -n dlmmc-cmdstanpy -c conda-forge python=3 cmdstanpy netCDF4 numpy scipy xarray arviz tqdm mpi4py openmpi -y
 conda activate dlmmc-cmdstanpy
 # compile the models
 python compile_stan_models.py

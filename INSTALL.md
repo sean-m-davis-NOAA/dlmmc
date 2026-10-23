@@ -7,7 +7,7 @@ The recommended workflow uses CmdStanPy. The commands below install the Python d
 For a local workstation, create the environment with Conda:
 
 ```bash
-conda create -n dlmmc-cmdstanpy -c conda-forge python=3.10 cmdstanpy netcdf4 numpy scipy xarray tqdm mpi4py openmpi pandas matplotlib jupyter -y
+conda create -n dlmmc-cmdstanpy -c conda-forge python=3.10 cmdstanpy netcdf4 numpy scipy xarray arviz tqdm mpi4py openmpi pandas matplotlib jupyter -y
 conda activate dlmmc-cmdstanpy
 ```
 
