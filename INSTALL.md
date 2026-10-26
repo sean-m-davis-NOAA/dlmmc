@@ -7,7 +7,7 @@ The recommended workflow uses CmdStanPy. The commands below install the Python d
 For a local workstation, create the environment with Conda:
 
 ```bash
-conda create -n dlmmc-cmdstanpy -c conda-forge python=3.10 cmdstanpy netcdf4 numpy scipy xarray arviz tqdm mpi4py openmpi pandas matplotlib jupyter -y
+conda create -n dlmmc-cmdstanpy -c conda-forge python=3.10 cmdstanpy netCDF4 numpy scipy xarray arviz tqdm mpi4py openmpi matplotlib jupyter ipykernel pandas -y
 conda activate dlmmc-cmdstanpy
 ```
 
@@ -19,12 +19,9 @@ Install CmdStan in the environment:
 python -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
 ```
 
-For notebook use, either install JupyterLab in this environment or register the environment as a kernel:
+The environment includes Jupyter and `ipykernel`. In VS Code, open the notebook and select `Python (dlmmc-cmdstanpy)` as its kernel. If Jupyter runs in a separate environment, register this environment as a kernel:
 
 ```bash
-conda install -c conda-forge jupyterlab
-# Or, when Jupyter is installed in another environment:
-conda install -c conda-forge ipykernel
 python -m ipykernel install --user --name dlmmc-cmdstanpy --display-name "Python (dlmmc-cmdstanpy)"
 ```
 
@@ -47,6 +44,12 @@ python dlm_benchmark.py
 The benchmark writes a JSON result under `results/`. It may take several minutes on the first run while CmdStan compiles the model.
 To verify success, open the newest `results/benchmark_*.json` file and confirm `backends.cmdstanpy` contains `compile_time` and `sample_time`, with no `backends.cmdstanpy_error` entry.
 
+## Run the notebooks
+
+After the benchmark succeeds, open `dlm_tutorial.ipynb` in JupyterLab or VS Code and run its cells in order. It demonstrates xarray-based time/data handling, CmdStanPy sampling, and posterior diagnostics. It uses four chains with 1,000 warmup and 2,000 sampling iterations per chain, so it takes longer than the benchmark.
+
+Next, run `dlm_validation_tests.ipynb`. It generates synthetic data with `utils/dlm.py` and tests parameter recovery for four model variants. Each test uses four chains with 250 warmup and 500 sampling iterations per chain and reports posterior intervals, R-hat/ESS, trend coverage, and divergences. These are validation demonstrations; warnings or missed recovery intervals indicate that a model/parameter needs further investigation, not necessarily an installation failure.
+
 ## Test the MPI example
 
 The MPI example fits the pressure/latitude grid in parallel and streams completed fits to one rank-0 writer. The resulting NetCDF is readable with xarray. On a local machine with Open MPI, run:
@@ -58,10 +61,6 @@ mpirun -np 4 python dlm_lat_alt_mpi_run.py
 The example defaults to one chain, one warmup iteration, and two sampling iterations per grid cell. These settings are only for a pipeline smoke test and do not provide converged posterior estimates. Increase them for scientific runs. The output is `results/BASIC_V1_2017.nc`; `fit_status` is 1 for completed cells, 0 for skipped cells, and -1 for failed fits.
 
 On an HPC system, launch the script using the site's MPI launcher and scheduler allocation. See `MPI-README.md` for details. Rank 0 is reserved for writing when multiple ranks are used.
-
-## Legacy validation
-
-`dlm_validation_tests.ipynb` currently imports the legacy PyStan API and is not the validation suite for the recommended CmdStanPy workflow. Use `dlm_benchmark.py` and the MPI smoke test above to validate the current path. The PyStan2 model definitions and old installation procedure are retained only for legacy compatibility.
 
 If CmdStan reports that its precompiled header needs rebuilding, run:
 

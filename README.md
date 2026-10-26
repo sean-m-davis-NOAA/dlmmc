@@ -29,13 +29,8 @@ CmdStan produces native compiled Stan executables and cmdstanpy is a lightweight
 1) CmdStan / CmdStanPy (recommended modern backend)
 ```
 # create and activate a modern environment
-conda create -n dlmmc-cmdstanpy -c conda-forge python=3 cmdstanpy netCDF4 numpy scipy xarray arviz tqdm mpi4py openmpi -y
+conda create -n dlmmc-cmdstanpy -c conda-forge python=3.10 cmdstanpy netCDF4 numpy scipy xarray arviz tqdm mpi4py openmpi matplotlib jupyter ipykernel pandas -y
 conda activate dlmmc-cmdstanpy
-# compile the models
-python compile_stan_models.py
-# Run the benchmark to see if it works
-python dlm_benchmark.py
-
 ```
 
 2) PyStan3 (legacy)
@@ -49,10 +44,6 @@ python compile_stan_models.py
 python dlm_benchmark.py
 ```
 
-This second line compiles all of the DLM models on your machine, saves them in `models/`, and then you're ready to start DLMing! Jump straight into the jupyter notebook tutorial `dlm_tutorial.ipynb` (see below), or if you prefer you can run a test suite to check that the install worked and all models run smoothly by executing (this will take some minutes to run through):
-```
-jupyter-nbconvert --to notebook --execute --ExecutePreprocessor.timeout=100000 dlm_validation_tests.ipynb
-```
 Notes:
 - CmdStan requires a C++ toolchain to compile models. On macOS install Xcode command-line tools (`xcode-select --install`) or use a conda-provided compiler on CI.
 - The CmdStanPy environment command includes the dependencies for the MPI example. On HPC systems, use the site-provided MPI implementation and ensure `mpi4py` is built against it instead of mixing in a separate Conda MPI implementation.
@@ -61,6 +52,42 @@ Notes:
 - dlmmc v1 assumes pystan version 2, which is incompatible with python >3.8. Newer versions of pystan (3.x), as used here, use a different syntax for the code and sampling.
   
 Finally, if you want to see what a successful installation looks like, see [INSTALL.md](INSTALL.md)
+
+## Getting Started
+
+The recommended path below uses the CmdStanPy environment above. Run commands from the repository root.
+
+1. **Install CmdStan.** A C++ toolchain is required; see the installation notes above.
+
+```bash
+python -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
+```
+
+2. **Generate model sources and markers.** This creates the canonical model markers used by the scripts and notebooks; no manual pickle copying is needed.
+
+```bash
+python compile_stan_models.py
+```
+
+3. **Run the benchmark.** This is the quickest end-to-end check of data loading, model compilation, and CmdStanPy sampling.
+
+```bash
+python dlm_benchmark.py
+```
+
+The benchmark writes a timestamped JSON file under `results/`. Confirm that its `backends.cmdstanpy` entry includes `compile_time` and `sample_time`, with no `cmdstanpy_error` entry.
+
+4. **Work through the tutorial.** Open `dlm_tutorial.ipynb` in JupyterLab or VS Code, select the CmdStanPy environment as the kernel, and run the cells in order. The tutorial uses four chains with 1,000 warmup and 2,000 sampling iterations per chain, so it takes longer than the benchmark.
+
+5. **Run the validation suite.** Open `dlm_validation_tests.ipynb` and run the cells in order. It performs synthetic parameter-recovery tests for four model variants using short chains. Review the recovery intervals, R-hat/ESS values, and divergences; the short settings demonstrate the workflow and are not a guarantee of convergence.
+
+6. **Optionally test the gridded MPI workflow.** This fits the example pressure/latitude grid in parallel and streams results to one NetCDF writer. It requires a working MPI implementation and `mpi4py`; on a local Open MPI setup:
+
+```bash
+mpirun -np 4 python dlm_lat_alt_mpi_run.py
+```
+
+The MPI example defaults to very short chains for a pipeline smoke test, not scientific inference. See [MPI-README.md](MPI-README.md) for output verification and HPC launch details.
 
 ### Installation with pip (at your own risk)
 
@@ -73,21 +100,15 @@ dlmmc has been successfully installed on Mac, Linux and Windows. Note that there
 
 ## Usage
 
-**Functionality (to be updated)**
-
-A detailed annotated tutorial walk-through of how to use the code is given in the jupyter notebook `dlm_tutorial.ipynb` -- this tutorial analyses stratospheric ozone time-series data as a case study. The notebook takes you step-by-step through the complete functionality of the code: loading in your own data, running the DLM model, and processing and plotting the results. The tutorial also serves as a test that the install was successful and the compiled models run smoothly (for a more comprehensive test suite see below).
-
-**Running in parallel with MPI (to be updated)**
-
-It's often necessary to perform regression of a large number time-series (eg., over a grid of observations at different altitudes/latitudes/longitudes) and is advantageous to be able to run these in parallel. Although not a central part of this package, I provide a template example for doing large MPI runs in `dlm_lat_alt_mpi_run.py` - see `MPI-README.md` for a description of getting set up with MPI runs.
+Follow the [Getting Started](#getting-started) sequence for the benchmark, tutorial, and validation suite. For large gridded analyses, see `dlm_lat_alt_mpi_run.py` and [MPI-README.md](MPI-README.md).
 
 **Model descriptions**
 
 Mathematical descriptions of each of the DLM models implemented in this package can be found in the file `models/model_descriptions/model_descriptions.pdf`. This file contains a concise description of the parameters of each model, their physical meanings, and how to refer to them in the code: make sure you have read and understand the model description before running a new model!
 
-**Test suite and code validation (to be updated)**
+## Validation
 
-A more comprehensive test suite is provided in `dlm_validation_tests.ipynb`. In this notebook I run through the suite of DLM models in dlmmc, generating mock data and running the DLM on those mock data, for each model in turn. This acts as both a test suite to check the install has worked robustly (ie., all of the models run to completion without error), and also serves as a set of validation tests demonstrating that the input parameters are recovered correctly, within posterior uncertainties, for each model.
+`dlm_validation_tests.ipynb` provides synthetic parameter-recovery demonstrations for four CmdStanPy model variants. Interpret its recovery intervals and sampler diagnostics as evidence for each run, not as a guarantee that every parameter is well identified under all settings.
 
 ## Citing this code
 
