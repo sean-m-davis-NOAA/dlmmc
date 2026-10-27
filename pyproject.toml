@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dlmmc"
-version = "0.1.0"
+version = "2.1.0"
 description = "Dynamical linear models for time-series analysis using CmdStanPy"
 readme = "README.md"
 requires-python = ">=3.10"
