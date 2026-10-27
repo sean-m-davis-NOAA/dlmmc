@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dlmmc"
+version = "0.1.0"
+description = "Dynamical linear models for time-series analysis using CmdStanPy"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "cmdstanpy>=1.2",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "platformdirs>=4",
+    "xarray>=2024.1",
+]
+
+[project.optional-dependencies]
+diagnostics = ["arviz>=0.17"]
+mpi = ["mpi4py>=3.1", "netCDF4>=1.6"]
+test = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["dlmmc*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

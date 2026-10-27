@@ -1,7 +1,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/sean-m-davis-NOAA/dlmmc)](https://github.com/sean-m-davis-NOAA/dlmmc/releases/latest)
 # DLMMC
 
-### Note: This package is an updated version of [dlmmc](https://github.com/justinalsing/dlmmc) that uses python3 and cmdstanpy (or optionally, pystan3)
+### Note: This Python 3 package uses CmdStanPy for Stan model fitting.
 
 **Dynamical Linear Modelling** (DLM) regression code in python for analysis of time-series data. The code is targeted at atmospheric time-series analysis, with a detailed worked example (and data) included for stratospheric ozone, but is a fairly general suite of state space model that can be applied or extended to a wide range of problems.
 
@@ -20,36 +20,21 @@ cd dlmmc
 
 ### Installation with conda (recommended)
 
-The most painless way to get set up is using the [Anaconda python distribution](https://www.anaconda.com/distribution/) (recommended). Two supported installation routes are provided below.
+The recommended way to get started is with Conda and the CmdStanPy backend.
 
-CmdStan produces native compiled Stan executables and cmdstanpy is a lightweight, well-maintained Python interface. This combination is generally faster and more robust than older PyStan workflows. 
+CmdStan produces native compiled Stan executables, and CmdStanPy provides the Python interface.
 
-**Only choose one installation method from below**
-
-1) CmdStan / CmdStanPy (recommended modern backend)
 ```
 # create and activate a modern environment
 conda create -n dlmmc-cmdstanpy -c conda-forge python=3.10 cmdstanpy netCDF4 numpy scipy xarray arviz tqdm mpi4py openmpi matplotlib jupyter ipykernel pandas -y
 conda activate dlmmc-cmdstanpy
-```
-
-2) PyStan3 (legacy)
-```
-# create and activate a modern environment
-conda create -n dlmmc-pystan python=3 pystan xarray netCDF4 -y
-conda activate dlmmc-pystan
-# compile the models
-python compile_stan_models.py
-# Run the benchmark to see if it works
-python dlm_benchmark.py
+python -m pip install -e .
 ```
 
 Notes:
 - CmdStan requires a C++ toolchain to compile models. On macOS install Xcode command-line tools (`xcode-select --install`) or use a conda-provided compiler on CI.
 - The CmdStanPy environment command includes the dependencies for the MPI example. On HPC systems, use the site-provided MPI implementation and ensure `mpi4py` is built against it instead of mixing in a separate Conda MPI implementation.
 - To keep a macOS laptop awake while compiling/sampling use `caffeinate -i <command>` or run the job on a remote server or in a tmux session.
-- The repository includes both workflows; importing the `stan_backend.py` will automatically detect and load either PyStan or cmdstanpy.
-- dlmmc v1 assumes pystan version 2, which is incompatible with python >3.8. Newer versions of pystan (3.x), as used here, use a different syntax for the code and sampling.
   
 Finally, if you want to see what a successful installation looks like, see [INSTALL.md](INSTALL.md)
 
@@ -63,7 +48,7 @@ The recommended path below uses the CmdStanPy environment above. Run commands fr
 python -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
 ```
 
-2. **Generate model sources and markers.** This creates the canonical model markers used by the scripts and notebooks; no manual pickle copying is needed.
+2. **Optionally precompile the packaged models.** Models compile lazily on the first `fit()` call; this command precompiles all models up front.
 
 ```bash
 python compile_stan_models.py
@@ -75,7 +60,7 @@ python compile_stan_models.py
 python dlm_benchmark.py
 ```
 
-The benchmark writes a timestamped JSON file under `results/`. Confirm that its `backends.cmdstanpy` entry includes `compile_time` and `sample_time`, with no `cmdstanpy_error` entry.
+The benchmark writes a timestamped JSON file under `results/`. Confirm it contains `compile_seconds`, `fit_seconds`, and posterior dimensions.
 
 4. **Work through the tutorial.** Open `dlm_tutorial.ipynb` in JupyterLab or VS Code, select the CmdStanPy environment as the kernel, and run the cells in order. The tutorial uses four chains with 1,000 warmup and 2,000 sampling iterations per chain, so it takes longer than the benchmark.
 
@@ -89,18 +74,37 @@ mpirun -np 4 python dlm_lat_alt_mpi_run.py
 
 The MPI example defaults to very short chains for a pipeline smoke test, not scientific inference. See [MPI-README.md](MPI-README.md) for output verification and HPC launch details.
 
-### Installation with pip (at your own risk)
+### Installation with pip
 
-Anaconda is not a _requirement_ for installing dlmmc, but is recommended because it works robustly with cmdstanpy/pystan. If you would rather use a different python distribution and `pip3` for installing dependencies, you are welcome to (at your own risk); see the [pystan readthedocs](https://pystan.readthedocs.io/en/latest/installation_beginner.html) for advice on installing pystan using `pip3` if you run into problems. Note that if you do not use Anaconda you will also have to install the other dependencies listed above, ie., 
+In an existing Python environment with the required dependencies and CmdStan installed, install the package from the repository root with `python -m pip install .`. For editable development installs, use `python -m pip install -e .`.
 
 
 **Platforms** 
 
-dlmmc has been successfully installed on Mac, Linux and Windows. Note that there are some limitations to the functionality of [pystan on Windows](https://pystan.readthedocs.io/en/latest/windows.html), but these do not restrict the use of the dlmmc package for Windows users.
+CmdStan requires a supported C++ toolchain on each platform. On HPC systems, follow the site's compiler and MPI guidance in `INSTALL.md` and `MPI-README.md`.
 
 ## Usage
 
-Follow the [Getting Started](#getting-started) sequence for the benchmark, tutorial, and validation suite. For large gridded analyses, see `dlm_lat_alt_mpi_run.py` and [MPI-README.md](MPI-README.md).
+Follow the [Getting Started](#getting-started) sequence for setup and examples. A basic no-regressor fit from xarray data looks like this:
+
+```python
+import xarray as xr
+import dlmmc
+
+with xr.open_dataset("data/BASIC_V1_2017_lotus_seascyc_gcsw2017_fac2.nc") as ds:
+	series = ds["o3"].isel(pressure=22, latitude=8)
+	uncertainty = ds["o3_sigma"].isel(pressure=22, latitude=8)
+	posterior = dlmmc.fit(
+		series,
+		uncertainty=uncertainty,
+		model="noregs_ar1",
+		chains=4,
+		warmup=500,
+		samples=1000,
+	)
+```
+
+The returned posterior is an xarray Dataset with `chain`, `draw`, and `time` coordinates. For regressors and plots, see `dlm_tutorial.ipynb`. For grid workloads, see `dlm_lat_alt_mpi_run.py` and [MPI-README.md](MPI-README.md).
 
 **Model descriptions**
 

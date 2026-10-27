@@ -1,177 +1,98 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Sep  8 16:29:35 2026
+"""Benchmark the public dlmmc.fit API on one example ozone time series."""
 
-@author: sdavis
-"""
+from __future__ import annotations
 
-import time, json, os, pickle, traceback
+import argparse
+import json
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
 import numpy as np
 import xarray as xr
-from utils.utils import prepare_missing_data, sampling_rate
-import stan_backend
-from datetime import datetime
 
-def main():
-    results = {}
-    results['timestamp'] = datetime.utcnow().isoformat() + 'Z'
-    # Load model pickle (may be PyStan object or a marker for cmdstanpy)
-    model_pkl = 'models/dlm_vanilla_ar1.pkl'
-    if not os.path.exists(model_pkl):
-        raise SystemExit(f'model pickle not found: {model_pkl}')
-    model_obj = pickle.load(open(model_pkl,'rb'))
-    results['model_pickle_type'] = type(model_obj).__name__
-    
-    # Load example timeseries from tutorial data
-    ds_path = 'data/BASIC_V1_2017_lotus_seascyc_gcsw2017_fac2.nc'
-    if not os.path.exists(ds_path):
-        raise SystemExit(f'data file not found: {ds_path}')
-    with xr.open_dataset(ds_path) as ds:
-        # Choose a data variable (not the time coordinate)
-        data_var = None
-        for name, var in ds.variables.items():
-            if name.lower() in ('time','latitude','longitude','lat','lon','pressure','plev'):
-                continue
-            if 'time' in var.dims:
-                data_var = var
-                data_name = name
-                break
-        if data_var is None:
-            raise SystemExit('Could not find a suitable data variable in the netCDF file')
-        print('Using data variable:', data_name, 'with dimensions', data_var.dims)
-        # Select the first index of every non-time dimension.
-        indexers = {dim: 0 for dim in data_var.dims if dim != 'time'}
-        d = np.asarray(data_var.isel(indexers).to_numpy(), dtype=float).squeeze()
-        # Try to find a corresponding stddev variable (heuristic)
-        s = None
-        for cand in ('stddev','std','error','uncertainty','sigma'):
-            if cand in ds.variables:
-                v = ds.variables[cand]
-                if 'time' in v.dims:
-                    std_indexers = {dim: 0 for dim in v.dims if dim != 'time'}
-                    s = np.asarray(v.isel(std_indexers).to_numpy(), dtype=float).squeeze()
-                    break
-    # Fallback: tiny constant stddev
-    if s is None:
-        s = np.ones_like(d) * 1e-3
-    # Prepare missing data if any
-    d, s = prepare_missing_data(d, s)
-    # Build input_data as in tutorial
-    input_data = {
-        'time_series': d,
-        'stddev': s,
-        'N': int(len(d)),
-        'nreg': 1,
-        'regressors': [[0.0] for _ in range(len(d))],
-        'sampling': sampling_rate('monthly'),
-        'S': 10.0,
-        'sigma_trend_prior':1e-4,
-        'sigma_seas_prior':0.01,
-        'sigma_AR_prior':0.5
+import dlmmc
+
+
+def load_example(pressure: int, latitude: int) -> tuple[xr.DataArray, xr.DataArray, xr.Dataset]:
+    with xr.open_dataset('data/BASIC_V1_2017_lotus_seascyc_gcsw2017_fac2.nc') as source:
+        data = source['o3'].isel(pressure=pressure, latitude=latitude).load()
+        uncertainty = source['o3_sigma'].isel(pressure=pressure, latitude=latitude).load()
+
+    regressors = {}
+    regressor_specs = [
+        ('ENSO', 'regressors/ENSO_MEI_1950_201802.txt', 1),
+        ('SOLAR', 'regressors/Flux_F30_monthly_195111_201803_absolute.txt', 1),
+        ('QBO30', 'regressors/multi_qbo30_1953_2018.txt', 1),
+        ('QBO50', 'regressors/multi_qbo50_1953_2018.txt', 1),
+        ('SAOD', 'regressors/sad_1979_2017_10deg_60S_60N.txt', latitude + 1),
+    ]
+    for name, path, column in regressor_specs:
+        values = np.loadtxt(path, usecols=(0, column))
+        regressor = xr.DataArray(
+            values[:, 1],
+            dims=('time',),
+            coords={'time': values[:, 0]},
+        )
+        regressors[name] = regressor.interp(time=data['time']).to_numpy()
+    regressor_dataset = xr.Dataset(
+        {name: ('time', values) for name, values in regressors.items()},
+        coords={'time': data['time']},
+    )
+    return data, uncertainty, regressor_dataset
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--pressure', type=int, default=22, help='pressure index in the example dataset')
+    parser.add_argument('--latitude', type=int, default=8, help='latitude index in the example dataset')
+    parser.add_argument('--chains', type=int, default=4)
+    parser.add_argument('--warmup', type=int, default=100)
+    parser.add_argument('--samples', type=int, default=100)
+    parser.add_argument('--seed', type=int, default=42)
+    parser.add_argument('--output-dir', type=Path, default=Path('results'))
+    args = parser.parse_args()
+
+    data, uncertainty, regressors = load_example(args.pressure, args.latitude)
+    start = time.perf_counter()
+    compiled = dlmmc.compile_models(['vanilla_ar1'])
+    compile_seconds = time.perf_counter() - start
+
+    start = time.perf_counter()
+    posterior = dlmmc.fit(
+        data,
+        regressors=regressors,
+        uncertainty=uncertainty,
+        model='vanilla_ar1',
+        chains=args.chains,
+        warmup=args.warmup,
+        samples=args.samples,
+        seed=args.seed,
+    )
+    fit_seconds = time.perf_counter() - start
+
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = args.output_dir / f'benchmark_{int(time.time())}.json'
+    result = {
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'model': 'vanilla_ar1',
+        'settings': {
+            'chains': args.chains,
+            'warmup': args.warmup,
+            'samples_per_chain': args.samples,
+            'seed': args.seed,
+        },
+        'compile_seconds': compile_seconds,
+        'fit_seconds': fit_seconds,
+        'executable': compiled['vanilla_ar1'],
+        'posterior_dimensions': dict(posterior.sizes),
+        'posterior_variables': list(posterior.data_vars),
+        'divergent_transitions': posterior.attrs.get('divergent_transitions'),
     }
-    # Sampling settings (full test as requested)
-    iterations = 100 + 100  # total not used directly for cmdstanpy; we use warmup+sampling below
-    warmup = 100
-    sampling = 100
-    chains = 4
-    results['settings'] = dict(warmup=warmup, sampling=sampling, chains=chains)
-    # Prepare results output dir
-    os.makedirs('results', exist_ok=True)
-    out_json = f'results/benchmark_{int(time.time())}.json'
-    # Try PyStan (legacy) if available
-    backend_results = {}
-    try:
-        import pystan
-        HAVE_PYSTAN = True
-    except Exception:
-        HAVE_PYSTAN = False
-    # If model_obj is a PyStan model or HAVE_PYSTAN, attempt PyStan sampling
-    if HAVE_PYSTAN:
-        try:
-            # If model_obj is a PyStan StanModel pickled, use it; else compile from .stan if source available
-            from time import perf_counter
-            py_res = {}
-            if hasattr(model_obj, 'model_code') or hasattr(model_obj, 'stan_json') or 'pystan' in str(type(model_obj)).lower():
-                print('Detected PyStan model in pickle; will run PyStan sampling')
-                stan_model = model_obj
-                compile_time = 0.0
-            else:
-                # try to compile from source .stan if present
-                stan_src = 'models/dlm_vanilla_ar1.stan'
-                if os.path.exists(stan_src):
-                    print('Compiling PyStan model from', stan_src)
-                    code = open(stan_src).read()
-                    t0 = perf_counter()
-                    stan_model = pystan.StanModel(model_code=code)
-                    compile_time = perf_counter() - t0
-                else:
-                    raise RuntimeError('No Stan source available to compile PyStan model')
-            py_res['compile_time'] = compile_time
-            # Run sampling
-            t0 = perf_counter()
-            fit = stan_model.sampling(data=input_data, iter=warmup+sampling, warmup=warmup, chains=chains, n_jobs=chains)
-            sample_time = perf_counter() - t0
-            py_res['sample_time'] = sample_time
-            # Attempt to gather simple diagnostics
-            try:
-                summary = fit.summary(pars=['sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1'])
-                py_res['pystan_summary_keys'] = list(summary.keys())
-            except Exception as e:
-                py_res['pystan_summary_error'] = str(e)
-            backend_results['pystan'] = py_res
-        except Exception as e:
-            backend_results['pystan_error'] = traceback.format_exc()
-    else:
-        backend_results['pystan_error'] = 'pystan not available in this environment'
-    # CmdStanPy benchmark
-    try:
-        from time import perf_counter
-        cs_res = {}
-        # If model_obj is a marker dict pointing to stan file, use that; else use models/dlm_vanilla_ar1.stan
-        if isinstance(model_obj, dict) and model_obj.get('backend') == 'cmdstanpy':
-            stan_file = model_obj['stan_file']
-        else:
-            stan_file = 'models/dlm_vanilla_ar1.stan'
-        t0 = perf_counter()
-        from cmdstanpy import CmdStanModel
-        model = CmdStanModel(stan_file=stan_file)
-        cs_res['compile_time'] = perf_counter() - t0
-        # run sampling
-        t0 = perf_counter()
-        mcmc = model.sample(data=input_data, chains=chains, iter_sampling=sampling, iter_warmup=warmup, show_console=True)
-        cs_res['sample_time'] = perf_counter() - t0
-        # diagnostics: try to get divergent__ if present
-        try:
-            df = mcmc.draws_pd()
-            if 'divergent__' in df.columns:
-                cs_res['n_divergent'] = int(df['divergent__'].sum())
-            else:
-                cs_res['n_divergent'] = None
-            # basic R_hat/ESS via summary if available
-            try:
-                summary_df = mcmc.summary()
-                # List the specific parameters you want to keep
-                pars_to_keep = ['sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1', 'lp__']
-                
-                # Filter the pandas dataframe to only include these rows
-                trimmed_summary = summary_df.loc[summary_df.index.isin(pars_to_keep)]
-                
-                # Convert the trimmed dataframe to a dict for the JSON file
-                cs_res['summary'] = trimmed_summary.to_dict()                
-            except Exception as e:
-                cs_res['summary_error'] = str(e)
-        except Exception as e:
-            cs_res['draws_error'] = str(e)
-        backend_results['cmdstanpy'] = cs_res
-    except Exception as e:
-        backend_results['cmdstanpy_error'] = traceback.format_exc()
-    results['backends'] = backend_results
-    with open(out_json,'w') as f:
-        json.dump(results, f, indent=2)
-    print('Benchmark finished; results written to', out_json)
+    output_path.write_text(json.dumps(result, indent=2))
+    print(f'Benchmark passed; results written to {output_path}')
+
 
 if __name__ == '__main__':
-    import multiprocessing
-    multiprocessing.set_start_method("fork")
     main()
