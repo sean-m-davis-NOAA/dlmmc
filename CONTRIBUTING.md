@@ -6,7 +6,7 @@ Note that in order to contribute new models, you will need to be able to write c
 
 ## Developing extended models
 
-The DLMs are characterized by the matrices **F**, **G**, **W**, and **C** (see `models/model_descriptions/`). Add new model source strings to `src/dlmmc/_stan_models.py` and register their public names and model requirements in `src/dlmmc/api.py`. CmdStan source is packaged with dlmmc; compiled executables are cached in the user's cache directory and should not be committed.
+The DLMs are characterized by the matrices **F**, **G**, **W**, and **C** (see `model_descriptions/`). Add new model source strings to `src/dlmmc/_stan_models.py` and register their public names and model requirements in `src/dlmmc/api.py`. CmdStan source is packaged with dlmmc; compiled executables are cached in the user's cache directory and should not be committed.
 
 A workflow for implementing a model is:
 
@@ -28,6 +28,6 @@ Then run a representative `dlmmc.fit()` with model-appropriate xarray data, regr
 
 The model source is compiled from the package automatically; no generated marker files are needed. For an end-to-end example over the gridded ozone data, see `dlm_lat_alt_mpi_run.py` and `MPI-README.md`. The MPI example runs fits on worker ranks and streams completed results to one rank-0 NetCDF writer; output files can be opened with xarray.
 
-Add a concise description of the model to `models/model_descriptions/` by updating the relevant TeX and bibliography sources. Add or update validation coverage for the CmdStanPy workflow when contributing model behavior.
+Add a concise description of the model to `model_descriptions/` by updating the relevant TeX and bibliography sources. Add or update validation coverage for the CmdStanPy workflow when contributing model behavior.
 
 For help with model design or implementation, open an issue in this repository.

@@ -1,13 +1,19 @@
 __pycache__
-models/__pycache__
 utils/__pycache__
 .ipynb_checkpoints
 *.DS_store
 
-# Stan compilation artifacts
-# Ignore compiled model binaries and build artifacts but keep .stan sources
-models/*
-!models/*.py
+# Python package build artifacts
+/build/
+/dist/
+*.egg-info/
+
+# Model description LaTeX build artifacts
+/model_descriptions/*.aux
+/model_descriptions/*.bbl
+/model_descriptions/*.blg
+/model_descriptions/*.log
+/model_descriptions/*.out
 
 # Analysis outputs / generated data
 results/
