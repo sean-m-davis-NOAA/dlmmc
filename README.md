@@ -67,10 +67,13 @@ After either step 2, install these packages to run the example notebooks,
 benchmark, and plots:
 
 ```bash
-conda install -c conda-forge jupyterlab ipykernel matplotlib scipy netcdf4 "arviz<1" -y
+conda install -c conda-forge jupyterlab ipykernel matplotlib scipy netcdf4 "arviz>=1.3,<2" -y
 ```
 
-The notebooks use the pre-1.0 ArviZ API, so keep the `arviz<1` constraint.
+The notebooks use modern ArviZ summaries directly on the labeled xarray
+posterior. This optional diagnostic stack requires Python 3.12 or newer;
+Conda selects a compatible Python version automatically. The core package
+still supports Python 3.10 or newer and does not require ArviZ.
 
 In VS Code, select `dlmmc-env` as the notebook kernel. JupyterLab is not needed
 when using VS Code; omit `jupyterlab` from the command if you prefer. Otherwise,

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dlmmc"
-version = "2.1.1"
+version = "2.1.2"
 description = "Dynamical linear models for time-series analysis using CmdStanPy"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-diagnostics = ["arviz>=0.17,<1"]
+diagnostics = ["arviz>=1.3,<2"]
 mpi = ["mpi4py>=3.1", "netCDF4>=1.6"]
 test = ["pytest>=8"]
 

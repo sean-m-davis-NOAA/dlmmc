@@ -72,11 +72,14 @@ python -c "import cmdstanpy, dlmmc; print('CmdStan:', cmdstanpy.cmdstan_path())"
 To run the example notebooks, benchmark, and plots, install:
 
 ```bash
-conda install -c conda-forge jupyterlab ipykernel matplotlib scipy netcdf4 "arviz<1" -y
+conda install -c conda-forge jupyterlab ipykernel matplotlib scipy netcdf4 "arviz>=1.3,<2" -y
 ```
 
-The notebooks use the pre-1.0 ArviZ API. Keep the `arviz<1` constraint to avoid
-incompatible diagnostic calls.
+The notebooks pass their labeled xarray posterior directly to modern ArviZ
+summaries. The optional ArviZ 1.3 stack requires Python 3.12 or newer; Conda
+selects a compatible version automatically. The core package still supports
+Python 3.10 or newer without ArviZ. For a pip-only diagnostics installation,
+use `python -m pip install 'dlmmc[diagnostics]'` in a Python 3.12+ environment.
 
 JupyterLab is not needed when using VS Code; omit `jupyterlab` from the command
 if you prefer. In VS Code, open the notebook and select `dlmmc-env` as its kernel.

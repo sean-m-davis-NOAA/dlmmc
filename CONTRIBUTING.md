@@ -24,6 +24,19 @@ python compile_stan_models.py
 
 Then run a representative `dlmmc.fit()` with model-appropriate xarray data, regressors, priors, and optional per-chain `inits`. Verify returned variables, dimensions, and diagnostics. Add unit tests under `tests/` for API validation and model-specific inputs. `dlm_benchmark.py` is an installation check; `dlm_validation_tests.ipynb` contains synthetic parameter-recovery examples for the packaged models.
 
+To include the notebook diagnostic regression tests, use Python 3.12 or newer
+with the optional modern ArviZ dependency:
+
+```bash
+python -m pip install -e '.[test,diagnostics]'
+python -m pytest
+```
+
+These tests execute the notebooks' diagnostic code for scalar and regressor
+parameters with both chain-first and draw-first arrays. Without a supported
+ArviZ installation, the diagnostic tests are skipped; the core API tests do not
+require ArviZ.
+
 ## When a model is ready
 
 The model source is compiled from the package automatically; no generated marker files are needed. For an end-to-end example over the gridded ozone data, see `dlm_lat_alt_mpi_run.py` and `MPI-README.md`. The MPI example runs fits on worker ranks and streams completed results to one rank-0 NetCDF writer; output files can be opened with xarray.
