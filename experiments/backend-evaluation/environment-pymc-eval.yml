@@ -1,0 +1,14 @@
+name: dlmmc-pymc-eval
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - arviz==1.3.0
+      - jax==0.12.0.1
+      - nutpie==0.16.11
+      - numpy==2.5.4
+      - pymc==6.3.2
+      - pymc-extras==0.15.1

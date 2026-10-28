@@ -1,0 +1,12 @@
+name: dlmmc-tfp-eval
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - tensorflow==2.18.1
+      - tensorflow-metal==1.2.0
+      - tensorflow-probability==0.25.0
+      - tf-keras==2.18.0
