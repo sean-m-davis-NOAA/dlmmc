@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-diagnostics = ["arviz>=0.17"]
+diagnostics = ["arviz>=0.17,<1"]
 mpi = ["mpi4py>=3.1", "netCDF4>=1.6"]
 test = ["pytest>=8"]
 

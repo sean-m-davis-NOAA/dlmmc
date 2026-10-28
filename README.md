@@ -11,49 +11,114 @@ Note: some basic working knowledge of python and jupyter notebooks is required t
 
 ## Installation
 
-### Install from PyPI with Conda (available now)
+### Recommended: install from PyPI with Conda
+
+This setup uses Conda for CmdStanPy and its CmdStan dependency, then installs
+the released dlmmc package from PyPI with pip. Notebook and MPI packages are
+optional and installed separately below.
+
+#### 1. Check for working C++ compiler, and install if necessary
+
+CmdStan needs a C++ compiler and Make. On macOS or Linux, check in a terminal:
 
 ```bash
-conda create -n dlmmc-env -c conda-forge python=3.10 cmdstanpy
+c++ --version
+make --version
+```
+
+Both commands should print version information (for example, Apple Clang or GCC,
+and GNU Make). If either command is missing:
+
+- **macOS:** run `xcode-select --install`, complete the installer, then repeat
+  the checks.
+- **Linux or HPC:** follow the
+  [compiler setup instructions](INSTALL.md#c-compiler-and-make).
+
+These checks confirm the tools are available; the benchmark below verifies that
+CmdStan can compile and run a model.
+
+#### 2. Create conda environment and pip install `dlmmc`
+
+```bash
+conda create -n dlmmc-env -c conda-forge python pip cmdstanpy -y
 conda activate dlmmc-env
 python -m pip install dlmmc
 ```
 
-Conda installs CmdStanPy and its CmdStan runtime; pip installs `dlmmc` and its Python dependencies. For optional features, install `python -m pip install 'dlmmc[diagnostics]'` for ArviZ diagnostics or `python -m pip install 'dlmmc[mpi]'` for MPI/NetCDF support. On HPC systems, install `mpi4py` against the site's MPI implementation rather than mixing MPI libraries.
+Conda installs CmdStan automatically as a dependency of CmdStanPy, so there is
+no separate `cmdstan` or `install_cmdstan()` step. No specific Python version
+needs to be selected; dlmmc requires Python 3.10 or newer.
 
-To run the example notebooks, install Jupyter and plotting dependencies with `conda install -c conda-forge jupyterlab ipykernel matplotlib scipy`, then install ArviZ with `python -m pip install 'dlmmc[diagnostics]'`.
-
-CmdStan compiles native Stan executables. A C++ toolchain is required; on macOS, install the Xcode command-line tools (`xcode-select --install`).
-
-### Install directly from conda-forge (not available yet)
-
-The conda-forge recipe is still under review. This simple install will not work until the recipe is merged and the package is published:
+**Alternative step 2: Conda-only installation (coming soon).**
+The conda-forge recipe is under review. Once it is published, you will be able
+to install dlmmc without pip:
 
 ```bash
-conda create -n dlmmc-env -c conda-forge dlmmc
+conda create -n dlmmc-env -c conda-forge dlmmc -y
 conda activate dlmmc-env
 ```
 
-For source development, clone the repository and use `python -m pip install -e .`. See [INSTALL.md](INSTALL.md) for environment and HPC details.
+Conda will install Python, CmdStanPy, CmdStan, and the other required dependencies
+automatically. Until the recipe is available, use the PyPI setup above.
+
+#### 3. Optional: install notebook and example dependencies
+
+After either step 2, install these packages to run the example notebooks,
+benchmark, and plots:
+
+```bash
+conda install -c conda-forge jupyterlab ipykernel matplotlib scipy netcdf4 "arviz<1" -y
+```
+
+The notebooks use the pre-1.0 ArviZ API, so keep the `arviz<1` constraint.
+
+In VS Code, select `dlmmc-env` as the notebook kernel. JupyterLab is not needed
+when using VS Code; omit `jupyterlab` from the command if you prefer. Otherwise,
+run `jupyter lab` from the activated environment.
+
+#### 4. Optional: install MPI support
+
+For MPI grid fitting on a local macOS/Linux workstation:
+
+```bash
+conda install -c conda-forge mpi4py openmpi netcdf4 scipy -y
+```
+
+This includes NetCDF support and SciPy for the grid example, even if you skipped
+step 3. On HPC systems, use the site's MPI implementation instead of this
+command; see [MPI-README.md](MPI-README.md).
+
+#### 5. Optional check: verify imports and CmdStan discovery
+
+```bash
+# Expected output: CmdStan: <path to CmdStan in the active Conda environment>
+python -c "import cmdstanpy, dlmmc; print('CmdStan:', cmdstanpy.cmdstan_path())"
+```
+
+### Development installations
+
+Only contributors need an editable installation: from a cloned repository, run
+`python -m pip install -e '.[diagnostics]'`. This makes changes to the local
+Python source take effect without reinstalling. The non-editable PyPI install
+above is recommended for normal use.
 
 ## Getting Started
 
-To run the repository's benchmark and notebooks, clone the source checkout and activate the environment installed above:
+The example notebooks, scripts, and data are in the repository. To obtain them
+after installing dlmmc, clone the repository (or download and extract its source
+archive):
 
 ```bash
 git clone https://github.com/sean-m-davis-NOAA/dlmmc.git
 cd dlmmc
 ```
 
-Run the following commands from the repository root.
+Cloning provides the examples; it does not require reinstalling the package.
+Install the optional notebook/example dependencies in step 3 above before
+running the benchmark or notebooks, and MPI support in step 4 for grid fitting.
+Run the following from the repository root with `dlmmc-env` activated.
 
-1. **Optionally precompile the packaged models.** Models compile lazily on the first `fit()` call; this command precompiles all models up front.
-
-```bash
-python compile_stan_models.py
-```
-
-2. **Run the benchmark.** This is the quickest end-to-end check of data loading, model compilation, and CmdStanPy sampling.
+1. **Run the benchmark.** This is the quickest end-to-end check of data loading, model compilation, and CmdStanPy sampling.
 
 ```bash
 python dlm_benchmark.py
@@ -61,11 +126,14 @@ python dlm_benchmark.py
 
 The benchmark writes a timestamped JSON file under `results/`. Confirm it contains `compile_seconds`, `fit_seconds`, and posterior dimensions.
 
-3. **Work through the tutorial.** Open `dlm_tutorial.ipynb` in JupyterLab or VS Code, select the CmdStanPy environment as the kernel, and run the cells in order. The tutorial uses four chains with 1,000 warmup and 2,000 sampling iterations per chain, so it takes longer than the benchmark.
+Models compile automatically on the first fit. Optionally run
+`python compile_stan_models.py` to compile all models in advance.
 
-4. **Run the validation suite.** Open `dlm_validation_tests.ipynb` and run the cells in order. It performs synthetic parameter-recovery tests for four model variants using short chains. Review the recovery intervals, R-hat/ESS values, and divergences; the short settings demonstrate the workflow and are not a guarantee of convergence.
+2. **Work through the tutorial.** Open `dlm_tutorial.ipynb` in JupyterLab or VS Code, select `dlmmc-env` as the kernel, and run the cells in order. The tutorial uses four chains with 1,000 warmup and 2,000 sampling iterations per chain, so it takes longer than the benchmark.
 
-5. **Optionally test the gridded MPI workflow.** This fits the example pressure/latitude grid in parallel and streams results to one NetCDF writer. It requires a working MPI implementation and the `mpi` extra; on a local Open MPI setup:
+3. **Run the validation suite.** Open `dlm_validation_tests.ipynb` and run the cells in order. It performs synthetic parameter-recovery tests for four model variants using short chains. Review the recovery intervals, R-hat/ESS values, and divergences; the short settings demonstrate the workflow and are not a guarantee of convergence.
+
+4. **Optionally test the gridded MPI workflow.** This fits the example pressure/latitude grid in parallel and streams results to one NetCDF writer. It requires the optional MPI dependencies installed above; on a local Open MPI setup:
 
 ```bash
 mpirun -np 4 python dlm_lat_alt_mpi_run.py
@@ -99,6 +167,18 @@ with xr.open_dataset("data/BASIC_V1_2017_lotus_seascyc_gcsw2017_fac2.nc") as ds:
 ```
 
 The returned posterior is an xarray Dataset with `chain`, `draw`, and `time` coordinates. For regressors and plots, see `dlm_tutorial.ipynb`. For grid workloads, see `dlm_lat_alt_mpi_run.py` and [MPI-README.md](MPI-README.md).
+
+### Temporary storage
+
+Each fit removes its temporary Stan output after loading the posterior and
+diagnostics into memory. Failed or interrupted fits retain their output and log
+its location for troubleshooting. Pass `output_dir="/path/to/output"` to
+`dlmmc.fit()` to keep raw output; dlmmc never removes user-specified output
+directories. The compiled-model cache is separate and is not removed.
+
+A single fit can still produce large CSV files. If temporary storage is limited,
+set `TMPDIR` to a writable scratch directory with sufficient space and quota
+before starting Python or the notebook kernel. See [INSTALL.md](INSTALL.md).
 
 **Model descriptions**
 

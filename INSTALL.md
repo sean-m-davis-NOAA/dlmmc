@@ -1,32 +1,140 @@
 # Installation and validation
 
-The recommended workflow uses CmdStanPy. The commands below install the Python dependencies for the benchmark and MPI example, install CmdStan, and run a small validation.
+The recommended workflow installs CmdStanPy and its CmdStan dependency with
+Conda, then the released dlmmc package from PyPI. A source checkout is not needed
+for installation. Notebook/example dependencies and MPI support are optional
+and installed separately.
+
+## C++ compiler and Make
+
+CmdStan compiles models into executables, so it needs a C++ compiler and Make.
+On macOS or Linux, check in a terminal:
+
+```bash
+c++ --version
+make --version
+```
+
+Both commands should print version information, not "command not found".
+This checks tool availability; the benchmark below tests model compilation.
+
+- **macOS:** if either tool is missing, run `xcode-select --install` and complete
+  the Xcode Command Line Tools installer. You do not need the full Xcode app.
+  Repeat the version checks after installation.
+- **Ubuntu/Debian Linux:** install the compiler and Make with
+  `sudo apt update` followed by `sudo apt install build-essential`, then repeat
+  the checks. On other distributions, use the equivalent development-tool
+  packages.
+- **Linux without administrator access:** create and activate `dlmmc-env` as
+  described below, then run `conda install -c conda-forge cxx-compiler make`.
+  Reactivate the environment afterward. Check the activated compiler with
+  `"$CXX" --version` and Make with `make --version`; the Conda compiler may use
+  a prefixed name rather than `c++`.
+- **HPC systems:** use the site's compiler module and scheduler instructions.
+  Load the module before running the checks, and use the same environment when
+  compiling and running models. Ask your system administrator if no compiler is
+  available.
 
 ## Create the environment
 
 For a local workstation, create the environment with Conda:
 
 ```bash
-conda create -n dlmmc-cmdstanpy -c conda-forge python=3.10 cmdstanpy netCDF4 numpy scipy xarray arviz tqdm mpi4py openmpi matplotlib jupyter ipykernel pandas -y
-conda activate dlmmc-cmdstanpy
-python -m pip install -e .
+conda create -n dlmmc-env -c conda-forge python pip cmdstanpy -y
+conda activate dlmmc-env
+python -m pip install dlmmc
 ```
 
-CmdStan needs a working C++ toolchain. On macOS, install the Xcode command-line tools (`xcode-select --install`). On Linux, use the system compiler or install a Conda compiler with `conda install -c conda-forge cxx-compiler make`.
+Conda installs CmdStan automatically through CmdStanPy. No specific Python
+version needs to be selected; dlmmc requires Python 3.10 or newer. Pip installs
+the released dlmmc package in non-editable mode. For the upcoming Conda-only
+alternative, see [README.md](README.md#installation).
 
-Install CmdStan in the environment:
+To obtain the example notebooks, scripts, and data, clone the repository or download its source
+archive as described in [README.md](README.md#getting-started). Run the examples
+below from that repository root after installing the optional example
+dependencies below; there is no need to reinstall dlmmc.
+Contributors can instead install a checkout with
+`python -m pip install -e '.[diagnostics]'` so local source edits take effect
+without reinstalling.
+
+Conda installs CmdStan in the environment; no separate download/build is needed.
+Verify that Python can locate it:
 
 ```bash
-python -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
+# Optional check: verify imports and CmdStan discovery.
+# Expected output: CmdStan: <path to CmdStan in the active Conda environment>
+python -c "import cmdstanpy, dlmmc; print('CmdStan:', cmdstanpy.cmdstan_path())"
 ```
 
-The environment includes Jupyter and `ipykernel`. In VS Code, open the notebook and select `Python (dlmmc-cmdstanpy)` as its kernel. If Jupyter runs in a separate environment, register this environment as a kernel:
+## Optional notebook and example dependencies
+
+To run the example notebooks, benchmark, and plots, install:
 
 ```bash
-python -m ipykernel install --user --name dlmmc-cmdstanpy --display-name "Python (dlmmc-cmdstanpy)"
+conda install -c conda-forge jupyterlab ipykernel matplotlib scipy netcdf4 "arviz<1" -y
 ```
 
-On HPC systems, use the site's compiler and MPI modules. Ensure `mpi4py` is installed against the MPI implementation used by the scheduler; do not mix the site's MPI libraries with Conda Open MPI.
+The notebooks use the pre-1.0 ArviZ API. Keep the `arviz<1` constraint to avoid
+incompatible diagnostic calls.
+
+JupyterLab is not needed when using VS Code; omit `jupyterlab` from the command
+if you prefer. In VS Code, open the notebook and select `dlmmc-env` as its kernel.
+If Jupyter runs in a separate environment, register this environment as a kernel:
+
+```bash
+python -m ipykernel install --user --name dlmmc-env --display-name "Python (dlmmc-env)"
+```
+
+## Optional MPI support
+
+For MPI grid fitting on a local macOS/Linux workstation:
+
+```bash
+conda install -c conda-forge mpi4py openmpi netcdf4 scipy -y
+```
+
+This includes NetCDF support and SciPy for the grid example without requiring the
+notebook packages. On HPC systems, use the site's compiler and MPI modules.
+Ensure `mpi4py` is installed against the MPI implementation used by the scheduler;
+do not mix the site's MPI libraries with Conda Open MPI.
+See [MPI-README.md](MPI-README.md) for launch instructions.
+
+## Temporary storage
+
+Stan can write large CSV files, even though the public API returns only selected
+posterior variables. Successful fits remove their per-fit temporary output after
+the posterior and diagnostics have been loaded into memory, including fits made
+by MPI workers. Failed or interrupted fits retain their output and log its
+location; inspect those files and remove them manually when no longer needed.
+
+Choose a writable scratch directory with sufficient space and quota before
+launching Python or a notebook kernel:
+
+```bash
+mkdir -p /path/to/your/scratch/dlmmc-tmp
+export TMPDIR=/path/to/your/scratch/dlmmc-tmp
+```
+
+Replace the example path with your actual scratch location. For VS Code, ensure
+the kernel inherits this setting, or restart the kernel and run the following
+cell before importing dlmmc:
+
+```python
+import os
+import tempfile
+from pathlib import Path
+
+scratch = Path("/path/to/your/scratch/dlmmc-tmp")
+scratch.mkdir(parents=True, exist_ok=True)
+os.environ["TMPDIR"] = str(scratch)
+tempfile.tempdir = str(scratch)
+print("Temporary directory:", tempfile.gettempdir())
+```
+
+To keep raw Stan output, pass `output_dir="/path/to/output"` to `dlmmc.fit()`.
+Explicit output directories are never removed by dlmmc. `cache_dir` controls
+compiled models, not sampling output.
 
 ## Precompile and test models
 
