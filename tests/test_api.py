@@ -218,3 +218,83 @@ def test_repeated_fits_do_not_accumulate_temporary_output(fake_sampler, tmp_path
         assert list(tmp_path.iterdir()) == []
         np.testing.assert_array_equal(posterior['trend'].values, np.ones((1, 2, 5)))
     assert len(set(directories)) == 3
+
+
+@pytest.mark.parametrize(
+    'source_name',
+    [
+        'dlm_vanilla_ar1',
+        'dlm_vanilla_ar2',
+        'dlm_dynregs_ar1',
+        'dlm_noregs_ar1',
+        'dlm_vanilla_ar1_noseasonal',
+        'dlm_vanilla_ar2_noseasonal',
+    ],
+)
+def test_kalman_filter_arrays_are_not_transformed_parameters(source_name):
+    stan_source = getattr(api._stan_models, source_name)
+
+    assert 'transformed parameters' not in stan_source
+    assert stan_source.count('array[N+1] vector[nx] x_hat;') == 2
+    assert '\n        array[N+1] vector[nx] x_hat;' in stan_source
+    assert '\n    array[N+1] vector[nx] x_hat;' not in stan_source
+
+
+def test_fit_csv_omits_local_kalman_scratch_arrays(tmp_path):
+    from cmdstanpy import cmdstan_path
+
+    try:
+        cmdstan_path()
+    except ValueError:
+        pytest.skip('CmdStan is not installed in this environment')
+
+    time = np.arange(12, dtype=float)
+    series = xr.DataArray(
+        0.3 + 0.01 * time + 0.1 * np.sin(2 * np.pi * time / 12),
+        dims=('time',),
+        coords={'time': time},
+    )
+    posterior = api.fit(
+        series,
+        model='noregs_ar1',
+        chains=1,
+        warmup=1,
+        samples=1,
+        seed=17,
+        show_progress=False,
+        adapt_engaged=False,
+        output_dir=tmp_path,
+    )
+
+    csv_path = next(tmp_path.glob('*.csv'))
+    header = next(line for line in csv_path.open() if line.startswith('lp__,'))
+    columns = header.rstrip().split(',')
+    scratch_prefixes = (
+        'x_hat.',
+        'x_bar.',
+        'C_hat.',
+        'C_y.',
+        'K.',
+        'C_bar.',
+        'v.',
+        'x.',
+        'x_realization.',
+        'x_ubar.',
+        'x_realization_hat.',
+        'y_realization.',
+        'v_realization.',
+        'r.',
+        'r_realization.',
+        'L.',
+        'M.',
+        'C_twidle.',
+        'x_twidle.',
+        'x_realization_twidle.',
+        'G.',
+        'W.',
+        'C.',
+    )
+
+    assert not any(column.startswith(scratch_prefixes) for column in columns)
+    assert {'trend.1', 'slope.1', 'seasonal.1', 'ar.1'} <= set(columns)
+    assert {'trend', 'slope', 'seasonal', 'ar', 'sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1'} <= set(posterior.data_vars)
