@@ -33,6 +33,7 @@ ENV_KEYS = (
 PACKAGES = (
     "cmdstanpy",
     "jax",
+    "numpyro",
     "nutpie",
     "numpy",
     "pymc",

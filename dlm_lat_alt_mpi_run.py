@@ -53,7 +53,9 @@ def _load_regressors(time: xr.DataArray, latitudes: np.ndarray) -> xr.Dataset:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=RESULT)
+    parser.add_argument('--cell-count', type=int, help='Fit this many evenly spaced valid cells for a scaling test.')
     parser.add_argument('--chains', type=int, default=1)
+    parser.add_argument('--parallel-chains', type=int, help='Maximum chains sampled concurrently per grid cell.')
     parser.add_argument('--warmup', type=int, default=1)
     parser.add_argument('--samples', type=int, default=2)
     parser.add_argument('--seed', type=int, default=1234)
@@ -68,14 +70,44 @@ def main() -> None:
         data = data.assign_coords(time=decoded_time)
         uncertainty = uncertainty.assign_coords(time=decoded_time)
         regressors = _load_regressors(data['time'], data['latitude'].to_numpy())
+        grid_dims = ('pressure', 'latitude')
+        if args.cell_count is not None:
+            if args.cell_count < 1:
+                parser.error('--cell-count must be positive.')
+            valid = np.isfinite(data).any(dim='time') & (
+                data.max(dim='time', skipna=True) > data.min(dim='time', skipna=True)
+            )
+            candidates = np.flatnonzero(valid.to_numpy().ravel())
+            if args.cell_count > len(candidates):
+                parser.error(
+                    f'--cell-count {args.cell_count} exceeds the {len(candidates)} valid nonconstant cells.'
+                )
+            selected = candidates[np.linspace(0, len(candidates) - 1, args.cell_count, dtype=int)]
+            pressure_indices, latitude_indices = np.unravel_index(
+                selected, (data.sizes['pressure'], data.sizes['latitude'])
+            )
+            cell_coordinates = np.arange(args.cell_count)
+            pressure_indexer = xr.DataArray(
+                pressure_indices, dims=('cell',), coords={'cell': cell_coordinates}
+            )
+            latitude_indexer = xr.DataArray(
+                latitude_indices, dims=('cell',), coords={'cell': cell_coordinates}
+            )
+            data = data.isel(pressure=pressure_indexer, latitude=latitude_indexer)
+            uncertainty = uncertainty.isel(
+                pressure=pressure_indexer, latitude=latitude_indexer
+            )
+            regressors = regressors.isel(latitude=latitude_indexer)
+            grid_dims = ('cell',)
         result = dlmmc.fit_grid_mpi(
             data,
             output=args.output,
             uncertainty=uncertainty,
             regressors=regressors,
             model='vanilla_ar1',
-            grid_dims=('pressure', 'latitude'),
+            grid_dims=grid_dims,
             chains=args.chains,
+            parallel_chains=args.parallel_chains,
             warmup=args.warmup,
             samples=args.samples,
             seed=args.seed,

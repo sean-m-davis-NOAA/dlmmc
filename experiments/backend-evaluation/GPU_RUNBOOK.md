@@ -1,3 +1,4 @@
+The reusable `mpi_rank_sweep.py` selects evenly spaced valid cells, precompiles outside timed trials, runs explicit rank counts/repeats, and records timing and fit statuses. Pass rank counts that fit the CPU allocation and selected cell count; do not treat its fastest short-run result as a scientific optimum. Use the same `--chains`, `--parallel-chains`, warmup, and sample settings when comparing counts.
 # GPU DLM Evaluation Runbook
 
 This document describes how to evaluate a GPU implementation of a dlmmc DLM on a workstation or HPC system, and how to compare it with the existing CmdStan CPU and MPI workflows. It is an experiment guide, not a claim that dlmmc currently has a production GPU mode.
@@ -6,6 +7,7 @@ This document describes how to evaluate a GPU implementation of a dlmmc DLM on a
 
 - `dlmmc.fit()` and `dlmmc.fit_grid_mpi()` use CmdStanPy. There is no `backend="gpu"` option or GPU-enabled production API. Keep CmdStanPy as the CPU backend and scientific reference.
 - The TFP code in this directory is a separate prototype. `tfp_real_grid_reference.py` creates fixed-parameter CmdStan likelihood/gradient references, and `tfp_real_grid_benchmark.py` compares those values on TensorFlow CPU/GPU. This is not a full GPU posterior sampler or a replacement for `fit_grid_mpi()`.
+- JAX is present in the existing PyMC environment, but the tested local environment reported CPU only; NumPyro is not installed there. JAX + NumPyro is a candidate experiment, not a currently available GPU path. Test each backend/device combination rather than inferring compatibility from a package import.
 - Past local results are cautionary: the tested TFP sequential Metal path was much slower than CPU for the 32-cell likelihood/gradient workload; GPU sampler attempts were incomplete or failed. PyMC/nutpie used CPU in the tested setup. These results do not predict performance on NVIDIA or AMD hardware.
 - A machine having a GPU, a visible device, or a successful matrix multiplication does not prove that the DLM model operations run on the GPU or that sampling is faster.
 
@@ -21,6 +23,17 @@ The goal is portability of the model and evaluation procedure, not one universal
 | GPU posterior sampling | Not implemented as a supported dlmmc backend | Future work after a model-faithful sampler path is selected and validated. |
 
 Stan can use OpenCL for particular supported operations when built and configured accordingly, but the current dlmmc models have not been tested or certified for that route. Treat it as a separate experiment; do not assume enabling an OpenCL build automatically accelerates the sequential Kalman/state-space work.
+
+## Local JAX And NumPyro Feasibility
+
+The existing environment check found JAX but no NumPyro and only `CpuDevice(0)`. Begin with package/device discovery; do not assume the previous Metal failure has been resolved.
+
+1. In a separate evaluation environment, install a JAX/NumPyro combination supported by the target platform. For local Apple GPU testing, verify current JAX Metal support and its version constraints from the package's official installation guidance before creating the environment. Keep the existing CmdStanPy environment separate as the reference.
+2. Run the environment probe and a tiny JAX operation explicitly on the reported device, force completion, and confirm the result's device. If only CPU is available or the operation fails, stop GPU claims there; NumPyro CPU may still be evaluated separately.
+3. If a local accelerator works, implement one-cell `vanilla_ar1` log likelihood and autodiff gradient in isolated experiment code. Compare fixed parameters and gradients with the CmdStan reference, first at float64 and then quantify float32 differences. Verify the full computation, not only a matrix operation, is placed on the accelerator.
+4. Only after numerical parity should NumPyro NUTS be compared with the existing CmdStan real-cell fit. Separate JIT/startup from sampling and compare posterior/state summaries, R-hat, bulk/tail ESS, divergences, acceptance, retained draws, and ESS/sec. CPU NumPyro is a sampler comparison, not a GPU result.
+
+Do not add a host-specific Metal environment file until JAX Metal availability and compatibility are verified for the target macOS and Python versions. Keep any NumPyro dependencies in an isolated evaluation environment, not the package's production dependencies.
 
 ## Procedure
 

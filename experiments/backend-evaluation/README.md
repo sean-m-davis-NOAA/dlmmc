@@ -89,3 +89,25 @@ For the real 32-cell batch, the median TFP likelihood-plus-gradient call took ab
 ## Interpretation
 
 The real-cell PyMC fit is encouraging as a CPU comparison, and TFP's batched likelihood/gradient is numerically close to CmdStanPy. There is no demonstrated GPU speedup: the tested TFP sequential Metal batch was much slower, and the parallel sampler path failed. Package behavior and dependencies are unchanged; these scripts and environment files are isolated under `experiments/backend-evaluation/`. Keep CmdStanPy as the stable package backend until a larger grid fit demonstrates both parity and an end-to-end benefit.
+
+## Local MPI Scaling Smoke Sweep
+
+Run the repeatable sweep from a CmdStanPy/MPI-enabled environment as described in [MPI-README.md](../../MPI-README.md#choosing-mpi-ranks-and-chains). For example:
+
+```bash
+python experiments/backend-evaluation/mpi_rank_sweep.py \
+	--ranks 1 2 4 8 14 --cells 16 --chains 1 --parallel-chains 1 \
+	--warmup 10 --samples 20 --repeats 2
+```
+
+On the local Apple M4 Pro (14 physical/logical CPU cores, 24 GiB RAM), this tested 16 evenly spaced valid, nonconstant cells, one chain per cell, 10 warmup iterations, 20 retained draws, and two repeats per rank count. The model was precompiled outside the trials. All cells completed in every trial.
+
+| Total MPI ranks | Fitting workers | Median elapsed time |
+| ---: | ---: | ---: |
+| 1 | 1 serial fitter | 29.04 s |
+| 2 | 1 | 30.80 s |
+| 4 | 3 | 13.98 s |
+| 8 | 7 | 8.76 s |
+| 14 | 13 | 9.07 s |
+
+Eight total ranks were fastest in this small sweep; fourteen ranks were slightly slower. These short chains and selected cells only establish a scaling smoke result, not a scientific or workload-independent optimum. Re-run with representative cells and scientifically adequate sampling settings before choosing production resources. The generated logs, NetCDF outputs, and JSON report are ignored under `results/`; the local summary is `results/mpi-rank-sweep-mac-20261101/summary.json`.
