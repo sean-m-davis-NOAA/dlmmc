@@ -23,3 +23,20 @@ python -c "import numpy as np, xarray as xr; ds=xr.open_dataset('results/BASIC_V
 ```
 
 On multi-node HPC systems, pass `--cache-dir` pointing to a shared filesystem so the worker nodes can use the executable compiled by rank 0. Launch within a scheduler allocation using the site's MPI launcher and ensure `mpi4py` is built against that MPI implementation. Do not mix a site-provided MPI library with a different Conda MPI implementation. For larger production runs, adjust the sampling settings and number of ranks for the available resources.
+
+### Temporary storage
+
+Workers remove each successful fit's temporary Stan output after loading its
+posterior and diagnostics into memory, rather than retaining CSV files for the
+entire grid run. Failed or interrupted fits retain their output and log its
+location for troubleshooting; repeated failures can still fill temporary storage.
+The NetCDF result and compiled-model cache are not removed.
+
+Set `TMPDIR` to a writable scratch directory with sufficient space and quota
+before launching MPI. Ensure the setting reaches every worker and the directory
+exists on each node. A single fit can still require substantial temporary space.
+See [INSTALL.md](INSTALL.md#temporary-storage) for setup instructions.
+
+If calling `fit_grid_mpi()` directly, an explicit `output_dir` is forwarded to
+each fit and is never removed by dlmmc. Avoid pointing concurrent fits at the same
+output directory because their filenames can collide.

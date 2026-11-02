@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
-from collections.abc import Mapping, Sequence
+import shutil
+import tempfile
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -200,6 +204,26 @@ def compile_models(
     return compiled
 
 
+@contextmanager
+def _sampling_output_directory(
+    output_dir: str | os.PathLike[str] | None,
+) -> Iterator[str | os.PathLike[str]]:
+    if output_dir is not None:
+        yield output_dir
+        return
+
+    directory = tempfile.mkdtemp(prefix="dlmmc-")
+    try:
+        yield directory
+    except BaseException:
+        logging.getLogger(__name__).warning(
+            "Fit did not complete; Stan output retained at %s", directory
+        )
+        raise
+    else:
+        shutil.rmtree(directory)
+
+
 def fit(
     data: xr.DataArray,
     regressors: xr.DataArray | xr.Dataset | np.ndarray | None = None,
@@ -237,6 +261,13 @@ def fit(
     are rejected. ``inits`` supplies sampler starting values and may vary by
     chain; it does not change the prior or target posterior. ``cache_dir`` can
     point to shared storage when fitting across multiple MPI nodes.
+
+    By default, Stan output is written to a per-fit temporary directory and
+    deleted after the posterior and diagnostics are loaded into memory. Failed
+    or interrupted fits retain their output and log its location. Pass
+    ``output_dir`` through sampler options to keep output in a directory you
+    manage; that directory is never removed by dlmmc. Set ``TMPDIR`` before
+    starting Python to choose temporary storage.
     """
     model_name, spec = _resolve_model(model)
     time = _time_coordinate(data)
@@ -321,52 +352,54 @@ def fit(
     }
     if parallel_chains is not None:
         sample_options["parallel_chains"] = parallel_chains
-    fit_result = stan_model.sample(**sample_options)
+    with _sampling_output_directory(sample_options.get("output_dir")) as output_dir:
+        sample_options["output_dir"] = output_dir
+        fit_result = stan_model.sample(**sample_options)
 
-    output_names = ["trend", "slope", "ar", "sigma_trend", "sigma_AR", "rhoAR1"]
-    if spec["seasonal"]:
-        output_names.extend(["seasonal", "sigma_seas"])
-    if spec["ar2"]:
-        output_names.append("rhoAR2")
-    if regressor_values is not None:
-        output_names.append("beta")
-    if spec["regressors"] == "dynamic":
-        output_names.append("sigma_reg")
-    draws = fit_result.draws_xr(vars=output_names)
-
-    posterior_vars: dict[str, Any] = {}
-    time_vars = {"trend", "slope", "ar", "seasonal"} & set(output_names)
-    for name in time_vars:
-        posterior_vars[name] = (("chain", "draw", "time"), draws[name].to_numpy())
-    scalar_vars = set(output_names) - time_vars - {"beta", "sigma_reg"}
-    for name in scalar_vars:
-        posterior_vars[name] = (("chain", "draw"), draws[name].to_numpy())
-    if "beta" in output_names:
-        beta_values = draws["beta"].to_numpy()
+        output_names = ["trend", "slope", "ar", "sigma_trend", "sigma_AR", "rhoAR1"]
+        if spec["seasonal"]:
+            output_names.extend(["seasonal", "sigma_seas"])
+        if spec["ar2"]:
+            output_names.append("rhoAR2")
+        if regressor_values is not None:
+            output_names.append("beta")
         if spec["regressors"] == "dynamic":
-            posterior_vars["beta"] = (("chain", "draw", "time", "regressor"), beta_values)
-        else:
-            posterior_vars["beta"] = (("chain", "draw", "regressor"), beta_values)
-    if "sigma_reg" in output_names:
-        posterior_vars["sigma_reg"] = (("chain", "draw", "regressor"), draws["sigma_reg"].to_numpy())
+            output_names.append("sigma_reg")
+        draws = fit_result.draws_xr(vars=output_names)
 
-    coords: dict[str, Any] = {
-        "chain": draws["chain"].to_numpy(),
-        "draw": draws["draw"].to_numpy(),
-        "time": time.to_numpy(),
-    }
-    if regressor_values is not None:
-        coords["regressor"] = regressor_names
-    posterior = xr.Dataset(posterior_vars, coords=coords)
-    posterior.attrs.update(
-        model=model_name,
-        backend="cmdstanpy",
-        chains=chains,
-        warmup=warmup,
-        samples_per_chain=samples,
-        sampling_interval=_sampling_interval(sampling),
-    )
-    divergences = fit_result.method_variables().get("divergent__")
-    if divergences is not None:
-        posterior.attrs["divergent_transitions"] = int(np.asarray(divergences).sum())
+        posterior_vars: dict[str, Any] = {}
+        time_vars = {"trend", "slope", "ar", "seasonal"} & set(output_names)
+        for name in time_vars:
+            posterior_vars[name] = (("chain", "draw", "time"), draws[name].to_numpy())
+        scalar_vars = set(output_names) - time_vars - {"beta", "sigma_reg"}
+        for name in scalar_vars:
+            posterior_vars[name] = (("chain", "draw"), draws[name].to_numpy())
+        if "beta" in output_names:
+            beta_values = draws["beta"].to_numpy()
+            if spec["regressors"] == "dynamic":
+                posterior_vars["beta"] = (("chain", "draw", "time", "regressor"), beta_values)
+            else:
+                posterior_vars["beta"] = (("chain", "draw", "regressor"), beta_values)
+        if "sigma_reg" in output_names:
+            posterior_vars["sigma_reg"] = (("chain", "draw", "regressor"), draws["sigma_reg"].to_numpy())
+
+        coords: dict[str, Any] = {
+            "chain": draws["chain"].to_numpy(),
+            "draw": draws["draw"].to_numpy(),
+            "time": time.to_numpy(),
+        }
+        if regressor_values is not None:
+            coords["regressor"] = regressor_names
+        posterior = xr.Dataset(posterior_vars, coords=coords)
+        posterior.attrs.update(
+            model=model_name,
+            backend="cmdstanpy",
+            chains=chains,
+            warmup=warmup,
+            samples_per_chain=samples,
+            sampling_interval=_sampling_interval(sampling),
+        )
+        divergences = fit_result.method_variables().get("divergent__")
+        if divergences is not None:
+            posterior.attrs["divergent_transitions"] = int(np.asarray(divergences).sum())
     return posterior
