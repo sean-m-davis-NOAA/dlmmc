@@ -6,6 +6,7 @@ It does not print the full environment, credentials, or tokens.
 
 from __future__ import annotations
 
+import argparse
 import importlib.metadata
 import json
 import os
@@ -14,6 +15,7 @@ import shutil
 import subprocess
 import sys
 from typing import Any
+from pathlib import Path
 
 
 ENV_KEYS = (
@@ -162,6 +164,13 @@ def torch_probe() -> dict[str, Any]:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Write the JSON report to this file instead of stdout.",
+    )
+    args = parser.parse_args()
     report: dict[str, Any] = {
         "python": sys.version,
         "python_executable": sys.executable,
@@ -198,7 +207,13 @@ def main() -> None:
         }
     except Exception as exc:  # noqa: BLE001 - optional MPI
         report["mpi4py"] = {"available": False, "error": f"{type(exc).__name__}: {exc}"}
-    print(json.dumps(report, indent=2, sort_keys=True))
+    report_json = json.dumps(report, indent=2, sort_keys=True) + "\n"
+    if args.output is None:
+        print(report_json, end="")
+    else:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(report_json)
+        print(f"wrote_environment_report={args.output}")
 
 
 if __name__ == "__main__":

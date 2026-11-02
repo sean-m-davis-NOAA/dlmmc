@@ -1,3 +1,4 @@
+- `python experiments/backend-evaluation/hpc_environment_probe.py` emits a JSON hardware/software/device report without installing anything; `--output path.json` keeps framework logs separate.
 # Experimental Backend Evaluation
 
 This directory contains scratch-to-share validation code for comparing CmdStanPy, PyMC, and TensorFlow Probability (TFP). It is exploratory only; the production package remains CmdStanPy-based.
@@ -39,7 +40,21 @@ conda run -n dlmmc-cmdstanpy2 python experiments/backend-evaluation/cmdstan_real
 conda run -n dlmmc-pymc-eval python experiments/backend-evaluation/pymc_real_cell.py
 ```
 
-The CmdStan script writes its inputs and draws to `/tmp/dlmmc-backend-eval-real-cell-cmdstan.npz`; the PyMC script reads that file and writes `/tmp/dlmmc-backend-eval-real-cell-pymc.npz`.
+The CmdStan script writes its inputs, draws, and a fixed-parameter likelihood/gradient reference to `/tmp/dlmmc-backend-eval-real-cell-cmdstan.npz` by default; the PyMC script reads that file and writes `/tmp/dlmmc-backend-eval-real-cell-pymc.npz`.
+
+For the NumPyro comparison, generate a CmdStan reference and then run the CPU NumPyro model from the user-provided `jax_dlm` environment:
+
+```bash
+conda run -n dlmmc-cmdstanpy2 python experiments/backend-evaluation/cmdstan_real_cell.py \
+	--output /tmp/dlmmc-backend-eval-real-cell-cmdstan-numpyro.npz
+conda run -n jax_dlm env JAX_PLATFORMS=cpu \
+	XLA_FLAGS=--xla_force_host_platform_device_count=4 \
+	python experiments/backend-evaluation/numpyro_real_cell.py \
+	--reference /tmp/dlmmc-backend-eval-real-cell-cmdstan-numpyro.npz \
+	--chain-method parallel --chains 4 --warmup 500 --samples 500
+```
+
+NumPyro checks fixed likelihood/gradient parity and skips sampling if it fails. The four forced JAX CPU devices are logical devices for mapping parallel chains, not additional physical cores. The prototype compares four hyperparameters; it does not yet reproduce Stan's smoothed latent-state summaries such as `beta`.
 
 ## Reproduce The Real-Grid Likelihood/Gradient Comparison
 
@@ -72,6 +87,16 @@ CmdStanPy completed in 142.4 s; PyMC/nutpie completed in 180.5 s. Both had zero 
 
 PyMC's R-hat for `sigma_season` was about 1.01 and its bulk ESS about 670; treat this as encouraging one-cell evidence, not definitive convergence. The leading missing observation in PyMC is intentional: it represents the unobserved prior-time state before Stan scores the first real observation. PyMC emitted the expected state-space imputation warning for that leading missing value. CmdStanPy emitted non-fatal NaN-scale warnings after sampling despite zero divergences; those should be investigated separately.
 
+### NumPyro CPU Real-Cell Fit
+
+On the same pressure-22/latitude-8 real cell, four chains, 500 warmup iterations, 500 retained draws, float64, priors, and CmdStanPy reference, NumPyro 0.19.0 matched the fixed-parameter likelihood to `2.3e-10` and the maximum relative gradient error to `1.35e-12`. Both NumPyro runs had zero divergences; R-hat ranged from 0.9993 to 1.0044 and mean acceptance probability was about 0.90.
+
+The CmdStanPy fit took 47.78 s with four parallel chains. NumPyro's two four-chain parallel CPU runs took 22.05 s and 22.86 s total, including JIT/warmup (about 1.1 s in those runs); retained sampling took 20.95 s and 21.78 s. NumPyro was faster for this one-cell test at the same nominal draws and comparable diagnostics. This is encouraging CPU evidence, not a grid-scale result or a universal speed claim; repeat on representative cells and compare full fit/output workflows before drawing a backend conclusion.
+
+The NumPyro means closely tracked CmdStanPy: `sigma_trend` 0.0001540-0.0001545 vs 0.0001532, `sigma_seas` 0.002068-0.002070 vs 0.002070, `sigma_AR` 0.09129-0.09135 vs 0.09125, and `rhoAR1` 0.3299-0.3314 vs 0.3326. This prototype marginalizes the state sequence and compares hyperparameters only; it does not yet reproduce CmdStan's simulation-smoothed state summaries. CmdStan reported zero divergences but also emitted the previously observed non-fatal NaN-scale warnings after sampling.
+
+The parallel run used `XLA_FLAGS=--xla_force_host_platform_device_count=4` to map the four chains over four logical CPU devices. This does not add physical cores. The `jax_dlm` Metal device still fails a basic operation; this is CPU-only NumPyro evidence.
+
 ### TFP Likelihood And Gradient
 
 TFP's faithful float32 sequential likelihood and gradient were explicitly placed on GPU:0 with TensorFlow soft device placement disabled. On the synthetic case, float32 TFP log likelihood differed from an independent double-precision Kalman recursion by about `4.3e-6` at fixed parameters. On the 32 real cells, mean absolute per-cell likelihood error was `0.216` on CPU and `0.213` on Metal (maximum errors `1.41` and `0.98`, respectively). Maximum aggregate-gradient relative errors were `0.021%` on CPU and `0.009%` on Metal.
@@ -85,6 +110,7 @@ For the real 32-cell batch, the median TFP likelihood-plus-gradient call took ab
 - A corrected 4-chain TFP Metal NUTS run did not return within a 10-minute limit. A parallel-filter TFP sampler run aborted in Apple's MPSGraph compiler (`MLIR pass manager failed`).
 - A separate TFP STS smoke test ran on Metal, but it did not include the full model or establish a speedup.
 - The JAX Metal prototype failed on a basic operation with `UNIMPLEMENTED: default_memory_space is not supported`.
+- In the separate `jax_dlm` environment, JAX 0.8.2 and NumPyro 0.19.0 detect the M4 Pro `METAL:0` device, but a basic matmul fails with the same `default_memory_space` error. Forcing `JAX_PLATFORMS=cpu` completes a 20-draw NumPyro NUTS smoke test. This verifies NumPyro CPU operation only; there is no JAX/NumPyro DLM parity result or local GPU sampling result.
 
 ## Interpretation
 

@@ -7,7 +7,7 @@ This document describes how to evaluate a GPU implementation of a dlmmc DLM on a
 
 - `dlmmc.fit()` and `dlmmc.fit_grid_mpi()` use CmdStanPy. There is no `backend="gpu"` option or GPU-enabled production API. Keep CmdStanPy as the CPU backend and scientific reference.
 - The TFP code in this directory is a separate prototype. `tfp_real_grid_reference.py` creates fixed-parameter CmdStan likelihood/gradient references, and `tfp_real_grid_benchmark.py` compares those values on TensorFlow CPU/GPU. This is not a full GPU posterior sampler or a replacement for `fit_grid_mpi()`.
-- JAX is present in the existing PyMC environment, but the tested local environment reported CPU only; NumPyro is not installed there. JAX + NumPyro is a candidate experiment, not a currently available GPU path. Test each backend/device combination rather than inferring compatibility from a package import.
+- The `jax_dlm` environment has JAX 0.8.2 and NumPyro 0.19.0 and detects `METAL:0`, but a basic matmul fails with `UNIMPLEMENTED: default_memory_space is not supported`. On CPU, the experimental NumPyro one-cell DLM passes fixed likelihood/gradient parity and its four-hyperparameter posterior agrees with CmdStan; latent-state smoothing and grid performance remain untested.
 - Past local results are cautionary: the tested TFP sequential Metal path was much slower than CPU for the 32-cell likelihood/gradient workload; GPU sampler attempts were incomplete or failed. PyMC/nutpie used CPU in the tested setup. These results do not predict performance on NVIDIA or AMD hardware.
 - A machine having a GPU, a visible device, or a successful matrix multiplication does not prove that the DLM model operations run on the GPU or that sampling is faster.
 
@@ -26,7 +26,7 @@ Stan can use OpenCL for particular supported operations when built and configure
 
 ## Local JAX And NumPyro Feasibility
 
-The existing environment check found JAX but no NumPyro and only `CpuDevice(0)`. Begin with package/device discovery; do not assume the previous Metal failure has been resolved.
+The separate `jax_dlm` environment contains JAX 0.8.2 and NumPyro 0.19.0. JAX enumerates `METAL:0`, but a synchronized 128x128 matmul fails with `UNIMPLEMENTED: default_memory_space is not supported`. Forcing `JAX_PLATFORMS=cpu` allows the one-cell NumPyro DLM experiment. Metal visibility is therefore not usable GPU execution in this environment.
 
 1. In a separate evaluation environment, install a JAX/NumPyro combination supported by the target platform. For local Apple GPU testing, verify current JAX Metal support and its version constraints from the package's official installation guidance before creating the environment. Keep the existing CmdStanPy environment separate as the reference.
 2. Run the environment probe and a tiny JAX operation explicitly on the reported device, force completion, and confirm the result's device. If only CPU is available or the operation fails, stop GPU claims there; NumPyro CPU may still be evaluated separately.
@@ -49,10 +49,10 @@ Run the probe inside the allocation, not only on a login node:
 
 ```bash
 python experiments/backend-evaluation/hpc_environment_probe.py \
-  > "$TMPDIR/dlmmc-environment-${SLURM_JOB_ID:-local}.json"
+  --output "$TMPDIR/dlmmc-environment-${SLURM_JOB_ID:-local}.json"
 ```
 
-Retain the JSON with the run results. Record the repository commit separately. The probe reports installed framework versions, loaded modules when exposed through `LOADEDMODULES`, scheduler fields, visible devices, and tiny framework device operations. It is an inventory check, not a DLM validation. On systems without Slurm, unset fields are expected.
+Retain the JSON with the run results. Record the repository commit separately. The probe reports installed framework versions, loaded modules when exposed through `LOADEDMODULES`, scheduler fields, visible devices, and tiny framework device operations. Use `--output` to keep framework initialization messages from contaminating the JSON artifact. It is an inventory check, not a DLM validation. On systems without Slurm, unset fields are expected.
 
 ### 2. Create A Host-Specific Environment
 
@@ -90,6 +90,7 @@ python experiments/backend-evaluation/tfp_real_grid_benchmark.py \
 ```
 
 If the host has no supported TensorFlow GPU, use `--device cpu`; do not interpret a CPU fallback as a GPU run. A GPU request should fail clearly when placement is unsupported. Confirm the printed likelihood and gradient devices are the intended accelerator. Save likelihood/gradient errors, warm-up/compilation time, steady-state timings, and actual device utilization.
+For the local CPU NumPyro comparison, run `cmdstan_real_cell.py` first, then `numpyro_real_cell.py` from `jax_dlm`. The NumPyro runner verifies fixed likelihood/gradient parity before sampling. The current two 4x500/500 runs matched the CmdStan hyperparameter posterior and took about 22-23 seconds versus 47.8 seconds for CmdStanPy on this one cell, but do not extrapolate this result to a grid or to GPU performance. Smoothed-state summaries are not yet compared.
 
 Before implementing or timing full GPU sampling, check model fidelity in this order:
 
