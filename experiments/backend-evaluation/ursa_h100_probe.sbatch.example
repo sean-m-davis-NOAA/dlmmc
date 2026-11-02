@@ -1,0 +1,24 @@
+#!/bin/bash
+#SBATCH --job-name=dlmmc-ursa-probe
+#SBATCH --account=<YOUR_PROJECT>
+#SBATCH --partition=u1-h100
+#SBATCH --qos=gpuwf
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+# Verify the GPU request syntax for the current Ursa Slurm configuration.
+#SBATCH --gpus=h100:1
+#SBATCH --time=00:10:00
+#SBATCH --output=dlmmc-ursa-probe-%j.out
+#SBATCH --error=dlmmc-ursa-probe-%j.err
+
+set -euo pipefail
+cd "${SLURM_SUBMIT_DIR}"
+
+# Load the site-approved module environment here after checking `module spider`
+# and `module show` on Ursa. RDHPCS requires Miniforge/conda-forge, not Anaconda.
+# For example, use the locally approved Conda module/activation setup, then:
+# conda activate /path/in/project/home/envs/dlmmc-ursa-probe
+
+module list 2>&1 || true
+python -u experiments/backend-evaluation/hpc_environment_probe.py

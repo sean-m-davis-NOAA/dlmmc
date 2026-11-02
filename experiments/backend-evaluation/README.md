@@ -2,6 +2,8 @@
 
 This directory contains scratch-to-share validation code for comparing CmdStanPy, PyMC, and TensorFlow Probability (TFP). It is exploratory only; the production package remains CmdStanPy-based.
 
+See [GPU_RUNBOOK.md](GPU_RUNBOOK.md) for the portable GPU evaluation workflow and [AGENTS.md](AGENTS.md) for experiment constraints and the staged roadmap.
+
 ## Environments
 
 The tests were run in separate Conda environments to avoid dependency conflicts:
@@ -17,6 +19,16 @@ To recreate the exploratory environments, use:
 conda env create -f experiments/backend-evaluation/environment-pymc-eval.yml
 conda env create -f experiments/backend-evaluation/environment-tfp-metal.yml
 ```
+
+These are local evaluation environments, not HERA-certified specifications. In particular, `environment-tfp-metal.yml` is for macOS/Apple Metal only. RDHPCS policy requires Miniforge with conda-forge rather than Anaconda/Miniconda. For HERA, first verify available GPU nodes, scheduler requests, site modules, and supported GPU runtime on an allocation; create a separate environment using the site-approved setup. See [AGENTS.md](AGENTS.md) for the HPC evaluation workflow and official RDHPCS references.
+
+## Preparing an Ursa GPU Probe
+
+The public [Ursa User Guide](https://docs.rdhpcs.noaa.gov/systems/ursa_user_guide.html) documents `u1-h100` (two NVIDIA H100 GPUs per node, `gpu` or `gpuwf` QoS), plus exploratory `u1-gh` and `u1-mi300x` partitions (`gpuwf`). Start with one H100 GPU using windfall access if the project does not have a dedicated GPU allocation. Confirm current access, module versions, and driver/runtime on Ursa before choosing a framework environment; the macOS Metal environment above is not suitable there.
+
+The probe script prints a JSON report of Python/package versions, loaded modules, scheduler environment, MPI, and available TensorFlow/JAX/PyTorch devices. It also performs a tiny device-placement matrix operation. From an Ursa allocation, first inspect modules with `module spider`, then edit the activation block, account placeholder, and GPU request directive in `ursa_h100_probe.sbatch.example` to match the live site configuration before submitting it. The template is intentionally not directly submittable. Keep environments in project home and job outputs in the site-approved work/scratch area; Ursa HPFS scratch is not backed up.
+
+The same staged procedure applies to other workstations and clusters, but the GPU runtime and environment must be selected for each host. The current package has no production GPU backend: use CmdStanPy for the CPU/MPI control and treat the TFP scripts below as fixed-parameter experiments. See [GPU_RUNBOOK.md](GPU_RUNBOOK.md) for the parity gates and fair end-to-end comparison method.
 
 ## Reproduce The Real-Cell Fit Comparison
 
