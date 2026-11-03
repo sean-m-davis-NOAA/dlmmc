@@ -36,6 +36,7 @@ PACKAGES = (
     "cmdstanpy",
     "jax",
     "numpyro",
+    "numba",
     "nutpie",
     "numpy",
     "pymc",
@@ -142,9 +143,12 @@ def torch_probe() -> dict[str, Any]:
     try:
         import torch
 
+        mps_backend = getattr(torch.backends, "mps", None)
         result: dict[str, Any] = {
             "version": torch.__version__,
             "cuda_available": torch.cuda.is_available(),
+            "mps_built": bool(mps_backend and mps_backend.is_built()),
+            "mps_available": bool(mps_backend and mps_backend.is_available()),
         }
         if torch.cuda.is_available():
             try:
@@ -158,6 +162,17 @@ def torch_probe() -> dict[str, Any]:
             except Exception as exc:  # noqa: BLE001 - probe must continue
                 result["matmul_ok"] = False
                 result["matmul_error"] = f"{type(exc).__name__}: {exc}"
+        if result["mps_available"]:
+            try:
+                value = torch.ones((16, 16), device="mps") @ torch.ones(
+                    (16, 16), device="mps"
+                )
+                torch.mps.synchronize()
+                result["mps_matmul_device"] = str(value.device)
+                result["mps_matmul_ok"] = True
+            except Exception as exc:  # noqa: BLE001 - probe must continue
+                result["mps_matmul_ok"] = False
+                result["mps_matmul_error"] = f"{type(exc).__name__}: {exc}"
         return result
     except Exception as exc:  # noqa: BLE001 - optional framework
         return {"available": False, "error": f"{type(exc).__name__}: {exc}"}

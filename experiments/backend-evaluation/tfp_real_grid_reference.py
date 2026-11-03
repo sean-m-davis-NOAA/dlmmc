@@ -36,11 +36,26 @@ PRIOR_SCALES = {
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cells", type=int, default=32)
+    parser.add_argument(
+        "--cell-indices",
+        type=int,
+        nargs="+",
+        help="Use these flat pressure/latitude indices instead of an even grid sample.",
+    )
     parser.add_argument("--output", type=Path, default=Path("/tmp/dlmmc-tfp-real-stan-reference.npz"))
     args = parser.parse_args()
 
     grid_size = 27 * 12
-    candidate_indices = np.linspace(0, grid_size - 1, args.cells + 16, dtype=int)
+    if args.cell_indices is None:
+        requested_cells = args.cells
+        candidate_indices = np.linspace(0, grid_size - 1, args.cells + 16, dtype=int)
+    else:
+        candidate_indices = np.asarray(args.cell_indices, dtype=int)
+        if np.any(candidate_indices < 0) or np.any(candidate_indices >= grid_size):
+            parser.error(f"--cell-indices must be between 0 and {grid_size - 1}.")
+        if len(np.unique(candidate_indices)) != len(candidate_indices):
+            parser.error("--cell-indices must be unique.")
+        requested_cells = len(candidate_indices)
     cell_indices: list[int] = []
     series_rows: list[np.ndarray] = []
     stddev_rows: list[np.ndarray] = []
@@ -80,11 +95,13 @@ def main() -> None:
         series_rows.append(filled_series)
         stddev_rows.append(stddev)
         regressor_rows.append(regressor_values)
-        if len(cell_indices) == args.cells:
+        if len(cell_indices) == requested_cells:
             break
 
-    if len(cell_indices) != args.cells:
-        raise ValueError(f"Found only {len(cell_indices)} valid cells; requested {args.cells}")
+    if len(cell_indices) != requested_cells:
+        raise ValueError(
+            f"Found only {len(cell_indices)} valid cells; requested {requested_cells}"
+        )
 
     series = np.stack(series_rows)
     stddev = np.stack(stddev_rows)

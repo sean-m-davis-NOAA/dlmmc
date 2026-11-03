@@ -120,6 +120,230 @@ def kalman_log_likelihood(
     return jnp.sum(contributions)
 
 
+def simulation_smoother_draw(
+    key: jax.Array,
+    parameters: jax.Array,
+    series: jax.Array,
+    uncertainty: jax.Array,
+    regressors: jax.Array,
+) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+    """Draw smoothed states using the same simulation-smoother equations as Stan."""
+    sigma_trend, sigma_seas, sigma_ar, rho = parameters
+    valid = jnp.isfinite(series)
+    series_mean = jnp.sum(jnp.where(valid, series, 0.0)) / jnp.sum(valid)
+    filled_series = jnp.where(valid, series, series_mean)
+    missing = ~valid | ~jnp.isfinite(uncertainty)
+    filled_uncertainty = jnp.where(missing, 1e20, uncertainty)
+    data_mean = jnp.mean(filled_series)
+    data_range = jnp.max(filled_series) - jnp.min(filled_series)
+    normalized_series = (filled_series - data_mean) / data_range
+    normalized_uncertainty = filled_uncertainty / data_range
+
+    time_count, regressor_count = regressors.shape
+    state_count = regressor_count + 7
+    dtype = parameters.dtype
+
+    transition = jnp.zeros((state_count, state_count), dtype=dtype)
+    transition = transition.at[0, 0].set(1.0).at[0, 1].set(1.0)
+    transition = transition.at[1, 1].set(1.0)
+    for start, angle in ((2, 2.0 * jnp.pi / 12.0), (4, 2.0 * jnp.pi / 6.0)):
+        transition = transition.at[start, start].set(jnp.cos(angle))
+        transition = transition.at[start, start + 1].set(jnp.sin(angle))
+        transition = transition.at[start + 1, start].set(-jnp.sin(angle))
+        transition = transition.at[start + 1, start + 1].set(jnp.cos(angle))
+    if regressor_count:
+        transition = transition.at[6 : 6 + regressor_count, 6 : 6 + regressor_count].set(
+            jnp.eye(regressor_count, dtype=dtype)
+        )
+    transition = transition.at[-1, -1].set(rho)
+
+    process_variance = jnp.concatenate(
+        (
+            jnp.array([1e-10], dtype=dtype),
+            jnp.square(sigma_trend)[None],
+            jnp.full((4,), jnp.square(sigma_seas), dtype=dtype),
+            jnp.full((regressor_count,), 1e-10, dtype=dtype),
+            jnp.square(sigma_ar)[None],
+        )
+    )
+    prior_variance = jnp.concatenate(
+        (
+            jnp.full((state_count - 1,), 10.0, dtype=dtype),
+            (jnp.square(sigma_ar) / (1.0 - jnp.square(rho)))[None],
+        )
+    )
+    process_covariance = jnp.diag(process_variance)
+    initial_covariance = jnp.diag(prior_variance)
+    observation_prefix = jnp.array([1.0, 0.0, 1.0, 0.0, 1.0, 0.0], dtype=dtype)
+    observation_suffix = jnp.array([1.0], dtype=dtype)
+    observation_vectors = jnp.concatenate(
+        (
+            jnp.broadcast_to(observation_prefix, (time_count, 6)),
+            regressors,
+            jnp.ones((time_count, 1), dtype=dtype),
+        ),
+        axis=1,
+    )
+
+    def filter_step(carry, values):
+        state_mean, state_covariance = carry
+        observation, measurement_sd, observation_vector = values
+        predicted_mean = transition @ state_mean
+        predicted_covariance = (
+            transition @ state_covariance @ transition.T + process_covariance
+        )
+        covariance_times_observation = predicted_covariance @ observation_vector
+        innovation_variance = (
+            observation_vector @ covariance_times_observation
+            + jnp.square(measurement_sd)
+        )
+        innovation = observation - observation_vector @ predicted_mean
+        gain = covariance_times_observation / innovation_variance
+        filtered_mean = predicted_mean + gain * innovation
+        filtered_covariance = predicted_covariance - jnp.outer(
+            gain, observation_vector
+        ) @ predicted_covariance
+        outputs = (
+            predicted_mean,
+            predicted_covariance,
+            innovation_variance,
+            innovation,
+            gain,
+        )
+        return (filtered_mean, filtered_covariance), outputs
+
+    (_, _), filter_outputs = jax.lax.scan(
+        filter_step,
+        (jnp.zeros((state_count,), dtype=dtype), initial_covariance),
+        (normalized_series, normalized_uncertainty, observation_vectors),
+    )
+    predicted_means, predicted_covariances, innovation_variances, innovations, gains = (
+        filter_outputs
+    )
+
+    random_keys = jax.random.split(key, 1 + 2 * time_count)
+    realization = jax.random.normal(random_keys[0], (state_count,), dtype=dtype) * jnp.sqrt(
+        prior_variance
+    )
+
+    def realization_step(carry, values):
+        previous_realization, previous_filtered_realization = carry
+        state_key, observation_key, observation_vector, measurement_sd, gain = values
+        current_realization = (
+            transition @ previous_realization
+            + jax.random.normal(state_key, (state_count,), dtype=dtype)
+            * jnp.sqrt(process_variance)
+        )
+        simulated_observation = (
+            observation_vector @ current_realization
+            + jax.random.normal(observation_key, (), dtype=dtype) * measurement_sd
+        )
+        filtered_realization = transition @ previous_filtered_realization
+        realization_innovation = simulated_observation - observation_vector @ filtered_realization
+        filtered_realization = filtered_realization + gain * realization_innovation
+        return (current_realization, filtered_realization), (
+            current_realization,
+            transition @ previous_filtered_realization,
+            realization_innovation,
+        )
+
+    keys_by_time = random_keys[1:].reshape((time_count, 2, 2))
+    (_, _), realization_outputs = jax.lax.scan(
+        realization_step,
+        (realization, jnp.zeros((state_count,), dtype=dtype)),
+        (
+            keys_by_time[:, 0],
+            keys_by_time[:, 1],
+            observation_vectors,
+            normalized_uncertainty,
+            gains,
+        ),
+    )
+    realized_states, filtered_realization_means, realization_innovations = realization_outputs
+
+    def backward_step(carry, values):
+        data_r_next, realization_r_next = carry
+        (
+            predicted_mean,
+            predicted_covariance,
+            variance,
+            innovation,
+            gain,
+            observation_vector,
+            realized_state,
+            realized_mean,
+            realization_innovation,
+        ) = values
+        smoother_transition = transition - transition @ jnp.outer(gain, observation_vector)
+        data_r = observation_vector * (innovation / variance) + smoother_transition.T @ data_r_next
+        realization_r = (
+            observation_vector * (realization_innovation / variance)
+            + smoother_transition.T @ realization_r_next
+        )
+        smoothed_data_mean = predicted_mean + predicted_covariance @ data_r
+        smoothed_realization_mean = realized_mean + predicted_covariance @ realization_r
+        smoothed_state = realized_state - smoothed_realization_mean + smoothed_data_mean
+        return (data_r, realization_r), smoothed_state
+
+    (_, _), smoothed_states = jax.lax.scan(
+        backward_step,
+        (jnp.zeros((state_count,), dtype=dtype), jnp.zeros((state_count,), dtype=dtype)),
+        (
+            predicted_means,
+            predicted_covariances,
+            innovation_variances,
+            innovations,
+            gains,
+            observation_vectors,
+            realized_states,
+            filtered_realization_means,
+            realization_innovations,
+        ),
+        reverse=True,
+    )
+
+    trend = smoothed_states[:, 0] * data_range + data_mean
+    slope = smoothed_states[:, 1] * data_range
+    seasonal = (smoothed_states[:, 2] + smoothed_states[:, 4]) * data_range
+    ar = smoothed_states[:, -1] * data_range
+    beta = smoothed_states[0, 6 : 6 + regressor_count] * data_range
+    return trend, slope, seasonal, ar, beta
+
+
+def draw_smoothed_states(
+    parameters: np.ndarray,
+    series: jax.Array,
+    uncertainty: jax.Array,
+    regressors: jax.Array,
+    seed: int,
+    batch_size: int = 16,
+) -> dict[str, np.ndarray]:
+    keys = jax.random.split(jax.random.PRNGKey(seed), len(parameters))
+    batched_smoother = jax.jit(
+        jax.vmap(
+            simulation_smoother_draw,
+            in_axes=(0, 0, None, None, None),
+        )
+    )
+    result_parts: list[tuple[np.ndarray, ...]] = []
+    started = time.perf_counter()
+    for start in range(0, len(parameters), batch_size):
+        stop = min(start + batch_size, len(parameters))
+        output = batched_smoother(
+            keys[start:stop],
+            jnp.asarray(parameters[start:stop], dtype=jnp.float64),
+            series,
+            uncertainty,
+            regressors,
+        )
+        output[0].block_until_ready()
+        result_parts.append(tuple(np.asarray(value) for value in output))
+    elapsed = time.perf_counter() - started
+    stacked = [np.concatenate([part[index] for part in result_parts], axis=0) for index in range(5)]
+    print(f"numpyro_simulation_smoother_seconds={elapsed:.3f}")
+    return dict(zip(("trend", "slope", "seasonal", "ar", "beta"), stacked))
+
+
 def numpyro_model(
     series: jax.Array,
     uncertainty: jax.Array,
@@ -289,6 +513,34 @@ def main() -> None:
             f"numpyro_rhat={float(result['r_hat']):.5g} "
             f"numpyro_ess={float(result['n_eff']):.5g} "
             f"numpyro_ess_per_sampling_second={float(result['n_eff']) / sampling_seconds:.5g}"
+        )
+
+    flat_parameters = np.stack(
+        [np.asarray(samples[name]).reshape(-1) for name in PARAMETER_NAMES],
+        axis=1,
+    )
+    smoothed = draw_smoothed_states(
+        flat_parameters,
+        series,
+        uncertainty,
+        regressors,
+        args.seed + 2,
+    )
+    for name, flat_draws in smoothed.items():
+        posterior_draws = flat_draws.reshape(
+            (args.chains, args.samples) + flat_draws.shape[1:]
+        )
+        posterior_output[name] = posterior_draws
+        cmdstan_draws = np.asarray(reference[name]).reshape(
+            (-1,) + flat_draws.shape[1:]
+        )
+        mean_error = flat_draws.mean(axis=0) - cmdstan_draws.mean(axis=0)
+        reference_sd = float(np.sqrt(np.mean(np.var(cmdstan_draws, axis=0))))
+        rmse = float(np.sqrt(np.mean(np.square(mean_error))))
+        normalized_rmse = rmse / reference_sd if reference_sd > 0 else float("nan")
+        print(
+            f"{name}_posterior_mean_rmse={rmse:.6g} "
+            f"{name}_rmse_over_cmdstan_posterior_sd={normalized_rmse:.6g}"
         )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

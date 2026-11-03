@@ -54,6 +54,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=RESULT)
     parser.add_argument('--cell-count', type=int, help='Fit this many evenly spaced valid cells for a scaling test.')
+    parser.add_argument('--cell-indices', type=int, nargs='+', help='Fit these flat pressure/latitude indices.')
     parser.add_argument('--chains', type=int, default=1)
     parser.add_argument('--parallel-chains', type=int, help='Maximum chains sampled concurrently per grid cell.')
     parser.add_argument('--warmup', type=int, default=1)
@@ -71,22 +72,36 @@ def main() -> None:
         uncertainty = uncertainty.assign_coords(time=decoded_time)
         regressors = _load_regressors(data['time'], data['latitude'].to_numpy())
         grid_dims = ('pressure', 'latitude')
-        if args.cell_count is not None:
-            if args.cell_count < 1:
-                parser.error('--cell-count must be positive.')
+        if args.cell_count is not None and args.cell_indices is not None:
+            parser.error('--cell-count and --cell-indices cannot be combined.')
+        if args.cell_count is not None or args.cell_indices is not None:
             valid = np.isfinite(data).any(dim='time') & (
                 data.max(dim='time', skipna=True) > data.min(dim='time', skipna=True)
             )
             candidates = np.flatnonzero(valid.to_numpy().ravel())
+        if args.cell_indices is not None:
+            selected = np.asarray(args.cell_indices, dtype=int)
+            if len(np.unique(selected)) != len(selected):
+                parser.error('--cell-indices must be unique.')
+            grid_size = data.sizes['pressure'] * data.sizes['latitude']
+            if np.any(selected < 0) or np.any(selected >= grid_size):
+                parser.error(f'--cell-indices must be between 0 and {grid_size - 1}.')
+            if not np.all(np.isin(selected, candidates)):
+                parser.error('--cell-indices must refer to valid, nonconstant cells.')
+        elif args.cell_count is not None:
+            if args.cell_count < 1:
+                parser.error('--cell-count must be positive.')
             if args.cell_count > len(candidates):
                 parser.error(
                     f'--cell-count {args.cell_count} exceeds the {len(candidates)} valid nonconstant cells.'
                 )
             selected = candidates[np.linspace(0, len(candidates) - 1, args.cell_count, dtype=int)]
+        if args.cell_count is not None or args.cell_indices is not None:
             pressure_indices, latitude_indices = np.unravel_index(
                 selected, (data.sizes['pressure'], data.sizes['latitude'])
             )
-            cell_coordinates = np.arange(args.cell_count)
+        if args.cell_count is not None or args.cell_indices is not None:
+            cell_coordinates = selected
             pressure_indexer = xr.DataArray(
                 pressure_indices, dims=('cell',), coords={'cell': cell_coordinates}
             )

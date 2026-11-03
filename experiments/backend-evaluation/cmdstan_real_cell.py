@@ -1,4 +1,4 @@
-"""Fit the benchmark ozone cell with CmdStanPy and save data/draws for PyMC comparison."""
+"""Fit the benchmark ozone cell with CmdStanPy for alternate-backend comparison."""
 
 from __future__ import annotations
 
@@ -143,6 +143,10 @@ def main() -> None:
         sigma_AR=posterior["sigma_AR"].to_numpy(),
         rhoAR1=posterior["rhoAR1"].to_numpy(),
         beta=posterior["beta"].to_numpy(),
+        trend=posterior["trend"].to_numpy(),
+        slope=posterior["slope"].to_numpy(),
+        seasonal=posterior["seasonal"].to_numpy(),
+        ar=posterior["ar"].to_numpy(),
         fixed_parameters=np.array(list(fixed_parameters.values())),
         fixed_log_likelihood=fixed_log_likelihood,
         fixed_likelihood_gradient=fixed_gradient,
