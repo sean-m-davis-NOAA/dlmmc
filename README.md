@@ -142,6 +142,12 @@ Models compile automatically on the first fit. Optionally run
 mpirun -np 4 python dlm_lat_alt_mpi_run.py
 ```
 
+To save all standard output and warnings to a log file:
+
+```bash
+mkdir -p results && mpirun -np 4 python dlm_lat_alt_mpi_run.py > results/mpi_run.log 2>&1
+```
+
 The MPI example defaults to very short chains for a pipeline smoke test, not scientific inference. See [MPI-README.md](MPI-README.md) for output verification and HPC launch details.
 
 **Platforms** 
