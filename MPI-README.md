@@ -1,5 +1,10 @@
 ## Running the grid example with MPI
 
+For a HERA-first CPU workflow, environment checks, and a Slurm smoke template,
+see [experiments/hpc/README.md](experiments/hpc/README.md). Its HERA-specific
+module names, MPI plugin, account, and storage paths are placeholders that must
+be verified on the live system.
+
 `dlm_lat_alt_mpi_run.py` fits one DLM for each pressure/latitude cell in the example ozone dataset through `dlmmc.fit_grid_mpi()`. The package uses xarray for inputs and writes a NetCDF result. Install the optional MPI dependencies with `python -m pip install 'dlmmc[mpi]'` (or `python -m pip install -e '.[mpi]'` from a source checkout). You also need a working MPI implementation compatible with `mpi4py`.
 
 The package contains the Stan sources and compiles the selected model on rank 0 before workers start. To compile all packaged models before launching, run `python compile_stan_models.py` from the repository root.
@@ -23,6 +28,17 @@ python -c "import numpy as np, xarray as xr; ds=xr.open_dataset('results/BASIC_V
 ```
 
 On multi-node HPC systems, pass `--cache-dir` pointing to a shared filesystem so the worker nodes can use the executable compiled by rank 0. Launch within a scheduler allocation using the site's MPI launcher and ensure `mpi4py` is built against that MPI implementation. Do not mix a site-provided MPI library with a different Conda MPI implementation. For larger production runs, adjust the sampling settings and number of ranks for the available resources.
+
+## HERA CPU/MPI evaluation
+
+For the HERA-first CPU workflow, site-specific setup checks, and a Slurm smoke
+template, see [experiments/hpc/README.md](experiments/hpc/README.md) and
+[experiments/hpc/hera_cpu_mpi.sbatch.example](experiments/hpc/hera_cpu_mpi.sbatch.example).
+The example is intentionally not submit-ready: verify the project account,
+Miniforge prefix, exact MPI module versions, `mpi4py` linkage, `srun` MPI plugin,
+and Work/TMPDIR paths on HERA first. The initial template uses one node, rank 0
+as writer, and two fitting workers; it is a pipeline smoke test, not a speed or
+convergence result.
 
 ### Temporary storage
 
