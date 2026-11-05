@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH --job-name=dlmmc-hera-multinode
+#SBATCH --account=chimera
+#SBATCH --partition=hera
+#SBATCH --qos=batch
+#SBATCH --nodes=2
+#SBATCH --ntasks=9
+#SBATCH --ntasks-per-node=5
+#SBATCH --cpus-per-task=1
+#SBATCH --time=06:00:00
+#SBATCH --output=/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work/dlmmc-hera-multinode-%j.out
+#SBATCH --error=/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work/dlmmc-hera-multinode-%j.err
+
+# Submit from the repository root. The shared performance script supplies the
+# workload and fit settings; the Slurm allocation above controls this run.
+set -euo pipefail
+exec bash "${SLURM_SUBMIT_DIR}/experiments/hpc/hera_cpu_mpi_performance.sbatch.example"

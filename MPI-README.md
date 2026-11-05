@@ -21,6 +21,8 @@ The output is created as a new file; by default, an existing output path is not 
 
 The defaults are one chain, one warmup iteration, and two sampling draws per cell. They are only a pipeline smoke test and do not produce converged posterior estimates. For longer runs, set the `--chains`, `--warmup`, and `--samples` options. Choose `--output` to set a different output path. Existing output is not overwritten unless `--overwrite` is specified. Short smoke-test chains can emit Stan warnings; check `fit_status` and the output file rather than treating convergence warnings as a pipeline failure.
 
+Use `--parallel-chains` to limit concurrent chains per cell and allocate at least that many CPUs per fitting worker. `--cell-indices` selects flat row-major `(pressure, latitude)` indices; unselected cells remain in the output grid with skipped status `0`.
+
 Verify that the output opens and inspect the grid dimensions and fit-status counts:
 
 ```bash
@@ -34,7 +36,9 @@ On multi-node HPC systems, pass `--cache-dir` pointing to a shared filesystem so
 For the HERA-first CPU workflow, site-specific setup checks, and a Slurm smoke
 template, see [experiments/hpc/README.md](experiments/hpc/README.md) and
 [experiments/hpc/hera_cpu_mpi.sbatch.example](experiments/hpc/hera_cpu_mpi.sbatch.example).
-The example is intentionally not submit-ready: verify the project account,
+That directory also contains single-cell, single-node, and multi-node
+performance Slurm templates and blank run-level/per-cell CSV templates.
+The examples contain site- and project-specific values: verify the project account,
 Miniforge prefix, exact MPI module versions, `mpi4py` linkage, `srun` MPI plugin,
 and Work/TMPDIR paths on HERA first. The initial template uses one node, rank 0
 as writer, and two fitting workers; it is a pipeline smoke test, not a speed or

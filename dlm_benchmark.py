@@ -48,15 +48,17 @@ def main() -> None:
     parser.add_argument('--pressure', type=int, default=22, help='pressure index in the example dataset')
     parser.add_argument('--latitude', type=int, default=8, help='latitude index in the example dataset')
     parser.add_argument('--chains', type=int, default=4)
+    parser.add_argument('--parallel-chains', type=int, help='Maximum chains sampled in parallel.')
     parser.add_argument('--warmup', type=int, default=100)
     parser.add_argument('--samples', type=int, default=100)
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--output-dir', type=Path, default=Path('results'))
+    parser.add_argument('--cache-dir', type=Path, help='CmdStan model cache directory.')
     args = parser.parse_args()
 
     data, uncertainty, regressors = load_example(args.pressure, args.latitude)
     start = time.perf_counter()
-    compiled = dlmmc.compile_models(['vanilla_ar1'])
+    compiled = dlmmc.compile_models(['vanilla_ar1'], cache_dir=args.cache_dir)
     compile_seconds = time.perf_counter() - start
 
     start = time.perf_counter()
@@ -66,9 +68,11 @@ def main() -> None:
         uncertainty=uncertainty,
         model='vanilla_ar1',
         chains=args.chains,
+        parallel_chains=args.parallel_chains,
         warmup=args.warmup,
         samples=args.samples,
         seed=args.seed,
+        cache_dir=args.cache_dir,
     )
     fit_seconds = time.perf_counter() - start
 
@@ -79,6 +83,7 @@ def main() -> None:
         'model': 'vanilla_ar1',
         'settings': {
             'chains': args.chains,
+            'parallel_chains': args.parallel_chains,
             'warmup': args.warmup,
             'samples_per_chain': args.samples,
             'seed': args.seed,

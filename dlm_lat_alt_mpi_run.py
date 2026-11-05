@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -50,16 +51,55 @@ def _load_regressors(time: xr.DataArray, latitudes: np.ndarray) -> xr.Dataset:
     return xr.Dataset(regressors).assign_coords(time=time)
 
 
+def _select_cells(data: xr.DataArray, cell_indices: list[int]) -> xr.DataArray:
+    grid_dims = ('pressure', 'latitude')
+    grid_shape = tuple(data.sizes[dim] for dim in grid_dims)
+    cell_count = int(np.prod(grid_shape))
+    if len(set(cell_indices)) != len(cell_indices):
+        raise ValueError('--cell-indices must not contain duplicates.')
+    if any(index < 0 or index >= cell_count for index in cell_indices):
+        raise ValueError(f'--cell-indices must be between 0 and {cell_count - 1}.')
+
+    selected = np.zeros(cell_count, dtype=bool)
+    selected[cell_indices] = True
+    selected_mask = xr.DataArray(
+        selected.reshape(grid_shape),
+        dims=grid_dims,
+        coords={dim: data.coords[dim] for dim in grid_dims},
+    )
+    return data.where(selected_mask)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=RESULT)
     parser.add_argument('--chains', type=int, default=1)
+    parser.add_argument(
+        '--parallel-chains',
+        type=int,
+        help='Maximum chains sampled in parallel for each cell.',
+    )
     parser.add_argument('--warmup', type=int, default=1)
     parser.add_argument('--samples', type=int, default=2)
     parser.add_argument('--seed', type=int, default=1234)
+    parser.add_argument(
+        '--cell-indices',
+        type=int,
+        nargs='+',
+        metavar='FLAT_INDEX',
+        help='Fit only these row-major pressure/latitude indices; other cells are marked skipped.',
+    )
     parser.add_argument('--cache-dir', type=Path, help='Shared CmdStan cache directory for multi-node runs.')
+    parser.add_argument(
+        '--no-progress',
+        action='store_true',
+        help='Disable CmdStanPy progress bars (reduces Python overhead per chain).',
+    )
     parser.add_argument('--overwrite', action='store_true')
     args = parser.parse_args()
+
+    logging.basicConfig(format='%(asctime)s %(name)s %(message)s')
+    logging.getLogger('dlmmc.mpi').setLevel(logging.INFO)
 
     with xr.open_dataset(DATASET) as source:
         data = source['o3']
@@ -68,6 +108,12 @@ def main() -> None:
         data = data.assign_coords(time=decoded_time)
         uncertainty = uncertainty.assign_coords(time=decoded_time)
         regressors = _load_regressors(data['time'], data['latitude'].to_numpy())
+        if args.cell_indices is not None:
+            try:
+                data = _select_cells(data, args.cell_indices)
+            except ValueError as exc:
+                parser.error(str(exc))
+
         result = dlmmc.fit_grid_mpi(
             data,
             output=args.output,
@@ -76,10 +122,12 @@ def main() -> None:
             model='vanilla_ar1',
             grid_dims=('pressure', 'latitude'),
             chains=args.chains,
+            parallel_chains=args.parallel_chains,
             warmup=args.warmup,
             samples=args.samples,
             seed=args.seed,
             cache_dir=args.cache_dir,
+            show_progress=not args.no_progress,
             overwrite=args.overwrite,
         )
 

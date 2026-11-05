@@ -1,6 +1,6 @@
 # HERA CPU/MPI Validation
 
-This is the HERA-first checklist for validating `dlmmc.fit_grid_mpi()` on NOAA RDHPCS CPU nodes. It is an experiment workflow, not a supported HERA installation recipe or a claim that any configuration has been tested on HERA. Keep the production API and CmdStanPy backend unchanged during this evaluation.
+This is the HERA-first checklist for validating `dlmmc.fit_grid_mpi()` on NOAA RDHPCS CPU nodes. It is an experiment workflow, not a supported HERA installation recipe or evidence of scientific convergence. Keep the production API and CmdStanPy backend unchanged during this evaluation.
 
 ## Verified Site Facts
 
@@ -19,53 +19,144 @@ Useful official references:
 
 ## Environment and MPI Contract
 
-1. On a HERA login or approved service node, record `module spider python`, `module spider intel`, `module spider impi`, and `srun --mpi=list`. Record the available Miniforge and MPI module versions, compiler wrapper, Slurm MPI plugin, Python version, CmdStan version, and `mpi4py.MPI.Get_library_version()`.
+1. On a HERA login or approved service node, record `module spider python`, `module spider intel`, `module spider impi`, and `srun --mpi=list`. Record the available Miniforge and MPI module versions, compiler wrapper, Slurm MPI plugin, Python version, CmdStan version, and `mpi4py.MPI.Get_library_version()`. The templates currently use the verified `intel/2024.2.1` and `impi/2024.2.1` modules and `chimera` association; confirm these remain available before submission.
 2. Create a dedicated Miniforge environment in project home using conda-forge packages. Avoid Anaconda/Miniconda and do not install packages into `base`.
 3. Build or install `mpi4py` against the exact MPI library used by the HERA launcher. Do not mix a Conda MPICH/OpenMPI runtime with the site Intel MPI or MVAPICH2 launcher. If compiling `mpi4py`, load the matching site MPI module and use its compiler wrapper, then check `MPI.Get_library_version()` inside a Slurm-launched job.
 4. Install the project in that environment from the checked-out source and resolve all core dependencies before submitting compute jobs. Do not rely on internet access from compute nodes.
-5. Compile the CmdStan model on HERA (or in an architecture-compatible shared cache) and set `--cache-dir` to a directory visible to all ranks. Keep `TMPDIR` writable and set it to site-approved temporary storage. The starter example is single-node so each rank can use that node's local temporary path; rework this explicitly before multi-node runs.
+5. Compile the CmdStan model on HERA (or in an architecture-compatible shared cache) and set `--cache-dir` to a directory visible to all ranks. Keep `TMPDIR` writable and set it to site-approved temporary storage. The single-node smoke uses node-local temporary storage; the performance templates use a per-job directory on shared Work, which must be visible to every node.
 
 An initial environment can be created in project home after Miniforge is installed and the site compiler/MPI modules have been verified:
 
 ```bash
-CONDA_ENV=/path/to/project-home/envs/dlmmc-hera
+CONDA_BASE=/path/to/miniforge3
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+CONDA_ENV="$CONDA_BASE/envs/dlmmc-hera"
 conda create -p "$CONDA_ENV" -c conda-forge --strict-channel-priority \
 	python=3.12 numpy scipy pandas platformdirs xarray netcdf4 cmdstanpy \
 	pip setuptools wheel -y
 
-# Replace these with exact module versions confirmed using module spider.
-INTEL_MODULE="intel/REPLACE_WITH_VERSION"
-IMPI_MODULE="impi/REPLACE_WITH_VERSION"
+# Verify these module versions on the live system before using them.
+INTEL_MODULE="intel/2024.2.1"
+IMPI_MODULE="impi/2024.2.1"
 module load "$INTEL_MODULE" "$IMPI_MODULE"
 conda activate "$CONDA_ENV"
-MPICC=mpiicc python -m pip install --no-binary=mpi4py mpi4py
+MPICC=mpiicx python -m pip install --no-binary=mpi4py mpi4py
 
 # In a checkout reachable from the compute nodes; dependencies were installed above.
 python -m pip install --no-deps -e /path/to/dlmmc
-python -c 'from mpi4py import MPI; import cmdstanpy; print(MPI.Get_library_version()); print(cmdstanpy.cmdstan_path())'
+python -c 'import mpi4py, cmdstanpy; mpi4py.rc.initialize=False; from mpi4py import MPI; print(MPI.Get_library_version()); print(cmdstanpy.cmdstan_path())'
 ```
 
-The module names/wrappers above follow the documented Intel MPI stack; replace them if `module spider`, `mpiicc -show`, or site support indicates a different current stack. Building `mpi4py` from source avoids silently bringing in an unrelated Conda MPI runtime. Record the `mpi4py` build command and `MPI.Get_library_version()` with each run.
+The module names/wrapper above follow the verified Intel MPI stack. On the checked HERA login node, `mpiicc` points to the unavailable classic `icc`, while `mpiicx` uses the available `icx`; recheck with `module spider`, `mpiicx -show`, or site support if the stack changes. Building `mpi4py` from source avoids silently bringing in an unrelated Conda MPI runtime. The version check above does not initialize MPI; verify initialization and collectives inside a Slurm launch. Record the `mpi4py` build command and `MPI.Get_library_version()` with each run.
 
 ## First Smoke Test
 
-Start with [hera_cpu_mpi.sbatch.example](hera_cpu_mpi.sbatch.example), after replacing every placeholder and confirming the account, module versions, MPI plugin, and Work path. Submit from a project-Work checkout (or edit the Slurm log paths to a pre-created Work directory). It requests one node and three MPI ranks: rank 0 is the NetCDF writer and two ranks fit cells. Each worker uses one CmdStan chain. It checks MPI initialization, fits two cells with tiny warmup/sample counts, and verifies both `fit_status` values. This only tests setup and output plumbing; it is not a scientific fit.
+Start with [hera_cpu_mpi.sbatch.example](hera_cpu_mpi.sbatch.example), after confirming its Miniforge installation, account, module versions, MPI plugin, and Work path. The current Intel MPI stack was checked with the `pmi2` Slurm plugin; the template uses it by default. It requests one node and three MPI ranks: rank 0 is the NetCDF writer and two ranks fit one fixed cell each (flat IDs 0 and 33). It checks MPI initialization, runs tiny warmup/sample counts, and verifies those two `fit_status` values. This only tests setup and output plumbing; it is not a scientific fit.
 
 Before a long run, inspect the job's resource limits with `sbatch-limits` and use `sinfo -O partition`. If the job needs to pull packages or sources, do that from an approved login/service workflow before compute; do not install dependencies in the batch script.
 
 If the MPI smoke fails, retain the batch output, `module list`, `srun --mpi=list`, `mpi4py` library version, and `sacct` job state. Do not change several environment variables at once. Confirm that `srun` selected the same MPI implementation against which `mpi4py` was built before trying another stack/plugin.
 
+On 2026-11-04, HERA job `34633280` completed the two-cell smoke using three ranks, Intel MPI 2021.13, `pmi2`, and CmdStan 2.40.0. Both selected cells completed and 322 were skipped; the 73-second wall time included a cold model compilation. CmdStan reported non-fatal NaN-scale and divergence warnings in these tiny chains, so this is not a convergence or performance result. The NetCDF and a populated run record are under `WORK_ROOT/runs/34633280`.
+
 ## Performance Test Plan
 
-After the smoke succeeds, use fixed cell IDs, data, seeds, and sampling settings for all configurations. The source-grid example has 312 valid nonconstant cells; select a reproducible diverse subset and record the actual flat IDs. Run from a project Work directory and write NetCDF, logs, CmdStan cache, and any retained artifacts outside the source checkout.
+After the smoke succeeds, use fixed cell IDs, data, seeds, and sampling settings for all configurations. The source-grid example has 312 valid nonconstant cells. The performance template uses 16 IDs approximately spread across the grid: `0 22 43 65 86 108 129 151 172 194 215 237 258 280 301 323`. For a 32-cell workload, use `0 10 21 31 42 52 62 73 83 94 104 115 125 135 146 156 167 177 188 198 208 219 229 240 250 261 271 281 292 302 313 323`. Flat IDs are row-major over `(pressure, latitude)`. Both sets are balanced modulo eight: the current static assignment gives each of eight workers two or four cells respectively, and is also balanced for two or four workers. The runner masks unselected cells, which are written with skipped status `0`; the output remains the full grid.
 
-1. Measure a one-cell `dlmmc.fit()` baseline and a one-rank `fit_grid_mpi()` baseline to separate model compilation, single-cell sampling, and grid setup.
-2. Measure the same 16- or 32-cell workload with Slurm task counts such as 3, 5, and 9 (rank 0 writer included). Keep one chain per worker initially.
-3. With the same task allocation, compare `--parallel-chains 1` versus 2 only when each worker has enough allocated CPUs. A first eight-chain-process configuration is 5 MPI ranks with 2 CPUs per task and `--parallel-chains 2`: four workers times two chains, plus rank 0. Compare with 9 ranks, 1 CPU per task, and `--parallel-chains 1`: eight workers plus rank 0. Keep within a single 40-core node for the first sweep.
-4. Once single-node behavior is understood, request multiple nodes and explicitly set `--nodes`, `--ntasks-per-node`, and `--cpus-per-task`. Preserve rank 0 as the sole NetCDF writer; workers fit assigned cells sequentially.
+1. Use [hera_cpu_fit_baseline.sbatch.example](hera_cpu_fit_baseline.sbatch.example) for a one-cell `dlmmc.fit()` baseline (flat ID 0 is pressure index 0, latitude index 0). Use the MPI performance template with one rank and `PERF_CELL_INDICES=0` for a matching one-cell `fit_grid_mpi()` baseline. The performance template's 16-cell, one-rank run then measures grid overhead separately.
+2. Measure the same 16-cell workload with Slurm task counts 3, 5, and 9 (rank 0 writer included), initially using one CPU per task and `--parallel-chains 1`. Keep chains, warmup, draws, seed, and cell IDs fixed.
+3. With the same five-task allocation, compare `--parallel-chains 1` and 2 only when each worker has enough allocated CPUs. For an eight-chain-process configuration, use 5 MPI ranks with 2 CPUs per task and `--parallel-chains 2` (four workers, two concurrent chains per worker, plus rank 0). Compare with 9 ranks, 1 CPU per task, and `--parallel-chains 1` (eight workers plus rank 0). Keep within a single 40-core node for the first sweep.
+4. Once single-node behavior is understood, try [hera_cpu_mpi_multinode.sbatch.example](hera_cpu_mpi_multinode.sbatch.example). It requests two nodes and nine ranks (eight workers plus rank 0) and invokes the same performance script. It uses a per-job `TMPDIR` on shared project Work so every node sees the directory; confirm Work and the selected MPI plugin are accessible on all nodes. This configuration completed on 2026-11-05 as job `34659299`: all 16 selected cells finished across two nodes in 1,453 seconds. Preserve rank 0 as the sole NetCDF writer; workers fit assigned cells sequentially.
 5. Use scientific warmup and retained draw counts for performance claims. The runner defaults of 1 warmup and 2 samples are pipeline smoke settings only.
 
-For every run record the git commit, HERA node/CPU allocation, loaded modules, MPI implementation and launcher/plugin, Python/CmdStan/CmdStanPy/mpi4py versions, cell IDs, model and priors, chain settings, seed, wall time, `fit_status` counts, CmdStan R-hat and bulk/tail ESS, and peak memory. Include model compilation/cache state, cells per hour, rank utilization, output size, and `TMPDIR`/Work path. Inspect per-cell diagnostics; aggregate throughput must not hide a poorly mixing cell. Compare end-to-end wall time and ESS/sec, not only likelihood timings.
+Configure [hera_cpu_mpi_performance.sbatch.example](hera_cpu_mpi_performance.sbatch.example) per run from the submit command rather than copying it: `sbatch` options override its `#SBATCH` defaults, and the exported environment variables `PERF_CELL_INDICES` (space-separated flat IDs), `CHAINS`, `PARALLEL_CHAINS`, `WARMUP`, `SAMPLES`, and `SEED` override its fit settings. Keep the Slurm allocation consistent with the fit settings. From the repository root, the sweep is:
+
+```bash
+T=experiments/hpc/hera_cpu_mpi_performance.sbatch.example
+sbatch -J dlmmc-hera-fit experiments/hpc/hera_cpu_fit_baseline.sbatch.example
+PERF_CELL_INDICES=0 sbatch -J perf-r1-c1 --ntasks=1 --time=01:00:00 "$T"
+sbatch -J perf-r1-c16 --ntasks=1 --time=04:00:00 "$T"
+sbatch -J perf-r3 --ntasks=3 --time=03:00:00 "$T"
+sbatch -J perf-r5 --ntasks=5 --time=02:00:00 "$T"
+sbatch -J perf-r9 --ntasks=9 --time=01:30:00 "$T"
+PARALLEL_CHAINS=2 sbatch -J perf-r5x2-pc2 --ntasks=5 --cpus-per-task=2 --time=01:30:00 "$T"
+sbatch -J perf-r9-2node --time=01:30:00 experiments/hpc/hera_cpu_mpi_multinode.sbatch.example
+```
+
+Set `CHAINS`, `WARMUP`, `SAMPLES`, and `SEED` identically across comparisons. The multi-node wrapper passes its environment to the performance template. The baseline and performance templates use shared Work for temporary output, so account for its I/O behavior when comparing configurations.
+
+After the jobs finish, collect one run-record row per job and the per-cell diagnostics with [collect_run_record.py](collect_run_record.py). It needs the `diagnostics` extra (`conda install -c conda-forge "arviz>=1.3,<2"` in the HERA environment):
+
+```bash
+python experiments/hpc/collect_run_record.py --output "$WORK_ROOT/hera-cpu-mpi-run-record.csv" JOBID [JOBID ...]
+```
+
+Each row merges `runs/JOBID/run-metadata.txt`, `sacct`, and the grid NetCDF. `wall_seconds` and `peak_memory_mib` use the grid-fit `srun` step, excluding environment setup and the MPI check (whole-job elapsed time is in `notes`). `ess_per_second` is the sum over fitted cells of each cell's minimum bulk ESS divided by that wall time. `rank_utilization` reports the cells planned per fitting rank and the resulting busy fraction of all ranks; rank 0 counts as idle when it is only the writer. Per-cell rows are written to `runs/JOBID/cell-diagnostics.csv` by [cell_diagnostics.py](cell_diagnostics.py), which computes ArviZ rank-normalized R-hat and bulk/tail ESS over the non-time-varying parameters (`sigma_*`, `rhoAR1`, `beta`) and reports each cell's worst value. The [run record CSV template](hera_cpu_mpi_run_record.csv.example) and [cell diagnostics CSV template](hera_cpu_mpi_cell_diagnostics.csv.example) define the columns. Inspect per-cell diagnostics; aggregate throughput must not hide a poorly mixing cell. Compare end-to-end wall time and ESS/sec, not only likelihood timings.
+
+The grid NetCDF contains posterior draws but does not retain per-cell CmdStan CSVs or divergence counts, so the divergence columns stay blank. Latent time series (`trend`, `slope`, `ar`, `seasonal`) are excluded from the per-cell summary.
+
+### Initial measurements (2026-11-05)
+
+All MPI measurements below used 4 chains, 500 warmup iterations, 500 retained draws, seed `20261104`, and the listed cell set. The one-cell runs used flat ID 0; the grid runs used the fixed 16-cell set above.
+
+| Job | Configuration | Wall time (s) | Cells/hour | Max R-hat | ESS/s |
+|---|---|---:|---:|---:|---:|
+| `34659225` | Plain `dlmmc.fit()`, 1 cell | 460 | — | not measured | — |
+| `34659293` | MPI, 1 rank, 1 cell, 1 CPU | 559 | 6.440 | 1.005 | 1.904 |
+| `34659679` | MPI, 1 rank, 1 cell, 2 CPUs | 487 | 7.392 | 1.005 | 2.185 |
+| `34659297` | MPI, 9 ranks, 1 node, 1 CPU/task | 1,557 | 36.994 | 1.009 | 12.20 |
+| `34659298` | MPI, 5 ranks, 2 CPUs/task, 2 parallel chains | 1,411 | 40.822 | 1.009 | 13.46 |
+| `34659299` | MPI, 9 ranks, 2 nodes, 1 CPU/task | 1,453 | 39.642 | 1.009 | 13.07 |
+| `34659296` | MPI, 5 ranks, 1 node, 1 CPU/task | 2,734 | 21.068 | 1.009 | 6.948 |
+| `34659976` | MPI, 1 rank, 1 cell, 1 CPU, progress off | 554 | 6.498 | 1.005 | 1.921 |
+| `34659294` | MPI, 1 rank, 16 cells, 1 CPU/task | 9,134 | 6.306 | 1.009 | 2.080 |
+| `34659295` | MPI, 3 ranks, 1 node, 1 CPU/task | 4,713 | 12.222 | 1.009 | 4.031 |
+| `34660583` | MPI, 9 ranks, 1 node, 2 CPUs/task | 1,368 | 42.105 | 1.009 | 13.89 |
+| `34660584` | MPI, 5 ranks, 1 node, 2 CPUs/task, 2 parallel chains | 1,411 | 40.822 | 1.009 | 13.46 |
+
+The multi-node job completed every selected cell. Turning off progress bars changed the one-cell wall time by less than 1% relative to job `34659293`, so it did not recover the one-CPU performance difference in this comparison. R-hat was computed for the MPI runs only; the plain `dlmmc.fit()` baseline recorded 0 divergences but did not retain draws for an R-hat calculation. These are exploratory measurements, not convergence guarantees.
+
+All jobs in the initial sweep and both instrumented reruns completed with exit code 0. Across MPI runs, the maximum per-cell R-hat was 1.009; the one-cell baseline's R-hat was not measured. The 9-rank, 2-CPU/task rerun had the shortest wall time (1,368 seconds), 43 seconds ahead of the 5-rank, 2-CPU/task, 2-parallel-chain run. Every single-node job was allocated and billed a whole 40-CPU node (`sacct` reports `cpu=40` and the same billing TRES), so a layout requesting fewer CPUs per node is not cheaper; it leaves cores idle.
+
+The instrumented reruns logged fit durations for all 16 cells. Per-cell times ranged from 442–702 seconds (mean 584) for job `34660583` (9 ranks, 2 CPUs/task, `parallel_chains=1`) and 242–383 seconds (mean 327) for job `34660584` (5 ranks, 2 CPUs/task, `parallel_chains=2`). Per-cell diagnostics are under `WORK_ROOT/runs/JOBID/cell-diagnostics.csv`; the complete run records are in `WORK_ROOT/hera-cpu-mpi-run-record.csv`.
+
+A "cell" is one `(pressure, latitude)` grid point, i.e. one single-time-series DLM fit (4 chains × (500 warmup + 500 draws) here). `cells/hour` is fitted cells divided by the grid-fit `srun` step's wall time; environment setup and the MPI check are excluded.
+
+### Interpretation and recommended layout (provisional)
+
+The 16-cell totals mostly reflect how many cells each worker received (2 with eight workers, 4 with four), so they cannot rank layouts. Per-cell times are more informative:
+
+- With `parallel_chains=1`, a second CPU per rank mostly serves the rank's Python process; the four chains still run one after another.
+- With `parallel_chains=2`, mean per-cell time was 327 seconds with four workers active, versus 487 seconds for an isolated one-cell, 2-CPU, `parallel_chains=1` fit (`34659679`) and 584 seconds with eight such workers active (`34660583`). The `34660583`/`34660584` comparison also differs in the number of concurrently active workers, so the roughly 1.5× gain is an estimate, not a controlled result.
+
+**Provisional recommendation (not yet tested): one node, 20 ranks × 2 CPUs/task, `PARALLEL_CHAINS=2`.** This uses all 40 allocated CPUs: rank 0 writes the NetCDF and 19 workers each run two chains at a time. At the measured 327 seconds per cell it would fit about 210 cells/hour, or the full 312-cell grid in about 1.5 hours; expect it to be somewhat slower because 19 workers will contend for shared node resources (memory bandwidth, Work I/O). Memory should fit: rank 0 writes each cell to the NetCDF as it arrives rather than holding the grid, and the observed peak was about 1.2 GB per task, or roughly 24 GB for 20 tasks on a 92 GB node. The alternative full-node layout is 10 ranks × 4 CPUs/task with `PARALLEL_CHAINS=4` (nine workers, all four chains concurrent).
+
+### Next tests
+
+Run these before a full-grid production job. From the repository root on HERA:
+
+```bash
+T=experiments/hpc/hera_cpu_mpi_performance.sbatch.example
+CELLS32="0 10 21 31 42 52 62 73 83 94 104 115 125 135 146 156 167 177 188 198 208 219 229 240 250 261 271 281 292 302 313 323"
+
+# 1. Controlled check: identical to job 34660584 except parallel_chains=1.
+PARALLEL_CHAINS=1 sbatch -J perf-r5x2-pc1 --ntasks=5 --cpus-per-task=2 --time=01:30:00 "$T"
+
+# 2. Recommended full-node layout on the 32-cell set.
+PERF_CELL_INDICES="$CELLS32" PARALLEL_CHAINS=2 sbatch -J perf32-r20x2-pc2 --ntasks=20 --cpus-per-task=2 --time=01:00:00 "$T"
+
+# 3. Alternative full-node layout on the 32-cell set.
+PERF_CELL_INDICES="$CELLS32" PARALLEL_CHAINS=4 sbatch -J perf32-r10x4-pc4 --ntasks=10 --cpus-per-task=4 --time=01:00:00 "$T"
+```
+
+The 32-cell set is not balanced over 19 or 9 workers (each worker gets one or two, or three or four, cells), so compare tests 2 and 3 on mean per-cell `fit_seconds` from the job's `.err` log (`grep 'dlmmc.mpi cell' WORK_ROOT/dlmmc-hera-perf-JOBID.err`) as well as on wall time. Collect each finished job with `collect_run_record.py` as above. If test 1 confirms the parallel-chain gain and test 2 is at least as fast per allocated node as test 3, run the full grid with the 20 × 2 layout and the same chains, warmup, draws, and seed. Pass all 312 valid flat IDs explicitly (flat IDs 3–8 and 15–20 have no valid data), so `check_fit_status.py` still verifies every cell, and request a wall time with margin:
+
+```bash
+ALL_VALID="$(python -c 'print(" ".join(str(i) for i in range(324) if not (3 <= i <= 8 or 15 <= i <= 20)))')"
+PERF_CELL_INDICES="$ALL_VALID" PARALLEL_CHAINS=2 sbatch -J full-r20x2-pc2 --ntasks=20 --cpus-per-task=2 --time=03:00:00 "$T"
+```
+
+Full-grid output is about 16 GB on Work.
 
 ## Decision Gate
 

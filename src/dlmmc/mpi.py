@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import os
+import time as _time
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -12,6 +14,7 @@ import xarray as xr
 
 from .api import _MODEL_SPECS, _get_compiled_model, _prepare_regressors, _resolve_model, fit
 
+_LOGGER = logging.getLogger(__name__)
 
 def _regressor_count(regressors: Any) -> int:
     if regressors is None:
@@ -242,6 +245,7 @@ def fit_grid_mpi(
         cell_regressors = regressors
         if isinstance(regressors, (xr.DataArray, xr.Dataset)):
             cell_regressors = regressors.isel({dim: value for dim, value in indexers.items() if dim in regressors.dims})
+        started = _time.perf_counter()
         try:
             posterior = fit(
                 series,
@@ -250,9 +254,14 @@ def fit_grid_mpi(
                 uncertainty=cell_uncertainty,
                 **fit_options,
             )
-            return cell_index, {name: posterior[name].to_numpy() for name in posterior.data_vars}, None
+            result = cell_index, {name: posterior[name].to_numpy() for name in posterior.data_vars}, None
         except Exception as exc:
-            return cell_index, None, str(exc)
+            result = cell_index, None, str(exc)
+        _LOGGER.info(
+            "cell flat_index=%d rank=%d status=%s fit_seconds=%.1f",
+            flat_index, rank, "failed" if result[2] else "ok", _time.perf_counter() - started,
+        )
+        return result
 
     if rank == 0:
         with __import__("netCDF4").Dataset(output_path, "r+") as result_file:

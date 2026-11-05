@@ -1,39 +1,44 @@
 #!/bin/bash
 #SBATCH --job-name=dlmmc-hera-smoke
-#SBATCH --account=REPLACE_WITH_PROJECT
+#SBATCH --account=chimera
 #SBATCH --partition=hera
 #SBATCH --qos=debug
 #SBATCH --nodes=1
 #SBATCH --ntasks=3
 #SBATCH --cpus-per-task=1
 #SBATCH --time=00:20:00
-#SBATCH --output=dlmmc-hera-%j.out
-#SBATCH --error=dlmmc-hera-%j.err
+#SBATCH --output=/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work/dlmmc-hera-%j.out
+#SBATCH --error=/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work/dlmmc-hera-%j.err
 
-# Template only: verify every placeholder, account/QOS limit, module version,
-# MPI plugin, and storage path on the live HERA system before submission.
+# Verify account/QOS limits, module versions, MPI plugin, and storage paths on
+# the live HERA system before submission.
 set -euo pipefail
 
 REPO_ROOT="${SLURM_SUBMIT_DIR}"
-WORK_ROOT="/REPLACE/WITH/PROJECT/WORK/dlmmc"
-CONDA_BASE="/REPLACE/WITH/PROJECT/HOME/miniforge3"
+WORK_ROOT="/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work"
+CONDA_BASE="/home/Sean.M.Davis/miniforge3"
 CONDA_ENV="${CONDA_BASE}/envs/dlmmc-hera"
-INTEL_MODULE_VERSION="REPLACE_WITH_VERIFIED_VERSION"
-IMPI_MODULE_VERSION="REPLACE_WITH_VERIFIED_VERSION"
+INTEL_MODULE_VERSION="2024.2.1"
+IMPI_MODULE_VERSION="2024.2.1"
+CELL_INDICES=(0 33)
 
 # HERA documents Intel MPI and MVAPICH2. Start with one site-supported stack;
 # mpi4py must be built against the same MPI library used by srun.
-: "${MODULESHOME:?Initialize the HERA module system before loading modules}"
-source "${MODULESHOME}/init/bash"
+: "${LMOD_CMD:?Initialize HERA Lmod before loading modules}"
+source "$(dirname "${LMOD_CMD}")/../init/bash"
 module load "intel/${INTEL_MODULE_VERSION}" "impi/${IMPI_MODULE_VERSION}"
 module list 2>&1
 
 source "${CONDA_BASE}/etc/profile.d/conda.sh"
+# Conda activation hooks may reference unset variables.
+set +u
 conda activate "${CONDA_ENV}"
+set -u
 export PYTHONUNBUFFERED=1
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
+HERA_SLURM_MPI="${HERA_SLURM_MPI-pmi2}"
 
-# Set HERA_SLURM_MPI only to a value verified with `srun --mpi=list` and the
-# selected site MPI stack. Empty uses the site's default srun MPI plugin.
+# Override only with a plugin verified for the MPI stack; empty uses the site default.
 run_mpi() {
     if [[ -n "${HERA_SLURM_MPI:-}" ]]; then
         srun --mpi="${HERA_SLURM_MPI}" \
@@ -54,17 +59,14 @@ mkdir -p "${RUN_DIR}" "${CACHE_DIR}" "${TMPDIR}"
 export OUTPUT_FILE="${RUN_DIR}/hera-mpi-smoke.nc"
 cd "${REPO_ROOT}"
 
-# Confirm the imported mpi4py is linked to the loaded HERA MPI.
-python -c 'from mpi4py import MPI; print(MPI.Get_library_version())'
-run_mpi \
-    python -c 'from mpi4py import MPI; c=MPI.COMM_WORLD; print(f"rank={c.rank} size={c.size} sum={c.allreduce(1)}")'
+run_mpi python experiments/hpc/check_mpi.py
 
 # Pipeline smoke only: rank 0 writes; two workers fit two cells serially.
 run_mpi \
     python -u dlm_lat_alt_mpi_run.py \
     --output "${OUTPUT_FILE}" \
-    --cell-indices 0 160 \
+    --cell-indices "${CELL_INDICES[@]}" \
     --chains 1 --parallel-chains 1 --warmup 1 --samples 2 --seed 20261103 \
     --cache-dir "${CACHE_DIR}"
 
-python -c 'import os, numpy as np, xarray as xr; d=xr.open_dataset(os.environ["OUTPUT_FILE"]); print(dict(zip(*np.unique(d.fit_status.values, return_counts=True)))); assert np.all(d.fit_status.values == 1)'
+python experiments/hpc/check_fit_status.py "${OUTPUT_FILE}" "${CELL_INDICES[@]}"
