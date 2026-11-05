@@ -12,7 +12,7 @@ On HERA, run the suite with the project environment:
 
 ## HERA CPU/MPI validation (in progress)
 
-The plan, results, recommended layout, and exact next commands are in [experiments/hpc/README.md](experiments/hpc/README.md). Read its "Initial measurements", "Interpretation and recommended layout", and "Next tests" sections before continuing that work.
+The plan, results, recommended layout, and exact next commands are in [experiments/hpc/README.md](experiments/hpc/README.md). Read its "Initial measurements", "Interpretation and recommended layout", and "Next step: full-grid run" sections before continuing that work.
 
 - Repository checkout: `/scratch3/BMC/chimera/Sean.M.Davis/dlmmc` (branch `hpc/hera-cmdstanpy-mpi`).
 - Run outputs, Slurm logs, and the run-record CSV: `/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work` (`runs/JOBID/`, `hera-cpu-mpi-run-record.csv`). This is Work storage: not backed up and subject to purge.

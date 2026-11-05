@@ -113,6 +113,9 @@ All MPI measurements below used 4 chains, 500 warmup iterations, 500 retained dr
 | `34659295` | MPI, 3 ranks, 1 node, 1 CPU/task | 4,713 | 12.222 | 1.009 | 4.031 |
 | `34660583` | MPI, 9 ranks, 1 node, 2 CPUs/task | 1,368 | 42.105 | 1.009 | 13.89 |
 | `34660584` | MPI, 5 ranks, 1 node, 2 CPUs/task, 2 parallel chains | 1,411 | 40.822 | 1.009 | 13.46 |
+| `34665311` | MPI, 5 ranks, 1 node, 2 CPUs/task, 1 parallel chain | 2,364 | 24.365 | 1.009 | 8.036 |
+| `34665312` | MPI, 20 ranks, 1 node, 2 CPUs/task, 2 parallel chains, 32 cells | 1,040 | 110.769 | 1.010 | 32.43 |
+| `34665313` | MPI, 10 ranks, 1 node, 4 CPUs/task, 4 parallel chains, 32 cells | 1,060 | 108.679 | 1.010 | 31.82 |
 
 The multi-node job completed every selected cell. Turning off progress bars changed the one-cell wall time by less than 1% relative to job `34659293`, so it did not recover the one-CPU performance difference in this comparison. R-hat was computed for the MPI runs only; the plain `dlmmc.fit()` baseline recorded 0 divergences but did not retain draws for an R-hat calculation. These are exploratory measurements, not convergence guarantees.
 
@@ -122,41 +125,38 @@ The instrumented reruns logged fit durations for all 16 cells. Per-cell times ra
 
 A "cell" is one `(pressure, latitude)` grid point, i.e. one single-time-series DLM fit (4 chains × (500 warmup + 500 draws) here). `cells/hour` is fitted cells divided by the grid-fit `srun` step's wall time; environment setup and the MPI check are excluded.
 
-### Interpretation and recommended layout (provisional)
+### Interpretation and recommended layout
 
-The 16-cell totals mostly reflect how many cells each worker received (2 with eight workers, 4 with four), so they cannot rank layouts. Per-cell times are more informative:
+The 16-cell totals mostly reflect how many cells each worker received (2 with eight workers, 4 with four), so they cannot rank layouts on their own. Per-cell `fit_seconds` from the job's `.err` log (`grep 'dlmmc.mpi cell' WORK_ROOT/dlmmc-hera-perf-JOBID.err`) and steady-state node throughput (fitting workers ÷ mean per-cell time) are more informative.
 
-- With `parallel_chains=1`, a second CPU per rank mostly serves the rank's Python process; the four chains still run one after another.
-- With `parallel_chains=2`, mean per-cell time was 327 seconds with four workers active, versus 487 seconds for an isolated one-cell, 2-CPU, `parallel_chains=1` fit (`34659679`) and 584 seconds with eight such workers active (`34660583`). The `34660583`/`34660584` comparison also differs in the number of concurrently active workers, so the roughly 1.5× gain is an estimate, not a controlled result.
+Layout tests completed on 2026-11-05 (all exit code 0, one whole 40-CPU node each):
 
-**Provisional recommendation (not yet tested): one node, 20 ranks × 2 CPUs/task, `PARALLEL_CHAINS=2`.** This uses all 40 allocated CPUs: rank 0 writes the NetCDF and 19 workers each run two chains at a time. At the measured 327 seconds per cell it would fit about 210 cells/hour, or the full 312-cell grid in about 1.5 hours; expect it to be somewhat slower because 19 workers will contend for shared node resources (memory bandwidth, Work I/O). Memory should fit: rank 0 writes each cell to the NetCDF as it arrives rather than holding the grid, and the observed peak was about 1.2 GB per task, or roughly 24 GB for 20 tasks on a 92 GB node. The alternative full-node layout is 10 ranks × 4 CPUs/task with `PARALLEL_CHAINS=4` (nine workers, all four chains concurrent).
+| Job | Layout | Cells | Mean (min–max) per-cell time (s) | Node throughput (cells/h) | Wall time (s) | Peak RSS/task (MiB) |
+|---|---|---:|---|---:|---:|---:|
+| `34665311` | 5 × 2 CPUs, `PARALLEL_CHAINS=1` | 16 | 552 (425–657) | 26 | 2,364 | 1,390 |
+| `34660584` | 5 × 2 CPUs, `PARALLEL_CHAINS=2` | 16 | 327 (242–383) | 44 | 1,411 | — |
+| `34665312` | 20 × 2 CPUs, `PARALLEL_CHAINS=2` | 32 | 462 (301–661) | 148 | 1,040 | 1,698 |
+| `34665313` | 10 × 4 CPUs, `PARALLEL_CHAINS=4` | 32 | 229 (166–325) | 142 | 1,060 | 1,387 |
 
-### Next tests
+- **Parallel chains matter.** In the controlled pair `34665311`/`34660584` (same allocation, only `PARALLEL_CHAINS` differs), two parallel chains cut mean per-cell time by 41% (552 → 327 s) and wall time by 40%. With `PARALLEL_CHAINS=1` the second CPU per rank is mostly idle.
+- **Fill the node.** Both full-node layouts fit the 32 cells in about 17.5 minutes, about 3.4 times the throughput of the best 16-cell partial-node layout.
+- **The two full-node layouts are effectively tied.** 20 × 2 has about 4% higher steady-state throughput, a single-run difference. Contention on the full node slows each 2-chain fit from 327 s (four workers) to 462 s (19 workers); 10 × 4 halves per-cell latency but runs only nine workers.
+- **Diagnostics did not depend on layout.** With the same seed, per-cell R-hat and ESS were identical across layouts. The worst 32-cell cell is flat ID 281 (R-hat 1.0104, minimum bulk ESS 653, minimum tail ESS 282), slightly above the common 1.01 threshold; review that cell, or use more draws, before relying on its full-grid results.
+- **Memory is not a constraint.** The peak was below 1.7 GiB per task, or under 34 GiB for 20 tasks on a 92 GB node; rank 0 writes each cell as it arrives.
 
-Run these before a full-grid production job. From the repository root on HERA:
+**Recommendation: one node, 20 ranks × 2 CPUs/task, `PARALLEL_CHAINS=2`.** 10 ranks × 4 CPUs/task with `PARALLEL_CHAINS=4` is an equally valid alternative. At about 145 cells/hour, the 312-cell grid should take roughly 2.2 hours, plus load imbalance from the static cell assignment (each of 19 workers gets 16 or 17 cells).
+
+### Next step: full-grid run
+
+Run the full grid with the recommended layout and the same chains, warmup, draws, and seed. Pass all 312 valid flat IDs explicitly (flat IDs 3–8 and 15–20 have no valid data), so `check_fit_status.py` still verifies every cell, and request a wall time with margin. From the repository root on HERA:
 
 ```bash
 T=experiments/hpc/hera_cpu_mpi_performance.sbatch.example
-CELLS32="0 10 21 31 42 52 62 73 83 94 104 115 125 135 146 156 167 177 188 198 208 219 229 240 250 261 271 281 292 302 313 323"
-
-# 1. Controlled check: identical to job 34660584 except parallel_chains=1.
-PARALLEL_CHAINS=1 sbatch -J perf-r5x2-pc1 --ntasks=5 --cpus-per-task=2 --time=01:30:00 "$T"
-
-# 2. Recommended full-node layout on the 32-cell set.
-PERF_CELL_INDICES="$CELLS32" PARALLEL_CHAINS=2 sbatch -J perf32-r20x2-pc2 --ntasks=20 --cpus-per-task=2 --time=01:00:00 "$T"
-
-# 3. Alternative full-node layout on the 32-cell set.
-PERF_CELL_INDICES="$CELLS32" PARALLEL_CHAINS=4 sbatch -J perf32-r10x4-pc4 --ntasks=10 --cpus-per-task=4 --time=01:00:00 "$T"
-```
-
-The 32-cell set is not balanced over 19 or 9 workers (each worker gets one or two, or three or four, cells), so compare tests 2 and 3 on mean per-cell `fit_seconds` from the job's `.err` log (`grep 'dlmmc.mpi cell' WORK_ROOT/dlmmc-hera-perf-JOBID.err`) as well as on wall time. Collect each finished job with `collect_run_record.py` as above. If test 1 confirms the parallel-chain gain and test 2 is at least as fast per allocated node as test 3, run the full grid with the 20 × 2 layout and the same chains, warmup, draws, and seed. Pass all 312 valid flat IDs explicitly (flat IDs 3–8 and 15–20 have no valid data), so `check_fit_status.py` still verifies every cell, and request a wall time with margin:
-
-```bash
 ALL_VALID="$(python -c 'print(" ".join(str(i) for i in range(324) if not (3 <= i <= 8 or 15 <= i <= 20)))')"
-PERF_CELL_INDICES="$ALL_VALID" PARALLEL_CHAINS=2 sbatch -J full-r20x2-pc2 --ntasks=20 --cpus-per-task=2 --time=03:00:00 "$T"
+PERF_CELL_INDICES="$ALL_VALID" PARALLEL_CHAINS=2 sbatch -J full-r20x2-pc2 --ntasks=20 --cpus-per-task=2 --time=04:00:00 "$T"
 ```
 
-Full-grid output is about 16 GB on Work.
+Collect it with `collect_run_record.py` as above. Full-grid output is about 16 GB on Work.
 
 ## Decision Gate
 
