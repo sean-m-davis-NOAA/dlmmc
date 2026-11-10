@@ -92,12 +92,20 @@ def main() -> None:
     parser.add_argument('--warmup', type=int, default=1)
     parser.add_argument('--samples', type=int, default=2)
     parser.add_argument('--seed', type=int, default=1234)
-    parser.add_argument(
+    cells = parser.add_mutually_exclusive_group()
+    cells.add_argument(
         '--cell-indices',
         type=int,
         nargs='+',
         metavar='FLAT_INDEX',
         help='Fit only these row-major pressure/latitude indices; other cells are marked skipped.',
+    )
+    cells.add_argument(
+        '--max-cells',
+        type=int,
+        metavar='N',
+        help='Fit at most N cells: the first N (row-major order) not yet complete. '
+        'With --resume, repeated runs continue where the previous one stopped.',
     )
     parser.add_argument('--cache-dir', type=Path, help='Shared CmdStan cache directory for multi-node runs.')
     restart = parser.add_mutually_exclusive_group()
@@ -126,6 +134,8 @@ def main() -> None:
     )
     dry_run.add_argument('--time-limit', help='Requested Slurm --time (for example 4:00:00) to check.')
     args = parser.parse_args()
+    if args.max_cells is not None and args.max_cells < 1:
+        parser.error('--max-cells must be at least 1.')
     if args.dry_run and args.ranks is None:
         parser.error('--dry-run requires --ranks (or run inside a Slurm job that sets SLURM_NTASKS).')
 
@@ -156,6 +166,7 @@ def main() -> None:
                 safety_factor=args.safety_factor,
                 time_limit=args.time_limit,
                 resume_from=args.output if args.resume else None,
+                max_cells=args.max_cells,
             )
             print(format_grid_estimate(estimate))
             return
@@ -174,6 +185,7 @@ def main() -> None:
             cache_dir=args.cache_dir,
             overwrite=args.overwrite,
             resume=args.resume,
+            max_cells=args.max_cells,
         )
 
     if result is not None:
