@@ -141,6 +141,11 @@ def build_record(job_id: str, work_root: Path, configuration: str | None) -> tup
         return np.array([float(r[name]) if r[name] not in ("", "nan") else np.nan for r in cells])
 
     rhat, bulk, tail = column("max_rhat"), column("min_ess_bulk"), column("min_ess_tail")
+    divergences = column("divergences")
+    divergence_summary = (
+        f"total={int(np.nansum(divergences))};cells_with_divergences={int(np.sum(divergences > 0))}"
+        if np.isfinite(divergences).any() else ""
+    )
     fitted = status.get(1, 0)
     ntasks = int(meta["ntasks"])
     cell_ids = [int(c) for c in str(meta["cell_indices"]).split()]
@@ -185,7 +190,7 @@ def build_record(job_id: str, work_root: Path, configuration: str | None) -> tup
         "wall_seconds": wall,
         "cells_per_hour": f"{fitted / wall * 3600:.3f}" if wall else "",
         "fit_status_counts": ";".join(f"{k}:{v}" for k, v in sorted(status.items())),
-        "divergences": "",
+        "divergences": divergence_summary,
         "rhat_summary": _summary(rhat, "max"),
         "ess_bulk_summary": _summary(bulk, "min"),
         "ess_tail_summary": _summary(tail, "min"),
@@ -199,8 +204,8 @@ def build_record(job_id: str, work_root: Path, configuration: str | None) -> tup
         "output_path": str(output),
         "tmpdir": meta.get("tmpdir", ""),
         "notes": (
-            f"job_elapsed_s={job['ElapsedRaw']}; no_progress={meta.get('no_progress', '0')}; "
-            "divergences not stored in grid NetCDF"
+            f"job_elapsed_s={job['ElapsedRaw']}; no_progress={meta.get('no_progress', '0')}"
+            + ("" if divergence_summary else "; divergences not stored in grid NetCDF")
         ),
     }
     return record, cells

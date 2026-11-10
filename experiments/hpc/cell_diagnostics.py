@@ -3,7 +3,8 @@
 Rows follow ``hera_cpu_mpi_cell_diagnostics.csv.example``. Diagnostics are
 computed by ArviZ from the stored posterior draws over every scalar and
 regressor parameter, so the worst-mixing parameter in each cell is reported.
-Divergence counts are not stored in the NetCDF and are left blank.
+Divergence counts come from the per-cell ``divergent_transitions`` variable;
+grid files written before dlmmc stored it leave the column blank.
 """
 
 from __future__ import annotations
@@ -69,9 +70,14 @@ def cell_diagnostics(ds: xr.Dataset, run_id: str) -> list[dict[str, object]]:
     min_bulk = np.min(bulk_parts, axis=0)
     min_tail = np.min(tail_parts, axis=0)
     nlat = ds.sizes["latitude"]
-    note = "divergences not stored in grid NetCDF"
+    if "divergent_transitions" in ds:
+        divergences = ds["divergent_transitions"].transpose(*GRID_DIMS).values
+        note = ""
+    else:
+        divergences = None
+        note = "divergences not stored in grid NetCDF"
     if nchains < 2:
-        note += "; R-hat requires at least 2 chains"
+        note = "; ".join(filter(None, [note, "R-hat requires at least 2 chains"]))
 
     rows = []
     for p, l in zip(*np.nonzero(fitted)):
@@ -82,7 +88,8 @@ def cell_diagnostics(ds: xr.Dataset, run_id: str) -> list[dict[str, object]]:
                 "pressure_index": int(p),
                 "latitude_index": int(l),
                 "fit_status": 1,
-                "divergences": "",
+                "divergences": "" if divergences is None or not np.isfinite(divergences[p, l])
+                else int(divergences[p, l]),
                 "max_rhat": "" if nchains < 2 else f"{max_rhat[p, l]:.4f}",
                 "min_ess_bulk": f"{min_bulk[p, l]:.1f}",
                 "min_ess_tail": f"{min_tail[p, l]:.1f}",

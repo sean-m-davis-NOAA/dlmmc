@@ -44,3 +44,17 @@ def test_single_chain_leaves_rhat_blank():
     rows = cell_diagnostics.cell_diagnostics(_dataset(nchains=1), "run")
 
     assert all(r["max_rhat"] == "" for r in rows)
+
+
+def test_divergences_are_read_when_stored():
+    ds = _dataset()
+    assert all(r["divergences"] == "" for r in cell_diagnostics.cell_diagnostics(ds, "run"))
+
+    counts = np.full((2, 3), np.nan)
+    counts[0, 1], counts[1, 2] = 0, 7
+    ds["divergent_transitions"] = (("pressure", "latitude"), counts)
+    rows = cell_diagnostics.cell_diagnostics(ds, "run")
+
+    assert [r["divergences"] for r in rows] == [0, 7]
+    assert "divergent_transitions" not in rows[0]["diagnostic_source"]
+    assert rows[0]["notes"] == ""
