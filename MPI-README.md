@@ -22,6 +22,40 @@ The output is created as a new file; by default, an existing output path is not 
 
 The defaults are one chain, one warmup iteration, and two sampling draws per cell. They are only a pipeline smoke test and do not produce converged posterior estimates. For longer runs, set the `--chains`, `--warmup`, and `--samples` options. Choose `--output` to set a different output path. Existing output is not overwritten unless `--overwrite` is specified. Short smoke-test chains can emit Stan warnings; check `fit_status` and the output file rather than treating convergence warnings as a pipeline failure.
 
+### Output variables and precision
+
+Edit `OUTPUT_VARIABLES` near the top of `dlm_lat_alt_mpi_run.py` to choose which
+posterior variables are saved and their precision. Remove an entry to omit that
+variable; use `"single"` for float32 or `"double"` for float64. For example:
+
+```python
+OUTPUT_VARIABLES = {
+    "trend": "single",
+    "sigma_trend": "double",
+    "sigma_AR": "double",
+    "rhoAR1": "double",
+    "sigma_seas": "double",
+    "beta": "single",
+}
+```
+
+This example omits `slope`, `ar`, and `seasonal`. The supplied configuration saves
+every posterior variable in single precision (float32), which halves the
+uncompressed storage per value compared with double precision; compressed file
+sizes vary. Earlier versions saved all posterior variables as float64; set entries
+to `"double"` to reproduce that. Coordinates keep their existing precision
+(including double-precision timestamps), and `fit_status` remains an integer.
+
+Direct API callers can pass the same mapping as
+`fit_grid_mpi(..., output_variables=...)`. `None` (the API default) saves all
+posterior variables in single precision; `{}` saves only coordinates and
+`fit_status`. Unknown names or precisions fail during setup, before an existing
+file is replaced. Only selected variables are transferred to rank 0, converted
+to the requested precision. Sampling itself runs in double precision and is
+unchanged; existing NetCDF files are not modified.
+
+### Checking output
+
 Verify that the output opens and inspect the grid dimensions and fit-status counts:
 
 ```bash
