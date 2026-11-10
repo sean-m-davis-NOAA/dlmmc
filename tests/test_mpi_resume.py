@@ -203,3 +203,68 @@ def test_runner_forwards_resume(monkeypatch, tmp_path):
 
     assert captured["resume"] is True
     assert captured["overwrite"] is False
+
+
+def test_max_cells_fits_grid_in_batches(single_rank_mpi, monkeypatch, tmp_path):
+    path = tmp_path / "grid.nc"
+    fitted = []
+    monkeypatch.setattr(
+        dlmmc_mpi, "fit", lambda series, **kwargs: fitted.append(float(series.values[0])) or _posterior(1)
+    )
+
+    _fit_grid(path, resume=True, max_cells=2).close()
+    assert fitted == [1.0, 2.0]
+    with xr.open_dataset(path) as partial:
+        np.testing.assert_array_equal(partial["fit_status"], [[1, 1, 0, 0]])
+
+    estimate = estimate_grid_run(_data(), ranks=3, model="noregs_ar1", resume_from=path, max_cells=2)
+    assert (estimate["fitted_cells"], estimate["completed_cells"], estimate["deferred_cells"]) == (1, 2, 0)
+
+    result = _fit_grid(path, resume=True, max_cells=2)
+    try:
+        assert fitted == [1.0, 2.0, 4.0]
+        np.testing.assert_array_equal(result["fit_status"], [[1, 1, 0, 1]])
+        assert "resumed: 2 cells complete, 1 to fit" in result.attrs["history"]
+    finally:
+        result.close()
+
+
+def test_estimate_reports_cells_deferred_by_max_cells():
+    estimate = estimate_grid_run(_data(), ranks=3, model="noregs_ar1", max_cells=1)
+
+    assert (estimate["fitted_cells"], estimate["deferred_cells"], estimate["skipped_cells"]) == (1, 2, 1)
+    assert "Cells to fit: 1 of 4 (2 left for later runs, 1 skipped" in format_grid_estimate(estimate)
+    with pytest.raises(ValueError, match="max_cells must be at least 1"):
+        estimate_grid_run(_data(), ranks=3, model="noregs_ar1", max_cells=0)
+
+
+def test_history_notes_cells_left_by_max_cells(single_rank_mpi, monkeypatch, tmp_path):
+    path = tmp_path / "grid.nc"
+    monkeypatch.setattr(dlmmc_mpi, "fit", lambda series, **kwargs: _posterior(1))
+    _fit_grid(path, max_cells=1).close()
+    result = _fit_grid(path, resume=True, max_cells=1)
+    try:
+        assert "resumed: 1 cells complete, 1 to fit (1 left for later runs)" in result.attrs["history"]
+    finally:
+        result.close()
+
+
+def test_runner_forwards_max_cells_and_rejects_cell_indices(monkeypatch, tmp_path):
+    from pathlib import Path
+
+    import dlm_lat_alt_mpi_run
+
+    captured = {}
+    monkeypatch.chdir(Path(__file__).resolve().parents[1])
+    monkeypatch.setattr(
+        dlm_lat_alt_mpi_run.dlmmc, "fit_grid_mpi", lambda data, **kwargs: captured.update(kwargs)
+    )
+    argv = ["dlm_lat_alt_mpi_run.py", "--output", str(tmp_path / "out.nc"), "--resume"]
+    monkeypatch.setattr(sys, "argv", [*argv, "--max-cells", "50"])
+    dlm_lat_alt_mpi_run.main()
+    assert captured["max_cells"] == 50
+
+    for extra in (["--max-cells", "0"], ["--max-cells", "5", "--cell-indices", "0"]):
+        monkeypatch.setattr(sys, "argv", [*argv, *extra])
+        with pytest.raises(SystemExit):
+            dlm_lat_alt_mpi_run.main()

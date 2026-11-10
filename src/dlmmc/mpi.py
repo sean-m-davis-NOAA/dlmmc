@@ -345,6 +345,7 @@ def estimate_grid_run(
     safety_factor: float = 1.25,
     time_limit: str | int | None = None,
     resume_from: str | os.PathLike[str] | None = None,
+    max_cells: int | None = None,
 ) -> dict[str, Any]:
     """Preview a ``fit_grid_mpi`` run without fitting or initializing MPI.
 
@@ -354,7 +355,9 @@ def estimate_grid_run(
     to rank 0 when ``ranks == 1``), and estimates the uncompressed output size.
     With ``resume_from`` naming an existing output file, cells already complete
     there are excluded (``completed_cells``), as in ``fit_grid_mpi(resume=True)``;
-    a missing file means a fresh run.
+    a missing file means a fresh run. With ``max_cells``, only the first
+    ``max_cells`` of those cells (in flat order) are counted, as in
+    ``fit_grid_mpi(max_cells=...)``; the rest are reported as ``deferred_cells``.
 
     The busiest worker determines the run time, so with ``seconds_per_cell`` the
     estimate is ``max cells per worker * seconds_per_cell * safety_factor``.
@@ -366,6 +369,8 @@ def estimate_grid_run(
     """
     if ranks < 1:
         raise ValueError("ranks must be at least 1.")
+    if max_cells is not None and max_cells < 1:
+        raise ValueError("max_cells must be at least 1.")
     if seconds_per_cell is not None and seconds_per_cell <= 0:
         raise ValueError("seconds_per_cell must be positive.")
     if safety_factor < 1:
@@ -386,8 +391,10 @@ def estimate_grid_run(
         completed = _read_completed_cells(Path(resume_from).expanduser(), selected_grid_dims)
         if completed.size != has_data.size:
             raise ValueError(f"{resume_from} has {completed.size} cells but data has {has_data.size}.")
-    fitted = has_data & ~completed
-    flat_ids = np.flatnonzero(fitted)
+    remaining = np.flatnonzero(has_data & ~completed)
+    flat_ids = remaining[:max_cells]
+    fitted = np.zeros(has_data.size, dtype=bool)
+    fitted[flat_ids] = True
     with np.errstate(invalid="ignore"):
         constant = fitted & (np.nanmax(np.where(np.isfinite(values), values, -np.inf), axis=0)
                              == np.nanmin(np.where(np.isfinite(values), values, np.inf), axis=0))
@@ -407,6 +414,7 @@ def estimate_grid_run(
         "grid_cells": int(fitted.size),
         "fitted_cells": int(flat_ids.size),
         "completed_cells": int(completed.sum()),
+        "deferred_cells": int(remaining.size - flat_ids.size),
         "skipped_cells": int(np.sum(~has_data & ~completed)),
         "ranks": ranks,
         "fitting_workers": workers,
@@ -437,6 +445,7 @@ def format_grid_estimate(estimate: Mapping[str, Any]) -> str:
     lines = [
         f"Cells to fit: {estimate['fitted_cells']} of {estimate['grid_cells']} ("
         + (f"{estimate['completed_cells']} already complete, " if estimate.get("completed_cells") else "")
+        + (f"{estimate['deferred_cells']} left for later runs, " if estimate.get("deferred_cells") else "")
         + f"{estimate['skipped_cells']} skipped: no finite data or not selected)",
         f"Ranks: {estimate['ranks']} ({estimate['fitting_workers']} fitting worker"
         f"{'s' if estimate['fitting_workers'] != 1 else ''}"
@@ -482,6 +491,7 @@ def fit_grid_mpi(
     posterior_means: bool = True,
     overwrite: bool = False,
     resume: bool = False,
+    max_cells: int | None = None,
     **fit_options: Any,
 ) -> xr.Dataset | None:
     """Fit a time series at each grid cell and stream results to one NetCDF file.
@@ -505,6 +515,11 @@ def fit_grid_mpi(
     run starts, so the same command can be used for every submission. Results
     are written one cell at a time, so an interrupted run loses only the cells
     in progress.
+
+    ``max_cells`` limits this run to the first ``max_cells`` cells (in flat
+    order) that still need fitting; the rest stay unfitted (``fit_status`` 0).
+    Combined with ``resume=True``, repeated runs work through the grid in
+    fixed-size batches.
 
     Cells with at least one finite value that still need fitting are dealt
     round-robin, in flat (row-major) order, to ranks ``1..N-1``.
@@ -592,6 +607,8 @@ def fit_grid_mpi(
             )
             if overwrite and resume:
                 raise ValueError("Set only one of overwrite=True and resume=True.")
+            if max_cells is not None and max_cells < 1:
+                raise ValueError("max_cells must be at least 1.")
             mean_schema = _mean_schema(_posterior_dims(selected_grid_dims, spec)) if posterior_means else {}
             completed = np.zeros(cell_count, dtype=bool)
             resuming = resume and output_path.exists()
@@ -607,7 +624,8 @@ def fit_grid_mpi(
                 )
                 completed = _read_completed_cells(output_path, selected_grid_dims)
             has_data = np.isfinite(data.to_numpy().reshape(data.sizes["time"], -1)).any(axis=0)
-            pending = np.flatnonzero(has_data & ~completed)
+            remaining = np.flatnonzero(has_data & ~completed)
+            pending = remaining[:max_cells]
             _get_compiled_model(model_name, spec, fit_options.get("cache_dir"))
             if resuming:
                 import netCDF4
@@ -616,6 +634,7 @@ def fit_grid_mpi(
                     entry = (
                         f"{datetime.now(timezone.utc).isoformat(timespec='seconds')} resumed: "
                         f"{int(completed.sum())} cells complete, {pending.size} to fit"
+                        + (f" ({remaining.size - pending.size} left for later runs)" if pending.size < remaining.size else "")
                     )
                     history = getattr(output_file, "history", "")
                     output_file.history = f"{history}\n{entry}" if history else entry

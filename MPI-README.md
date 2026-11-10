@@ -20,7 +20,7 @@ The script calls `dlmmc.fit_grid_mpi()`. With multiple ranks, rank 0 creates and
 
 The output is created as a new file; by default, an existing output path is not overwritten. Use `--overwrite` to replace it, or `--resume` to continue it (see [Splitting a run across jobs](#splitting-a-run-across-jobs---resume)). The result is readable with xarray. `fit_status` is 1 for completed fits, 0 for skipped (or not yet fitted) cells, and -1 for cells where fitting raised an error.
 
-The defaults are one chain, one warmup iteration, and two sampling draws per cell. They are only a pipeline smoke test and do not produce converged posterior estimates. For longer runs, set the `--chains`, `--warmup`, and `--samples` options. Use `--cell-indices` to fit only some cells (row-major flat IDs). Choose `--output` to set a different output path. Existing output is not overwritten unless `--overwrite` is specified. Short smoke-test chains can emit Stan warnings; check `fit_status` and the output file rather than treating convergence warnings as a pipeline failure.
+The defaults are one chain, one warmup iteration, and two sampling draws per cell. They are only a pipeline smoke test and do not produce converged posterior estimates. For longer runs, set the `--chains`, `--warmup`, and `--samples` options. Use `--cell-indices` to fit only some cells (row-major flat IDs), or `--max-cells N` to fit only the first N cells not yet complete. Choose `--output` to set a different output path. Existing output is not overwritten unless `--overwrite` is specified. Short smoke-test chains can emit Stan warnings; check `fit_status` and the output file rather than treating convergence warnings as a pipeline failure.
 
 ### Previewing a run (`--dry-run`)
 
@@ -84,16 +84,32 @@ mpirun -np 4 python dlm_lat_alt_mpi_run.py --resume --chains 4 --warmup 500 --sa
 ```
 
 `--cell-indices` takes row-major flat IDs (`pressure_index * 12 + latitude_index`)
-and marks every other cell as skipped for that run. It is not one of the settings
-that must match, so it can differ between runs. An interrupted run (Ctrl-C, or a
-batch job that hits its time limit) resumes the same way: repeat the second
-command. On a batch scheduler, put `--resume` in the job script and submit the
+and marks every other cell as skipped for that run.
+
+Alternatively, give only a cell count with `--max-cells N`: each run fits the
+first N cells (in flat order) that are not yet complete, starting from the
+beginning of the grid when the file is new. Repeating the same command works
+through the grid in batches of N; once every cell is done, a further run fits
+nothing. `--max-cells` and `--cell-indices` cannot be combined. For example, the
+same 324-cell grid in two equal runs:
+
+```bash
+mpirun -np 4 python dlm_lat_alt_mpi_run.py --resume --max-cells 162 --chains 4 --warmup 500 --samples 500
+mpirun -np 4 python dlm_lat_alt_mpi_run.py --resume --max-cells 162 --chains 4 --warmup 500 --samples 500
+```
+
+Neither option is one of the settings that must match, so they can differ between
+runs. With `--dry-run`, they are applied the same way, and the report shows how
+many cells are left for later runs.
+
+An interrupted run (Ctrl-C, or a batch job that hits its time limit) resumes the
+same way: repeat its command with `--resume`. On a batch scheduler, put `--resume` in the job script and submit the
 same script repeatedly. With Slurm, `--dependency=afterany:JOBID` starts each job
 after the previous one ends, even if that job ran out of time.
 
 A job that starts after the grid is complete fits nothing and exits after
-setup. From Python, use `fit_grid_mpi(..., resume=True)` and
-`estimate_grid_run(..., resume_from=path)`.
+setup. From Python, use `fit_grid_mpi(..., resume=True, max_cells=N)` and
+`estimate_grid_run(..., resume_from=path, max_cells=N)`.
 
 ### Output variables and precision
 
