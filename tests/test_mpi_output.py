@@ -81,7 +81,7 @@ def test_output_selection_precision_and_status(single_rank_mpi, monkeypatch, tmp
         name: "single" for name in posterior.data_vars
     }
     try:
-        assert set(result.data_vars) == {*expected, "fit_status"}
+        assert set(result.data_vars) == {*expected, "fit_status", "divergent_transitions"}
         np.testing.assert_array_equal(result["fit_status"], [[1, 0, -1]])
         for name, precision in expected.items():
             dtype = np.dtype("float32" if precision == "single" else "float64")
@@ -242,3 +242,60 @@ def test_runner_forwards_output_variables(monkeypatch, tmp_path):
     dlm_lat_alt_mpi_run.main()
 
     assert captured["output_variables"] is dlm_lat_alt_mpi_run.OUTPUT_VARIABLES
+
+
+def test_grid_records_divergences_and_run_metadata(single_rank_mpi, monkeypatch, tmp_path):
+    import netCDF4
+
+    def fake_fit(series, **kwargs):
+        if series.values[0] == 2:
+            raise RuntimeError("sampler failed")
+        posterior = xr.Dataset({"sigma_AR": (("chain", "draw"), np.ones((2, 3)))})
+        posterior.attrs["divergent_transitions"] = int(series.values[0] * 10)
+        return posterior
+
+    monkeypatch.setattr(dlmmc_mpi, "fit", fake_fit)
+    values = np.ones((6, 1, 4))
+    values[:, 0, 1] = np.nan
+    values[:, 0, 2] = 2
+    values[:, 0, 3] = 3
+    data = xr.DataArray(values, dims=("time", "pressure", "latitude"))
+    path = tmp_path / "grid.nc"
+    result = dlmmc_mpi.fit_grid_mpi(
+        data,
+        path,
+        model="dynregs_ar1",
+        regressors=np.ones((6, 2)),
+        chains=2,
+        warmup=4,
+        samples=3,
+        seed=11,
+        sigma_reg_prior=[0.1, 0.2],
+        adapt_delta=0.9,
+        output_variables={"sigma_AR": "single"},
+    )
+    try:
+        np.testing.assert_array_equal(result["fit_status"], [[1, 0, -1, 1]])
+        np.testing.assert_array_equal(result["divergent_transitions"], [[10, np.nan, np.nan, 30]])
+        attrs = result.attrs
+        assert attrs["model"] == "dynregs_ar1"
+        assert (attrs["chains"], attrs["warmup"], attrs["samples_per_chain"], attrs["seed"]) == (2, 4, 3, 11)
+        assert attrs["adapt_delta"] == 0.9
+        np.testing.assert_allclose(attrs["prior_sigma_reg"], [0.1, 0.2])
+        assert attrs["prior_sigma_AR"] == 0.5
+        assert "writer" in attrs
+        assert "divergent" in result["divergent_transitions"].attrs["comment"]
+    finally:
+        result.close()
+    with netCDF4.Dataset(path) as output:
+        assert output["divergent_transitions"].dtype == np.dtype("int32")
+
+
+def test_invalid_prior_fails_before_compilation(single_rank_mpi, monkeypatch, tmp_path):
+    def unexpected_compile(*args, **kwargs):
+        pytest.fail("invalid priors must fail before model compilation")
+
+    monkeypatch.setattr(dlmmc_mpi, "_get_compiled_model", unexpected_compile)
+    data = xr.DataArray(np.ones((6, 1, 1)), dims=("time", "pressure", "latitude"))
+    with pytest.raises(RuntimeError, match="sigma_AR_prior"):
+        dlmmc_mpi.fit_grid_mpi(data, tmp_path / "grid.nc", model="noregs_ar1", sigma_AR_prior=-1.0)

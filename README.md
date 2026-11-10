@@ -177,6 +177,34 @@ with xr.open_dataset("data/BASIC_V1_2017_lotus_seascyc_gcsw2017_fac2.nc") as ds:
 
 The returned posterior is an xarray Dataset with `chain`, `draw`, and `time` coordinates. For regressors and plots, see `dlm_tutorial.ipynb`. For grid workloads, see `dlm_lat_alt_mpi_run.py` and [MPI-README.md](MPI-README.md).
 
+### Output metadata and sampler diagnostics
+
+The posterior's attributes, which `posterior.to_netcdf(...)` writes as NetCDF
+global attributes, record how the fit was run: `model`, `chains`, `warmup`,
+`samples_per_chain`, `sampling_interval`, `seed` (if set), `adapt_delta`,
+`max_treedepth`, and `thin` (if set), the resolved prior values (`prior_S`,
+`prior_sigma_trend`, `prior_sigma_AR`, and, when the model uses them,
+`prior_sigma_seas` and `prior_sigma_reg`), `dlmmc_version`, `cmdstan_version`,
+and `date_created`. Prior values are in the normalized units used inside the
+Stan models (series centered on its mean and divided by its range): `prior_S` is
+the prior variance of the initial state, and the others are half-normal prior
+scales for the corresponding standard deviations. MPI grid files carry the same
+global attributes.
+
+**Divergent transitions.** `divergent_transitions` is the number of post-warmup
+iterations, summed over all chains, that Stan flagged as *divergent*. Stan's NUTS
+sampler explores the posterior by simulating a trajectory in small steps. Where
+the posterior is sharply curved (for example, a narrow funnel), those steps
+become inaccurate and Stan flags the iteration as divergent. Divergences mean
+the sampler could not explore part of the posterior, so estimates may be biased
+even when R-hat and effective sample size (ESS) look acceptable. Zero is
+expected. Investigate any nonzero count before relying on the results; common
+remedies are increasing `adapt_delta` (for example, `adapt_delta=0.95`, which
+takes smaller steps), increasing warmup, or reconsidering the priors or model.
+Check divergences together with R-hat and ESS; none of them alone establishes
+convergence. MPI grid files store one `divergent_transitions` value per grid
+cell.
+
 ### Temporary storage
 
 Each fit removes its temporary Stan output after loading the posterior and

@@ -9,13 +9,14 @@ import shutil
 import tempfile
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import xarray as xr
-from cmdstanpy import CmdStanModel
+from cmdstanpy import CmdStanModel, cmdstan_version
 from platformdirs import user_cache_dir
 
 from . import _stan_models
@@ -36,6 +37,74 @@ _DEFAULT_PRIORS = {
     "sigma_AR_prior": 0.5,
     "sigma_reg_prior": 1e-4,
 }
+
+
+DIVERGENCE_COMMENT = (
+    "Number of post-warmup NUTS iterations, summed over all chains, flagged by Stan as "
+    "divergent transitions. Divergences occur where the sampler cannot accurately follow "
+    "strongly curved regions of the posterior, so draws may be biased even when R-hat "
+    "and ESS look acceptable. Zero is expected; investigate any nonzero count (for "
+    "example, increase adapt_delta or warmup) before relying on the results."
+)
+PRIOR_COMMENT = (
+    "prior_S is the prior variance of the initial Kalman-filter state; the other prior_* "
+    "attributes are half-normal prior scales for the corresponding standard deviations. "
+    "All are in the normalized units used inside the Stan model, where the series is "
+    "centered on its mean and divided by its range."
+)
+_PRIOR_ARGUMENTS = ("S", "sigma_trend_prior", "sigma_seas_prior", "sigma_AR_prior", "sigma_reg_prior")
+_RECORDED_SAMPLER_OPTIONS = ("adapt_delta", "max_treedepth", "thin")
+
+
+def _package_version() -> str:
+    try:
+        from importlib.metadata import version
+
+        return version("dlmmc")
+    except Exception:
+        return "unknown"
+
+
+def _run_metadata(
+    model_name: str,
+    prior_values: Mapping[str, Any],
+    *,
+    chains: int,
+    warmup: int,
+    samples: int,
+    seed: int | None,
+    sampling: str | float,
+    sampler_options: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Return NetCDF-compatible attributes describing a fit configuration."""
+    attrs: dict[str, Any] = {
+        "model": model_name,
+        "backend": "cmdstanpy",
+        "chains": chains,
+        "warmup": warmup,
+        "samples_per_chain": samples,
+        "sampling_interval": _sampling_interval(sampling),
+    }
+    if seed is not None:
+        attrs["seed"] = int(seed)
+    for name in _RECORDED_SAMPLER_OPTIONS:
+        value = sampler_options.get(name)
+        if value is not None:
+            attrs[name] = value
+    for name, value in sorted(prior_values.items()):
+        attrs["prior_" + name.removesuffix("_prior")] = (
+            np.asarray(value, dtype=float) if isinstance(value, list) else value
+        )
+    attrs["prior_comment"] = PRIOR_COMMENT
+    attrs["dlmmc_version"] = _package_version()
+    try:
+        stan_version = cmdstan_version()
+    except Exception:
+        stan_version = None
+    if stan_version is not None:
+        attrs["cmdstan_version"] = ".".join(str(part) for part in stan_version)
+    attrs["date_created"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return attrs
 
 
 def _resolve_model(model: str) -> tuple[str, dict[str, Any]]:
@@ -268,6 +337,10 @@ def fit(
     ``output_dir`` through sampler options to keep output in a directory you
     manage; that directory is never removed by dlmmc. Set ``TMPDIR`` before
     starting Python to choose temporary storage.
+
+    The returned Dataset's attributes record the model, sampler settings,
+    resolved prior values (``prior_*``), software versions, and the number of
+    post-warmup ``divergent_transitions``; they are kept by ``to_netcdf()``.
     """
     model_name, spec = _resolve_model(model)
     time = _time_coordinate(data)
@@ -391,15 +464,18 @@ def fit(
         if regressor_values is not None:
             coords["regressor"] = regressor_names
         posterior = xr.Dataset(posterior_vars, coords=coords)
-        posterior.attrs.update(
-            model=model_name,
-            backend="cmdstanpy",
+        posterior.attrs.update(_run_metadata(
+            model_name,
+            prior_values,
             chains=chains,
             warmup=warmup,
-            samples_per_chain=samples,
-            sampling_interval=_sampling_interval(sampling),
-        )
+            samples=samples,
+            seed=seed,
+            sampling=sampling,
+            sampler_options=sampler_options,
+        ))
         divergences = fit_result.method_variables().get("divergent__")
         if divergences is not None:
             posterior.attrs["divergent_transitions"] = int(np.asarray(divergences).sum())
+            posterior.attrs["divergent_transitions_comment"] = DIVERGENCE_COMMENT
     return posterior

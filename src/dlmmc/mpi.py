@@ -10,7 +10,17 @@ from typing import Any, Literal
 import numpy as np
 import xarray as xr
 
-from .api import _MODEL_SPECS, _get_compiled_model, _prepare_regressors, _resolve_model, fit
+from .api import (
+    _MODEL_SPECS,
+    _PRIOR_ARGUMENTS,
+    DIVERGENCE_COMMENT,
+    _get_compiled_model,
+    _prepare_regressors,
+    _resolve_model,
+    _resolve_priors,
+    _run_metadata,
+    fit,
+)
 
 
 def _regressor_count(regressors: Any) -> int:
@@ -80,7 +90,7 @@ def _create_result_file(
     grid_dims: tuple[str, ...],
     nreg: int,
     regressor_names: list[str],
-    model_name: str,
+    metadata: Mapping[str, Any],
     output_schema: Mapping[str, tuple[str, tuple[str, ...]]],
     chains: int,
     samples: int,
@@ -135,8 +145,11 @@ def _create_result_file(
         status[:] = 0
         status.flag_values = np.array([-1, 0, 1], dtype=np.int8)
         status.flag_meanings = "failed skipped complete"
-        output.model = model_name
-        output.backend = "cmdstanpy"
+        divergences = output.createVariable("divergent_transitions", "i4", grid_dims, fill_value=-1)
+        divergences.long_name = "number of divergent post-warmup transitions"
+        divergences.units = "1"
+        divergences.comment = DIVERGENCE_COMMENT + " Missing for skipped or failed cells."
+        output.setncatts(dict(metadata))
         output.writer = "MPI rank 0; worker fits streamed as they complete"
 
 
@@ -183,8 +196,13 @@ def fit_grid_mpi(
 
     ``output_variables`` maps posterior variable names to ``"single"`` (float32)
     or ``"double"`` (float64). Only listed posterior variables are saved; ``None``
-    saves all in single precision, and an empty mapping saves only coordinates
-    and ``fit_status``. This affects storage and MPI transfers, not sampling.
+    saves all in single precision, and an empty mapping saves only coordinates,
+    ``fit_status``, and ``divergent_transitions``. This affects storage and MPI transfers, not sampling.
+
+    The file always contains ``fit_status`` and a per-cell
+    ``divergent_transitions`` count, and its global attributes record the model,
+    sampler settings, resolved priors, and software versions. Invalid priors are
+    rejected during setup, before any fits run.
     """
     try:
         from mpi4py import MPI
@@ -226,6 +244,7 @@ def fit_grid_mpi(
     output_path = Path(output).expanduser().resolve()
     cell_count = int(np.prod([data.sizes[dim] for dim in selected_grid_dims]))
     chains = int(fit_options.get("chains", 4))
+    warmup = int(fit_options.get("warmup", 1000))
     samples = int(fit_options.get("samples", 1000))
     setup_error = None
     output_schema: dict[str, tuple[str, tuple[str, ...]]] = {}
@@ -233,6 +252,22 @@ def fit_grid_mpi(
     if rank == 0:
         try:
             output_schema = _output_schema(selected_grid_dims, spec, output_variables)
+            prior_values = _resolve_priors(
+                spec,
+                nreg,
+                fit_options.get("priors"),
+                {name: fit_options.get(name) for name in _PRIOR_ARGUMENTS},
+            )
+            metadata = _run_metadata(
+                model_name,
+                prior_values,
+                chains=chains,
+                warmup=warmup,
+                samples=samples,
+                seed=fit_options.get("seed"),
+                sampling=fit_options.get("sampling", "monthly"),
+                sampler_options=fit_options,
+            )
             if output_path.exists() and not overwrite:
                 raise FileExistsError(f"Output already exists: {output_path}; set overwrite=True to replace it.")
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -241,7 +276,7 @@ def fit_grid_mpi(
             _get_compiled_model(model_name, spec, fit_options.get("cache_dir"))
             _create_result_file(
                 output_path, data, selected_grid_dims, nreg, regressor_names,
-                model_name, output_schema, chains, samples,
+                metadata, output_schema, chains, samples,
             )
         except Exception as exc:
             setup_error = str(exc)
@@ -280,10 +315,13 @@ def fit_grid_mpi(
                 uncertainty=cell_uncertainty,
                 **fit_options,
             )
-            return cell_index, {
+            payload = {
                 name: posterior[name].to_numpy().astype(dtype, copy=False)
                 for name, (dtype, _) in output_schema.items()
-            }, None
+            }
+            if "divergent_transitions" in posterior.attrs:
+                payload["divergent_transitions"] = np.int32(posterior.attrs["divergent_transitions"])
+            return cell_index, payload, None
         except Exception as exc:
             return cell_index, None, str(exc)
 
