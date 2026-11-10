@@ -189,7 +189,10 @@ and `date_created`. Prior values are in the normalized units used inside the
 Stan models (series centered on its mean and divided by its range): `prior_S` is
 the prior variance of the initial state, and the others are half-normal prior
 scales for the corresponding standard deviations. MPI grid files carry the same
-global attributes.
+global attributes, plus per-cell posterior means of the non-time-varying
+parameters (see [MPI-README.md](MPI-README.md#output-variables-and-precision)).
+For a single fit, compute summaries directly from the draws, for example
+`posterior["sigma_AR"].mean()`; they are not duplicated as attributes.
 
 **Divergent transitions.** `divergent_transitions` is the number of post-warmup
 iterations, summed over all chains, that Stan flagged as *divergent*. Stan's NUTS

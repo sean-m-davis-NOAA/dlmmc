@@ -57,7 +57,16 @@ unchanged; existing NetCDF files are not modified.
 Every grid file also contains `fit_status` and an integer `divergent_transitions`
 variable over the grid dimensions (missing for skipped or failed cells), plus
 global attributes describing the model, sampler settings, priors, and software
-versions. See [Output metadata and sampler diagnostics](README.md#output-metadata-and-sampler-diagnostics)
+versions.
+
+By default, each non-time-varying parameter also gets a per-cell posterior mean,
+named `<name>_mean` (for example `sigma_AR_mean`, `rhoAR1_mean`, and, for static
+regressor models, `beta_mean` with a `regressor` dimension). Means are stored in
+double precision, are computed from the full-precision draws, and are written
+even when that parameter's draws are omitted from `OUTPUT_VARIABLES`, so you can
+drop large draw arrays and keep a compact summary. Time-varying variables
+(`trend`, `slope`, `ar`, `seasonal`, dynamic `beta`) do not get means. Pass
+`posterior_means=False` to `fit_grid_mpi()` to omit them. See [Output metadata and sampler diagnostics](README.md#output-metadata-and-sampler-diagnostics)
 for what these mean and how to interpret divergences.
 
 ### Checking output

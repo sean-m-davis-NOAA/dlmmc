@@ -40,11 +40,7 @@ def _coordinate_values(data: xr.DataArray, dim: str) -> np.ndarray:
     return np.arange(data.sizes[dim])
 
 
-def _output_schema(
-    grid_dims: tuple[str, ...],
-    spec: Mapping[str, Any],
-    output_variables: Mapping[str, Literal["single", "double"]] | None,
-) -> dict[str, tuple[str, tuple[str, ...]]]:
+def _posterior_dims(grid_dims: tuple[str, ...], spec: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
     scalar_dims = ("chain", "draw") + grid_dims
     time_dims = ("chain", "draw", "time") + grid_dims
     variables = {
@@ -66,7 +62,24 @@ def _output_schema(
             variables["sigma_reg"] = ("chain", "draw", "regressor") + grid_dims
         else:
             variables["beta"] = ("chain", "draw", "regressor") + grid_dims
+    return variables
 
+
+def _mean_schema(variables: Mapping[str, tuple[str, ...]]) -> dict[str, tuple[str, tuple[str, ...]]]:
+    """Map each non-time-varying parameter to its per-cell posterior-mean variable."""
+    return {
+        f"{name}_mean": (name, tuple(dim for dim in dims if dim not in ("chain", "draw")))
+        for name, dims in variables.items()
+        if "time" not in dims
+    }
+
+
+def _output_schema(
+    grid_dims: tuple[str, ...],
+    spec: Mapping[str, Any],
+    output_variables: Mapping[str, Literal["single", "double"]] | None,
+) -> dict[str, tuple[str, tuple[str, ...]]]:
+    variables = _posterior_dims(grid_dims, spec)
     if output_variables is None:
         return {name: ("f4", dims) for name, dims in variables.items()}
     if not isinstance(output_variables, Mapping):
@@ -92,6 +105,7 @@ def _create_result_file(
     regressor_names: list[str],
     metadata: Mapping[str, Any],
     output_schema: Mapping[str, tuple[str, tuple[str, ...]]],
+    mean_schema: Mapping[str, tuple[str, tuple[str, ...]]],
     chains: int,
     samples: int,
 ) -> None:
@@ -141,6 +155,14 @@ def _create_result_file(
 
         for name, (dtype, dims) in output_schema.items():
             output.createVariable(name, dtype, dims, zlib=True, fill_value=np.nan)
+        for name, (source, dims) in mean_schema.items():
+            mean = output.createVariable(name, "f8", dims, zlib=True, fill_value=np.nan)
+            mean.long_name = f"posterior mean of {source}"
+            mean.comment = (
+                f"Mean of all post-warmup draws of {source} over every chain, computed from "
+                "the full-precision draws before any output precision reduction. Missing "
+                "for skipped or failed cells."
+            )
         status = output.createVariable("fit_status", "i1", grid_dims)
         status[:] = 0
         status.flag_values = np.array([-1, 0, 1], dtype=np.int8)
@@ -179,6 +201,7 @@ def fit_grid_mpi(
     model: str = "vanilla_ar1",
     grid_dims: Sequence[str] | None = None,
     output_variables: Mapping[str, Literal["single", "double"]] | None = None,
+    posterior_means: bool = True,
     overwrite: bool = False,
     **fit_options: Any,
 ) -> xr.Dataset | None:
@@ -197,7 +220,14 @@ def fit_grid_mpi(
     ``output_variables`` maps posterior variable names to ``"single"`` (float32)
     or ``"double"`` (float64). Only listed posterior variables are saved; ``None``
     saves all in single precision, and an empty mapping saves only coordinates,
-    ``fit_status``, and ``divergent_transitions``. This affects storage and MPI transfers, not sampling.
+    ``fit_status``, and ``divergent_transitions``. This affects storage and MPI
+    transfers, not sampling.
+
+    With ``posterior_means=True`` (the default), each non-time-varying parameter
+    (for example ``sigma_AR``, ``rhoAR1``, or static ``beta``) also gets a
+    ``<name>_mean`` variable over the grid (plus ``regressor`` where applicable),
+    holding the double-precision posterior mean for each cell. Means are written
+    whether or not that parameter's draws are selected in ``output_variables``.
 
     The file always contains ``fit_status`` and a per-cell
     ``divergent_transitions`` count, and its global attributes record the model,
@@ -276,7 +306,9 @@ def fit_grid_mpi(
             _get_compiled_model(model_name, spec, fit_options.get("cache_dir"))
             _create_result_file(
                 output_path, data, selected_grid_dims, nreg, regressor_names,
-                metadata, output_schema, chains, samples,
+                metadata, output_schema,
+                _mean_schema(_posterior_dims(selected_grid_dims, spec)) if posterior_means else {},
+                chains, samples,
             )
         except Exception as exc:
             setup_error = str(exc)
@@ -284,6 +316,7 @@ def fit_grid_mpi(
     if setup_error:
         raise RuntimeError(f"Could not initialize grid fit: {setup_error}")
     output_schema = comm.bcast(output_schema, root=0)
+    mean_schema = _mean_schema(_posterior_dims(selected_grid_dims, spec)) if posterior_means else {}
     comm.Barrier()
 
     grid_shape = tuple(data.sizes[dim] for dim in selected_grid_dims)
@@ -319,6 +352,8 @@ def fit_grid_mpi(
                 name: posterior[name].to_numpy().astype(dtype, copy=False)
                 for name, (dtype, _) in output_schema.items()
             }
+            for name, (source, _) in mean_schema.items():
+                payload[name] = posterior[source].mean(("chain", "draw")).to_numpy().astype("f8")
             if "divergent_transitions" in posterior.attrs:
                 payload["divergent_transitions"] = np.int32(posterior.attrs["divergent_transitions"])
             return cell_index, payload, None
