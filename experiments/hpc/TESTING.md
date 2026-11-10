@@ -41,7 +41,7 @@ On 2026-11-04, HERA job `34633280` completed the two-cell smoke using three rank
 
 ## Performance Test Plan
 
-After the smoke succeeds, use fixed cell IDs, data, seeds, and sampling settings for all configurations. The source-grid example has 312 valid nonconstant cells. The performance template uses 16 IDs approximately spread across the grid: `0 22 43 65 86 108 129 151 172 194 215 237 258 280 301 323`. For a 32-cell workload, use `0 10 21 31 42 52 62 73 83 94 104 115 125 135 146 156 167 177 188 198 208 219 229 240 250 261 271 281 292 302 313 323`. Flat IDs are row-major over `(pressure, latitude)`. Both sets are balanced modulo eight: the current static assignment gives each of eight workers two or four cells respectively, and is also balanced for two or four workers. The runner masks unselected cells, which are written with skipped status `0`; the output remains the full grid.
+After the smoke succeeds, use fixed cell IDs, data, seeds, and sampling settings for all configurations. The source-grid example has 312 valid nonconstant cells. The performance template uses 16 IDs approximately spread across the grid: `0 22 43 65 86 108 129 151 172 194 215 237 258 280 301 323`. For a 32-cell workload, use `0 10 21 31 42 52 62 73 83 94 104 115 125 135 146 156 167 177 188 198 208 219 229 240 250 261 271 281 292 302 313 323`. Flat IDs are row-major over `(pressure, latitude)`. Both sets are balanced modulo eight: the flat-index modulo assignment used for these runs gave each of eight workers two or four cells respectively, and is also balanced for two or four workers. (dlmmc now deals the cells to fit round-robin, which gives the same counts for these sets.) The runner masks unselected cells, which are written with skipped status `0`; the output remains the full grid.
 
 1. Use [hera_cpu_fit_baseline.sbatch.example](hera_cpu_fit_baseline.sbatch.example) for a one-cell `dlmmc.fit()` baseline (flat ID 0 is pressure index 0, latitude index 0). Use the MPI performance template with one rank and `PERF_CELL_INDICES=0` for a matching one-cell `fit_grid_mpi()` baseline. The performance template's 16-cell, one-rank run then measures grid overhead separately.
 2. Measure the same 16-cell workload with Slurm task counts 3, 5, and 9 (rank 0 writer included), initially using one CPU per task and `--parallel-chains 1`. Keep chains, warmup, draws, seed, and cell IDs fixed.
@@ -168,7 +168,8 @@ Four cells had a worst-parameter R-hat above 1.01: flat IDs 132 (1.0174), 90 (1.
 - The CmdStanPy/MPI path works on HERA with Intel MPI and `srun --mpi=pmi2`, single- and multi-node, with rank 0 as the sole writer.
 - Use one whole node as 20 ranks × 2 CPUs with `--parallel-chains` equal to the CPUs per task. 10 × 4 is practically tied; 40 × 1 is about 8% slower.
 - Memory and output writing are not bottlenecks at this grid size.
-- Run time is set by the busiest worker under the static `flat_index % (nranks - 1)` assignment, which `--dry-run` reports.
+- Run time is set by the busiest worker, which `--dry-run` reports. dlmmc deals the cells to fit round-robin to the workers; the runs above used the earlier `flat_index % (nranks - 1)` assignment, which gives the same or nearly the same counts.
+- Grids that need more than one job's wall time can be split across jobs with `--resume` (see HERA.md).
 
 ## Open items
 

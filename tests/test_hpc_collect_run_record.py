@@ -71,9 +71,10 @@ def test_fit_step_is_longest_numbered_step():
     assert collect.fit_step(rows)["JobID"] == "7.1"
 
 
-def test_worker_cell_counts_follow_static_assignment():
+def test_worker_cell_counts_follow_round_robin_assignment():
     cells = [0, 22, 43, 65, 86, 108, 129, 151, 172, 194, 215, 237, 258, 280, 301, 323]
 
     assert collect.worker_cell_counts(cells, 1) == [16]
     assert collect.worker_cell_counts(cells, 3) == [8, 8]
     assert collect.worker_cell_counts(cells, 9) == [2] * 8
+    assert collect.worker_cell_counts(cells, 6) == [4, 3, 3, 3, 3]

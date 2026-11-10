@@ -101,11 +101,16 @@ def fit_step(rows: list[dict[str, str]]) -> dict[str, str]:
 
 
 def worker_cell_counts(cell_ids: list[int], ntasks: int) -> list[int]:
-    """Cells per fitting rank under fit_grid_mpi's static flat-index assignment."""
+    """Cells per fitting rank when fit_grid_mpi deals the cells round-robin in flat order.
+
+    Runs made before resume support (commit d4b116f) assigned ``flat_index % workers``
+    instead; for the evenly spread cell sets in TESTING.md the counts are identical,
+    and for the 312-cell full grid they differ by at most one cell per worker.
+    """
     if ntasks == 1:
         return [len(cell_ids)]
     workers = ntasks - 1
-    counts = Counter(cell % workers for cell in cell_ids)
+    counts = Counter(position % workers for position in range(len(set(cell_ids))))
     return [counts.get(w, 0) for w in range(workers)]
 
 

@@ -130,6 +130,31 @@ backed up and is subject to purge; copy results you want to keep elsewhere. The
 model compiles on the first run (about a minute) and is cached in the
 `cmdstan-cache` directory afterwards.
 
+### Splitting a long grid across jobs
+
+If the dry run needs more time than you want to request (or than the QoS
+allows), queue several shorter jobs that continue the same output file. Each
+job fits only the cells that are not yet complete. A job killed at its time
+limit loses only the cells in progress, and the next job picks up the rest:
+
+```bash
+export OUTPUT_FILE=/path/on/work/dlmmc-grid.nc RESUME=1 CELL_INDICES
+JOB=$(sbatch --parsable --time=02:00:00 my-dlmmc-grid.sbatch)
+JOB=$(sbatch --parsable --time=02:00:00 --dependency=afterany:$JOB my-dlmmc-grid.sbatch)
+sbatch --time=02:00:00 --dependency=afterany:$JOB my-dlmmc-grid.sbatch
+```
+
+Keep every setting the same across the jobs. A resumed run refuses to start if
+the chains, warmup, samples, seed, priors, or output variables differ from the
+file's. Check how many cells remain, and whether one more job will finish them:
+
+```bash
+python dlm_lat_alt_mpi_run.py -n --resume --output "$OUTPUT_FILE" --ranks 20 --chains 4 \
+    --samples 500 --seconds-per-cell 570 --time-limit 2:00:00 --cell-indices $CELL_INDICES
+```
+
+A job that starts after the grid is finished exits after setup without fitting.
+
 ## 5. Check the results
 
 The job ends by running
@@ -162,5 +187,5 @@ It exits with an error if any cell failed (`fit_status` -1). Then:
 | `module` fails or loads nothing in a batch job | Initialize Lmod with `source "$(dirname "$LMOD_CMD")/../init/bash"`; `$MODULESHOME/init/bash` does not work here. |
 | `unbound variable` during `conda activate` in a `set -u` script | Activation hooks reference unset variables; wrap the call in `set +u` / `set -u`. |
 | MPI hangs or every rank reports rank 0 | Launch with `srun --mpi=pmi2`, and check that `mpi4py` was built with `mpiicx` against the loaded `impi` module. |
-| Job killed at the time limit | Rerun `--dry-run` with your measured `--seconds-per-cell`, raise `--time`, and resubmit. Treat the partial output as incomplete. |
+| Job killed at the time limit | Resubmit the same job with `RESUME=1` and the same `OUTPUT_FILE` to fit the remaining cells (see [Splitting a long grid across jobs](#splitting-a-long-grid-across-jobs)), or rerun `--dry-run` with your measured `--seconds-per-cell` and raise `--time`. |
 | `TMPDIR` fills up | Point `TMPDIR` at Work storage. Successful fits clean up after themselves; failed fits keep their CmdStan files for debugging. |

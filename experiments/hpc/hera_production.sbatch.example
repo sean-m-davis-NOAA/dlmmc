@@ -5,6 +5,8 @@
 # Pick --time with a dry run first (no MPI, safe on a login node):
 #   python dlm_lat_alt_mpi_run.py -n --ranks 20 --chains 4 --samples 500 \
 #       --seconds-per-cell 570 --time-limit 4:00:00
+# To split a long grid across jobs, give every job the same OUTPUT_FILE and RESUME=1,
+# and chain them with --dependency=afterany (see HERA.md).
 #SBATCH --job-name=dlmmc-grid
 #SBATCH --account=YOUR_ACCOUNT
 #SBATCH --partition=hera
@@ -33,6 +35,7 @@ SEED="${SEED:-20261104}"
 SECONDS_PER_CELL="${SECONDS_PER_CELL:-570}"         # measured on HERA for the settings above
 # Optional space-separated flat cell IDs; empty fits every cell with finite data.
 read -r -a CELL_ARGS <<< "${CELL_INDICES:+--cell-indices ${CELL_INDICES}}"
+RESUME="${RESUME:-0}"                               # 1: continue OUTPUT_FILE, fitting only unfinished cells
 # ---------------------------------------------------------------------------
 
 source "$(dirname "${LMOD_CMD}")/../init/bash"
@@ -48,10 +51,16 @@ RUN_DIR="${WORK_ROOT}/runs/${SLURM_JOB_ID}"
 CACHE_DIR="${WORK_ROOT}/cmdstan-cache"
 export TMPDIR="${WORK_ROOT}/tmp/${SLURM_JOB_ID}"
 mkdir -p "${RUN_DIR}" "${CACHE_DIR}" "${TMPDIR}"
-OUTPUT_FILE="${RUN_DIR}/dlmmc-grid.nc"
+if [[ "${RESUME}" == 1 && -z "${OUTPUT_FILE:-}" ]]; then
+    echo "RESUME=1 needs OUTPUT_FILE set to the same path for every job." >&2
+    exit 1
+fi
+OUTPUT_FILE="${OUTPUT_FILE:-${RUN_DIR}/dlmmc-grid.nc}"
+mkdir -p "$(dirname "${OUTPUT_FILE}")"
 
-FIT_ARGS=(--chains "${CHAINS}" --parallel-chains "${PARALLEL_CHAINS}"
+FIT_ARGS=(--output "${OUTPUT_FILE}" --chains "${CHAINS}" --parallel-chains "${PARALLEL_CHAINS}"
     --warmup "${WARMUP}" --samples "${SAMPLES}" --seed "${SEED}" "${CELL_ARGS[@]}")
+if [[ "${RESUME}" == 1 ]]; then FIT_ARGS+=(--resume); fi
 
 # Record the plan and check it against this job's time limit (no MPI).
 TIME_LIMIT="$(squeue -h -j "${SLURM_JOB_ID}" -o %l)"
@@ -61,7 +70,7 @@ python dlm_lat_alt_mpi_run.py "${FIT_ARGS[@]}" --dry-run \
 
 srun --mpi=pmi2 --ntasks="${SLURM_NTASKS}" --cpus-per-task="${SLURM_CPUS_PER_TASK}" \
     python -u dlm_lat_alt_mpi_run.py "${FIT_ARGS[@]}" \
-    --output "${OUTPUT_FILE}" --cache-dir "${CACHE_DIR}" --no-progress
+    --cache-dir "${CACHE_DIR}" --no-progress
 
 python experiments/hpc/summarize_grid_output.py "${OUTPUT_FILE}"
 rm -rf "${TMPDIR}"
