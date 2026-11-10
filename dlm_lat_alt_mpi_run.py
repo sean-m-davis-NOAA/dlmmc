@@ -74,7 +74,14 @@ def main() -> None:
     parser.add_argument('--samples', type=int, default=2)
     parser.add_argument('--seed', type=int, default=1234)
     parser.add_argument('--cache-dir', type=Path, help='Shared CmdStan cache directory for multi-node runs.')
-    parser.add_argument('--overwrite', action='store_true')
+    restart = parser.add_mutually_exclusive_group()
+    restart.add_argument('--overwrite', action='store_true', help='Replace an existing output file.')
+    restart.add_argument(
+        '--resume',
+        action='store_true',
+        help='Continue an existing output file, fitting only cells not yet complete '
+        '(starts a new file if none exists). Use the same settings as the original run.',
+    )
     dry_run = parser.add_argument_group(
         'dry run', 'Preview the cell assignment, output size, and run time without fitting or starting MPI.'
     )
@@ -116,6 +123,7 @@ def main() -> None:
                 seconds_per_cell=args.seconds_per_cell,
                 safety_factor=args.safety_factor,
                 time_limit=args.time_limit,
+                resume_from=args.output if args.resume else None,
             )
             print(format_grid_estimate(estimate))
             return
@@ -133,6 +141,7 @@ def main() -> None:
             seed=args.seed,
             cache_dir=args.cache_dir,
             overwrite=args.overwrite,
+            resume=args.resume,
         )
 
     if result is not None:

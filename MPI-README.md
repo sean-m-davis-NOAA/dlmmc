@@ -16,9 +16,9 @@ To capture all standard output and warnings in a file:
 mkdir -p results && mpirun -np 4 python dlm_lat_alt_mpi_run.py > results/mpi_run.log 2>&1
 ```
 
-The script calls `dlmmc.fit_grid_mpi()`. With multiple ranks, rank 0 creates and writes `results/BASIC_V1_2017.nc`; all other ranks fit assigned grid cells and send each result to rank 0 as soon as the fit completes. Rank 0 is reserved for writing, so four ranks means three fitting workers. This single-writer design avoids concurrent NetCDF/HDF5 writes and does not require parallel-I/O-enabled libraries. Running the script directly with one process also works, but performs the fits serially.
+The script calls `dlmmc.fit_grid_mpi()`. With multiple ranks, rank 0 creates and writes `results/BASIC_V1_2017.nc`; all other ranks fit assigned grid cells and send each result to rank 0 as soon as the fit completes. Rank 0 is reserved for writing, so four ranks means three fitting workers. Cells with data are dealt round-robin in flat (row-major) order to the workers, which fit their cells one after another. This single-writer design avoids concurrent NetCDF/HDF5 writes and does not require parallel-I/O-enabled libraries. Running the script directly with one process also works, but performs the fits serially.
 
-The output is created as a new file; by default, an existing output path is not overwritten. Use `--overwrite` to replace it; runs do not resume or append. The result is readable with xarray. `fit_status` is 1 for completed fits, 0 for skipped cells, and -1 for cells where fitting raised an error.
+The output is created as a new file; by default, an existing output path is not overwritten. Use `--overwrite` to replace it, or `--resume` to continue it (see [Splitting a run across jobs](#splitting-a-run-across-jobs---resume)). The result is readable with xarray. `fit_status` is 1 for completed fits, 0 for skipped (or not yet fitted) cells, and -1 for cells where fitting raised an error.
 
 The defaults are one chain, one warmup iteration, and two sampling draws per cell. They are only a pipeline smoke test and do not produce converged posterior estimates. For longer runs, set the `--chains`, `--warmup`, and `--samples` options. Choose `--output` to set a different output path. Existing output is not overwritten unless `--overwrite` is specified. Short smoke-test chains can emit Stan warnings; check `fit_status` and the output file rather than treating convergence warnings as a pipeline failure.
 
@@ -27,7 +27,7 @@ The defaults are one chain, one warmup iteration, and two sampling draws per cel
 Add `--dry-run` (or `-n`) to preview a run without fitting, compiling, or
 starting MPI, so it is safe on a login node. Give the total rank count (including
 the rank-0 writer) with `--ranks`; inside a Slurm job it defaults to
-`$SLURM_NTASKS`. The report lists how many cells will be fitted, how the static
+`$SLURM_NTASKS`. The report lists how many cells will be fitted, how the round-robin
 assignment spreads them across workers (the busiest worker sets the run time),
 cells with constant data, which usually fail or are meaningless, and the
 uncompressed output size.
@@ -49,6 +49,36 @@ node can make it longer. The estimate is the busiest worker's cell count times
 shorter than the estimate with margin. Model compilation and startup add time
 that the margin should cover. The same preview is available from Python as
 `dlmmc.estimate_grid_run()`.
+
+### Splitting a run across jobs (`--resume`)
+
+A grid that needs more time than one batch job allows can be fitted in several
+jobs. Add `--resume` to every submission, with the same output path and
+settings. Each job fits only the cells whose `fit_status` is not yet 1
+(complete), then exits. Failed cells (-1) are retried. If the output file does
+not exist yet, `--resume` starts a new run, so every job can use the same
+command. A job that hits its time limit loses only the cells in progress,
+because rank 0 writes each result to the file as it arrives.
+
+Before fitting, the existing file is checked against the requested run: model,
+grid, chains, warmup, samples, seed, sampler options, priors, and output
+variables and precision must all match. Otherwise the run stops with a message
+listing the differences. Each resume appends a line to the file's `history`
+attribute. With `--dry-run`, `--resume` counts only the remaining cells, so you
+can check whether one more job will finish the grid.
+
+On Slurm, queue the jobs up front with dependencies; a later job starts when the
+previous one ends, even if it ran out of time:
+
+```bash
+JOB=$(sbatch --parsable my-grid.sbatch)            # the batch script passes --resume
+JOB=$(sbatch --parsable --dependency=afterany:$JOB my-grid.sbatch)
+sbatch --dependency=afterany:$JOB my-grid.sbatch
+```
+
+A job that starts after the grid is complete fits nothing and exits after
+setup. From Python, use `fit_grid_mpi(..., resume=True)` and
+`estimate_grid_run(..., resume_from=path)`.
 
 ### Output variables and precision
 

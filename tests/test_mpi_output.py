@@ -174,7 +174,7 @@ def test_worker_filters_and_casts_payload_using_writer_schema(single_rank_mpi, m
 
     class WorkerComm(_SingleRankComm):
         def __init__(self):
-            self.broadcasts = iter([None, schema])
+            self.broadcasts = iter([None, schema, np.array([0])])
 
         def Get_rank(self):
             return 1
