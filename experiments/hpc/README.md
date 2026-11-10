@@ -116,6 +116,7 @@ All MPI measurements below used 4 chains, 500 warmup iterations, 500 retained dr
 | `34665311` | MPI, 5 ranks, 1 node, 2 CPUs/task, 1 parallel chain | 2,364 | 24.365 | 1.009 | 8.036 |
 | `34665312` | MPI, 20 ranks, 1 node, 2 CPUs/task, 2 parallel chains, 32 cells | 1,040 | 110.769 | 1.010 | 32.43 |
 | `34665313` | MPI, 10 ranks, 1 node, 4 CPUs/task, 4 parallel chains, 32 cells | 1,060 | 108.679 | 1.010 | 31.82 |
+| `34666833` | MPI, 40 ranks, 1 node, 1 CPU/task, 1 parallel chain, 39 cells | 1,371 | 102.407 | 1.010 | 30.88 |
 
 The multi-node job completed every selected cell. Turning off progress bars changed the one-cell wall time by less than 1% relative to job `34659293`, so it did not recover the one-CPU performance difference in this comparison. R-hat was computed for the MPI runs only; the plain `dlmmc.fit()` baseline recorded 0 divergences but did not retain draws for an R-hat calculation. These are exploratory measurements, not convergence guarantees.
 
@@ -129,22 +130,24 @@ A "cell" is one `(pressure, latitude)` grid point, i.e. one single-time-series D
 
 The 16-cell totals mostly reflect how many cells each worker received (2 with eight workers, 4 with four), so they cannot rank layouts on their own. Per-cell `fit_seconds` from the job's `.err` log (`grep 'dlmmc.mpi cell' WORK_ROOT/dlmmc-hera-perf-JOBID.err`) and steady-state node throughput (fitting workers ÷ mean per-cell time) are more informative.
 
-Layout tests completed on 2026-11-05 (all exit code 0, one whole 40-CPU node each):
+Layout tests completed on 2026-11-05 (all exit code 0, one whole 40-CPU node each). `Node throughput` below is the measured `cells/hour` from the run record: fitted cells divided by the grid-fit step's wall time. It is not calculated from mean per-cell sampler time.
 
-| Job | Layout | Cells | Mean (min–max) per-cell time (s) | Node throughput (cells/h) | Wall time (s) | Peak RSS/task (MiB) |
+| Job | Layout | Cells | Mean (min–max) per-cell fit time (s) | Node throughput (cells/h) | Wall time (s) | Peak RSS/task (MiB) |
 |---|---|---:|---|---:|---:|---:|
 | `34665311` | 5 × 2 CPUs, `PARALLEL_CHAINS=1` | 16 | 552 (425–657) | 26 | 2,364 | 1,390 |
 | `34660584` | 5 × 2 CPUs, `PARALLEL_CHAINS=2` | 16 | 327 (242–383) | 44 | 1,411 | — |
-| `34665312` | 20 × 2 CPUs, `PARALLEL_CHAINS=2` | 32 | 462 (301–661) | 148 | 1,040 | 1,698 |
-| `34665313` | 10 × 4 CPUs, `PARALLEL_CHAINS=4` | 32 | 229 (166–325) | 142 | 1,060 | 1,387 |
+| `34665312` | 20 × 2 CPUs, `PARALLEL_CHAINS=2` | 32 | 462 (301–661) | 111 | 1,040 | 1,698 |
+| `34665313` | 10 × 4 CPUs, `PARALLEL_CHAINS=4` | 32 | 229 (166–325) | 109 | 1,060 | 1,387 |
+| `34666833` | 40 × 1 CPU, `PARALLEL_CHAINS=1` | 39 | 941 (698–1,052) | 102 | 1,371 | 2,327 |
 
 - **Parallel chains matter.** In the controlled pair `34665311`/`34660584` (same allocation, only `PARALLEL_CHAINS` differs), two parallel chains cut mean per-cell time by 41% (552 → 327 s) and wall time by 40%. With `PARALLEL_CHAINS=1` the second CPU per rank is mostly idle.
 - **Fill the node.** Both full-node layouts fit the 32 cells in about 17.5 minutes, about 3.4 times the throughput of the best 16-cell partial-node layout.
-- **The two full-node layouts are effectively tied.** 20 × 2 has about 4% higher steady-state throughput, a single-run difference. Contention on the full node slows each 2-chain fit from 327 s (four workers) to 462 s (19 workers); 10 × 4 halves per-cell latency but runs only nine workers.
-- **Diagnostics did not depend on layout.** With the same seed, per-cell R-hat and ESS were identical across layouts. The worst 32-cell cell is flat ID 281 (R-hat 1.0104, minimum bulk ESS 653, minimum tail ESS 282), slightly above the common 1.01 threshold; review that cell, or use more draws, before relying on its full-grid results.
+- **The full-node layouts are close.** 20 × 2 recorded 111 cells/hour, 10 × 4 recorded 109, and 40 × 1 recorded 102. Differences of this size from single runs are not conclusive, but 40 × 1 did not improve throughput despite using all 39 workers. The measured wall throughput includes sampling, data transfer, and output writing; mean sampler time alone does not capture those costs.
+- **40 × 1 trades lower worker count per cell rate for more concurrent fits.** Its 39 cells ran one per fitting worker, with a mean logged fit time of 941 s (compared with 462 s under 20 × 2 and 229 s under 10 × 4). The overall wall throughput was 102 cells/hour.
+- **Diagnostics were consistent.** The 39-cell 40 × 1 run had maximum R-hat 1.0099 and minimum bulk ESS 623. The worst 32-cell point from the full-node comparison, ID 281, had R-hat 1.0104, minimum bulk ESS 653, and minimum tail ESS 282, slightly above the common 1.01 threshold; review that cell or use more draws before relying on its full-grid results. Divergences are not stored in the grid NetCDF.
 - **Memory is not a constraint.** The peak was below 1.7 GiB per task, or under 34 GiB for 20 tasks on a 92 GB node; rank 0 writes each cell as it arrives.
 
-**Recommendation: one node, 20 ranks × 2 CPUs/task, `PARALLEL_CHAINS=2`.** 10 ranks × 4 CPUs/task with `PARALLEL_CHAINS=4` is an equally valid alternative. At about 145 cells/hour, the 312-cell grid should take roughly 2.2 hours, plus load imbalance from the static cell assignment (each of 19 workers gets 16 or 17 cells).
+**Recommendation: one node, 20 ranks × 2 CPUs/task, `PARALLEL_CHAINS=2`.** It had the highest measured wall throughput, but only marginally; regard it and 10 × 4 as practically tied. The 40 × 1 layout is a viable alternative but was about 8% slower in measured cells/hour. At the observed 102–111 cells/hour, a 312-cell grid is roughly 2.8–3.1 hours before allowance for static-assignment imbalance (each of 19 workers gets 16 or 17 cells). The 4-hour wall-time request below provides that margin.
 
 ### Next step: full-grid run
 
