@@ -33,8 +33,9 @@ WARMUP="${WARMUP:-500}"
 SAMPLES="${SAMPLES:-500}"
 SEED="${SEED:-20261104}"
 SECONDS_PER_CELL="${SECONDS_PER_CELL:-570}"         # measured on HERA for the settings above
-# Optional space-separated flat cell IDs; empty fits every cell with finite data.
-read -r -a CELL_ARGS <<< "${CELL_INDICES:+--cell-indices ${CELL_INDICES}}"
+# Optional, set at most one: CELL_INDICES (space-separated flat cell IDs) or
+# MAX_CELLS (fit the first N cells not yet complete). Neither: every cell with finite data.
+read -r -a CELL_ARGS <<< "${CELL_INDICES:+--cell-indices ${CELL_INDICES}} ${MAX_CELLS:+--max-cells ${MAX_CELLS}}"
 RESUME="${RESUME:-0}"                               # 1: continue OUTPUT_FILE, fitting only unfinished cells
 # ---------------------------------------------------------------------------
 

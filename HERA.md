@@ -155,6 +155,20 @@ python dlm_lat_alt_mpi_run.py -n --resume --output "$OUTPUT_FILE" --ranks 20 --c
 
 A job that starts after the grid is finished exits after setup without fitting.
 
+To give every job the same, predictable amount of work instead, set `MAX_CELLS`
+(and leave `CELL_INDICES` unset; the two cannot be combined). Each job then fits
+the first `MAX_CELLS` cells that are not yet complete. A multiple of the 19
+fitting workers balances the load: at about 570 s per cell, `MAX_CELLS=114` is 6
+cells per worker, about 57 minutes of fitting (72 minutes with the dry run's
+margin). Submit the same job until the dry run reports no cells left. Failed cells
+are retried and count toward `MAX_CELLS` in every job, so cells that always fail
+(such as constant-data cells) are better excluded with `CELL_INDICES`.
+
+```bash
+export OUTPUT_FILE=/path/on/work/dlmmc-grid.nc RESUME=1 MAX_CELLS=114
+sbatch --time=01:30:00 my-dlmmc-grid.sbatch
+```
+
 ## 5. Check the results
 
 The job ends by running
