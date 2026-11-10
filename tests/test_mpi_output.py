@@ -75,7 +75,8 @@ def test_output_selection_precision_and_status(single_rank_mpi, monkeypatch, tmp
     )
     path = tmp_path / "grid.nc"
     result = dlmmc_mpi.fit_grid_mpi(
-        data, path, model="noregs_ar1", chains=2, samples=3, output_variables=output_variables
+        data, path, model="noregs_ar1", chains=2, samples=3, output_variables=output_variables,
+        posterior_means=False,
     )
     expected = output_variables if output_variables is not None else {
         name: "single" for name in posterior.data_vars
@@ -152,6 +153,7 @@ def test_model_specific_output_dimensions(single_rank_mpi, monkeypatch, tmp_path
         chains=2,
         samples=3,
         output_variables={name: "single"},
+        posterior_means=False,
     )
     try:
         assert result[name].dims == dims + ("pressure", "latitude")
@@ -193,7 +195,7 @@ def test_worker_filters_and_casts_payload_using_writer_schema(single_rank_mpi, m
     })
     monkeypatch.setattr(dlmmc_mpi, "fit", lambda *args, **kwargs: posterior)
     data = xr.DataArray(np.ones((6, 1, 1)), dims=("time", "pressure", "latitude"))
-    result = dlmmc_mpi.fit_grid_mpi(data, tmp_path / "grid.nc", model="noregs_ar1")
+    result = dlmmc_mpi.fit_grid_mpi(data, tmp_path / "grid.nc", model="noregs_ar1", posterior_means=False)
     assert result is None
     (index, payload, error), dest, tag = sent[0]
     assert index == (0, 0)
@@ -218,6 +220,7 @@ def test_single_precision_reduces_file_size_for_identical_draws(single_rank_mpi,
             chains=2,
             samples=32,
             output_variables={"trend": precision},
+            posterior_means=False,
         )
         result.close()
         sizes[precision] = path.stat().st_size
@@ -273,6 +276,7 @@ def test_grid_records_divergences_and_run_metadata(single_rank_mpi, monkeypatch,
         sigma_reg_prior=[0.1, 0.2],
         adapt_delta=0.9,
         output_variables={"sigma_AR": "single"},
+        posterior_means=False,
     )
     try:
         np.testing.assert_array_equal(result["fit_status"], [[1, 0, -1, 1]])
@@ -299,3 +303,67 @@ def test_invalid_prior_fails_before_compilation(single_rank_mpi, monkeypatch, tm
     data = xr.DataArray(np.ones((6, 1, 1)), dims=("time", "pressure", "latitude"))
     with pytest.raises(RuntimeError, match="sigma_AR_prior"):
         dlmmc_mpi.fit_grid_mpi(data, tmp_path / "grid.nc", model="noregs_ar1", sigma_AR_prior=-1.0)
+
+
+def test_posterior_means_cover_non_time_parameters_even_when_draws_are_omitted(
+    single_rank_mpi, monkeypatch, tmp_path
+):
+    import netCDF4
+
+    rng = np.random.default_rng(3)
+    posterior = xr.Dataset({
+        **{name: (("chain", "draw", "time"), rng.normal(size=(2, 3, 6)))
+           for name in ("trend", "slope", "ar", "seasonal")},
+        **{name: (("chain", "draw"), rng.normal(size=(2, 3)))
+           for name in ("sigma_trend", "sigma_AR", "rhoAR1", "sigma_seas")},
+        "beta": (("chain", "draw", "regressor"), rng.normal(size=(2, 3, 2))),
+    })
+
+    def fake_fit(series, **kwargs):
+        if series.values[0] == 2:
+            raise RuntimeError("sampler failed")
+        return posterior
+
+    monkeypatch.setattr(dlmmc_mpi, "fit", fake_fit)
+    values = np.ones((6, 1, 3))
+    values[:, 0, 1] = np.nan
+    values[:, 0, 2] = 2
+    data = xr.DataArray(values, dims=("time", "pressure", "latitude"))
+    path = tmp_path / "grid.nc"
+    result = dlmmc_mpi.fit_grid_mpi(
+        data, path, model="vanilla_ar1", regressors=np.ones((6, 2)), chains=2, samples=3,
+        output_variables={"trend": "single"},
+    )
+    try:
+        means = {name for name in result.data_vars if name.endswith("_mean")}
+        assert means == {"sigma_trend_mean", "sigma_AR_mean", "rhoAR1_mean", "sigma_seas_mean", "beta_mean"}
+        assert "sigma_AR" not in result
+        assert result["sigma_AR_mean"].dims == ("pressure", "latitude")
+        assert result["beta_mean"].dims == ("regressor", "pressure", "latitude")
+        np.testing.assert_allclose(
+            result["sigma_AR_mean"].isel(pressure=0, latitude=0), posterior["sigma_AR"].mean()
+        )
+        np.testing.assert_allclose(
+            result["beta_mean"].isel(pressure=0, latitude=0), posterior["beta"].mean(("chain", "draw"))
+        )
+        assert np.isnan(result["sigma_AR_mean"].isel(pressure=0, latitude=[1, 2])).all()
+        assert "posterior mean" in result["sigma_AR_mean"].attrs["long_name"]
+    finally:
+        result.close()
+    with netCDF4.Dataset(path) as output:
+        assert output["sigma_AR_mean"].dtype == np.dtype("float64")
+
+
+def test_posterior_means_can_be_disabled(single_rank_mpi, monkeypatch, tmp_path):
+    posterior = xr.Dataset({"sigma_AR": (("chain", "draw"), np.ones((1, 2)))})
+    monkeypatch.setattr(dlmmc_mpi, "fit", lambda *args, **kwargs: posterior)
+    data = xr.DataArray(np.ones((6, 1, 1)), dims=("time", "pressure", "latitude"))
+    result = dlmmc_mpi.fit_grid_mpi(
+        data, tmp_path / "grid.nc", model="noregs_ar1", chains=1, samples=2,
+        output_variables={"sigma_AR": "single"}, posterior_means=False,
+    )
+    try:
+        assert not [name for name in result.data_vars if name.endswith("_mean")]
+        assert result["fit_status"].item() == 1
+    finally:
+        result.close()
