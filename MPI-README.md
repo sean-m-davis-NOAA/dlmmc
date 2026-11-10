@@ -48,11 +48,17 @@ to `"double"` to reproduce that. Coordinates keep their existing precision
 
 Direct API callers can pass the same mapping as
 `fit_grid_mpi(..., output_variables=...)`. `None` (the API default) saves all
-posterior variables in single precision; `{}` saves only coordinates and
-`fit_status`. Unknown names or precisions fail during setup, before an existing
+posterior variables in single precision; `{}` saves only coordinates,
+`fit_status`, and `divergent_transitions`. Unknown names or precisions fail during setup, before an existing
 file is replaced. Only selected variables are transferred to rank 0, converted
 to the requested precision. Sampling itself runs in double precision and is
 unchanged; existing NetCDF files are not modified.
+
+Every grid file also contains `fit_status` and an integer `divergent_transitions`
+variable over the grid dimensions (missing for skipped or failed cells), plus
+global attributes describing the model, sampler settings, priors, and software
+versions. See [Output metadata and sampler diagnostics](README.md#output-metadata-and-sampler-diagnostics)
+for what these mean and how to interpret divergences.
 
 ### Checking output
 

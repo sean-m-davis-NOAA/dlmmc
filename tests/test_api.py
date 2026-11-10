@@ -169,6 +169,7 @@ def test_fit_forwards_per_chain_initializers_and_returns_labeled_draws(fake_samp
     assert np.array_equal(posterior['time'].values, data['time'].values)
     np.testing.assert_array_equal(posterior['trend'].values, np.ones((n_chains, n_draws, n_time)))
     assert posterior.attrs['divergent_transitions'] == 0
+    assert 'divergent' in posterior.attrs['divergent_transitions_comment']
     if output_mode == 'explicit':
         assert (output_dir / 'chain.csv').is_file()
         assert (output_dir / 'unrelated.txt').read_text() == 'keep this file\n'
@@ -298,3 +299,42 @@ def test_fit_csv_omits_local_kalman_scratch_arrays(tmp_path):
     assert not any(column.startswith(scratch_prefixes) for column in columns)
     assert {'trend.1', 'slope.1', 'seasonal.1', 'ar.1'} <= set(columns)
     assert {'trend', 'slope', 'seasonal', 'ar', 'sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1'} <= set(posterior.data_vars)
+
+
+def test_fit_records_priors_and_sampler_settings_as_netcdf_attributes(fake_sampler, tmp_path):
+    data = xr.DataArray(
+        np.linspace(1.0, 2.0, 4),
+        dims=('time',),
+        coords={'time': pd.date_range('2000-01-01', periods=4, freq='MS')},
+    )
+    posterior = api.fit(
+        data,
+        model='noregs_ar1',
+        chains=2,
+        warmup=5,
+        samples=3,
+        seed=7,
+        sigma_AR_prior=0.25,
+        adapt_delta=0.95,
+        show_progress=False,
+    )
+
+    attrs = posterior.attrs
+    assert attrs['model'] == 'noregs_ar1'
+    assert (attrs['chains'], attrs['warmup'], attrs['samples_per_chain'], attrs['seed']) == (2, 5, 3, 7)
+    assert attrs['adapt_delta'] == 0.95
+    assert attrs['prior_sigma_AR'] == 0.25
+    assert attrs['prior_S'] == api._DEFAULT_PRIORS['S']
+    assert attrs['prior_sigma_trend'] == api._DEFAULT_PRIORS['sigma_trend_prior']
+    assert attrs['prior_sigma_seas'] == api._DEFAULT_PRIORS['sigma_seas_prior']
+    assert 'prior_sigma_reg' not in attrs
+    assert 'normalized units' in attrs['prior_comment']
+    assert attrs['dlmmc_version']
+    assert attrs['date_created']
+
+    pytest.importorskip('netCDF4')
+    path = tmp_path / 'posterior.nc'
+    posterior.to_netcdf(path)
+    with xr.open_dataset(path) as reopened:
+        assert reopened.attrs['prior_sigma_AR'] == 0.25
+        assert reopened.attrs['divergent_transitions'] == 0
