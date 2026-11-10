@@ -111,7 +111,14 @@ def main() -> None:
         action='store_true',
         help='Disable CmdStanPy progress bars (reduces Python overhead per chain).',
     )
-    parser.add_argument('--overwrite', action='store_true')
+    restart = parser.add_mutually_exclusive_group()
+    restart.add_argument('--overwrite', action='store_true', help='Replace an existing output file.')
+    restart.add_argument(
+        '--resume',
+        action='store_true',
+        help='Continue an existing output file, fitting only cells not yet complete '
+        '(starts a new file if none exists). Use the same settings as the original run.',
+    )
     dry_run = parser.add_argument_group(
         'dry run', 'Preview the cell assignment, output size, and run time without fitting or starting MPI.'
     )
@@ -162,6 +169,7 @@ def main() -> None:
                 seconds_per_cell=args.seconds_per_cell,
                 safety_factor=args.safety_factor,
                 time_limit=args.time_limit,
+                resume_from=args.output if args.resume else None,
             )
             print(format_grid_estimate(estimate))
             return
@@ -181,6 +189,7 @@ def main() -> None:
             cache_dir=args.cache_dir,
             show_progress=not args.no_progress,
             overwrite=args.overwrite,
+            resume=args.resume,
         )
 
     if result is not None:
