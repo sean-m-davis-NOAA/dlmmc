@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Mapping, Sequence
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
@@ -175,6 +176,105 @@ def _create_result_file(
         output.writer = "MPI rank 0; worker fits streamed as they complete"
 
 
+# Attributes that may legitimately differ between the original run and a resumed run.
+_RESUME_IGNORED_ATTRIBUTES = {"date_created", "dlmmc_version", "cmdstan_version", "writer", "history"}
+
+
+def _attribute_equal(left: Any, right: Any) -> bool:
+    if isinstance(left, str) or isinstance(right, str):
+        return str(left) == str(right)
+    return np.array_equal(np.asarray(left), np.asarray(right))
+
+
+def _read_completed_cells(path: Path, grid_dims: tuple[str, ...]) -> np.ndarray:
+    """Return a flat boolean mask of cells whose ``fit_status`` is complete."""
+    with xr.open_dataset(path, decode_times=False) as existing:
+        if "fit_status" not in existing:
+            raise ValueError(f"{path} has no fit_status variable; it was not written by fit_grid_mpi.")
+        status = existing["fit_status"]
+        if set(status.dims) != set(grid_dims):
+            raise ValueError(f"{path} fit_status has dimensions {status.dims}, expected {grid_dims}.")
+        return (status.transpose(*grid_dims).to_numpy() == 1).ravel()
+
+
+def _check_resumable(
+    path: Path,
+    data: xr.DataArray,
+    grid_dims: tuple[str, ...],
+    nreg: int,
+    metadata: Mapping[str, Any],
+    output_schema: Mapping[str, tuple[str, tuple[str, ...]]],
+    mean_schema: Mapping[str, tuple[str, tuple[str, ...]]],
+    chains: int,
+    samples: int,
+) -> None:
+    """Raise ``ValueError`` unless ``path`` was written by an identically configured run."""
+    import netCDF4
+
+    problems = []
+    with netCDF4.Dataset(path, "r") as existing:
+        expected_sizes = {"chain": chains, "draw": samples, "time": data.sizes["time"]}
+        expected_sizes.update({dim: data.sizes[dim] for dim in grid_dims})
+        if nreg:
+            expected_sizes["regressor"] = nreg
+        for dim, size in expected_sizes.items():
+            actual = len(existing.dimensions[dim]) if dim in existing.dimensions else None
+            if actual != size:
+                problems.append(f"dimension {dim!r} is {actual}, expected {size}")
+        for dim in grid_dims:
+            if dim in existing.variables and len(existing.variables[dim]) == data.sizes[dim]:
+                stored = np.asarray(existing.variables[dim][:])
+                if not np.array_equal(stored.astype(str), np.asarray(_coordinate_values(data, dim)).astype(str)):
+                    problems.append(f"coordinate {dim!r} values differ")
+
+        expected_variables = {name: np.dtype(dtype) for name, (dtype, _) in output_schema.items()}
+        expected_variables.update({name: np.dtype("f8") for name in mean_schema})
+        stored_variables = {
+            name: variable.dtype
+            for name, variable in existing.variables.items()
+            if name not in existing.dimensions and name not in ("fit_status", "divergent_transitions")
+        }
+        if stored_variables != expected_variables:
+            problems.append(
+                "output variables differ: file has "
+                + ", ".join(f"{name}:{dtype}" for name, dtype in sorted(stored_variables.items()))
+                + "; run requests "
+                + ", ".join(f"{name}:{dtype}" for name, dtype in sorted(expected_variables.items()))
+            )
+
+        stored_attributes = {
+            name: existing.getncattr(name)
+            for name in existing.ncattrs()
+            if name not in _RESUME_IGNORED_ATTRIBUTES
+        }
+        for name in sorted(set(stored_attributes) | (set(metadata) - _RESUME_IGNORED_ATTRIBUTES)):
+            if name not in stored_attributes or name not in metadata:
+                problems.append(f"setting {name!r} is only set in the {'run' if name in metadata else 'file'}")
+            elif not _attribute_equal(stored_attributes[name], metadata[name]):
+                stored, requested = (
+                    value.tolist() if isinstance(value, (np.ndarray, np.generic)) else value
+                    for value in (stored_attributes[name], metadata[name])
+                )
+                problems.append(f"setting {name!r} is {stored!r} in the file but {requested!r} now")
+    if problems:
+        raise ValueError(
+            f"Cannot resume {path}: it was written with different settings ("
+            + "; ".join(problems)
+            + "). Use the original settings, or set overwrite=True to start over."
+        )
+
+
+def _write_result_to_file(
+    path: Path, index: tuple[int, ...], posterior: dict[str, np.ndarray] | None, error: str | None
+) -> None:
+    # Open the file for each cell so an interrupted run (for example at a wall-clock
+    # limit) leaves a closed, readable file that can be resumed.
+    import netCDF4
+
+    with netCDF4.Dataset(path, "r+") as output:
+        _write_result(output, index, posterior, error)
+
+
 def _write_result(output: Any, index: tuple[int, ...], posterior: dict[str, np.ndarray] | None, error: str | None) -> None:
     if error is not None:
         output["fit_status"][index] = -1
@@ -244,13 +344,17 @@ def estimate_grid_run(
     seconds_per_cell: float | None = None,
     safety_factor: float = 1.25,
     time_limit: str | int | None = None,
+    resume_from: str | os.PathLike[str] | None = None,
 ) -> dict[str, Any]:
     """Preview a ``fit_grid_mpi`` run without fitting or initializing MPI.
 
     Counts the cells that would be fitted (cells with at least one finite value)
     and lists those whose finite values are all equal (``constant_cell_ids``),
-    reproduces the static assignment of cells to ``ranks - 1`` workers (or to
-    rank 0 when ``ranks == 1``), and estimates the uncompressed output size.
+    reproduces the round-robin assignment of cells to ``ranks - 1`` workers (or
+    to rank 0 when ``ranks == 1``), and estimates the uncompressed output size.
+    With ``resume_from`` naming an existing output file, cells already complete
+    there are excluded (``completed_cells``), as in ``fit_grid_mpi(resume=True)``;
+    a missing file means a fresh run.
 
     The busiest worker determines the run time, so with ``seconds_per_cell`` the
     estimate is ``max cells per worker * seconds_per_cell * safety_factor``.
@@ -276,13 +380,19 @@ def estimate_grid_run(
     nreg = 0 if spec["regressors"] == "none" else _regressor_count(regressors)
 
     values = data.to_numpy().reshape(data.sizes["time"], -1)
-    fitted = np.isfinite(values).any(axis=0)
+    has_data = np.isfinite(values).any(axis=0)
+    completed = np.zeros(has_data.size, dtype=bool)
+    if resume_from is not None and Path(resume_from).expanduser().exists():
+        completed = _read_completed_cells(Path(resume_from).expanduser(), selected_grid_dims)
+        if completed.size != has_data.size:
+            raise ValueError(f"{resume_from} has {completed.size} cells but data has {has_data.size}.")
+    fitted = has_data & ~completed
     flat_ids = np.flatnonzero(fitted)
     with np.errstate(invalid="ignore"):
         constant = fitted & (np.nanmax(np.where(np.isfinite(values), values, -np.inf), axis=0)
                              == np.nanmin(np.where(np.isfinite(values), values, np.inf), axis=0))
     workers = 1 if ranks == 1 else ranks - 1
-    per_worker = np.bincount(flat_ids % workers, minlength=workers) if ranks > 1 else np.array([flat_ids.size])
+    per_worker = np.bincount(np.arange(flat_ids.size) % workers, minlength=workers)
 
     sizes = {**{dim: data.sizes[dim] for dim in data.dims}, "chain": chains, "draw": samples, "regressor": nreg}
     variables = _posterior_dims(selected_grid_dims, spec)
@@ -296,7 +406,8 @@ def estimate_grid_run(
     estimate: dict[str, Any] = {
         "grid_cells": int(fitted.size),
         "fitted_cells": int(flat_ids.size),
-        "skipped_cells": int(fitted.size - flat_ids.size),
+        "completed_cells": int(completed.sum()),
+        "skipped_cells": int(np.sum(~has_data & ~completed)),
         "ranks": ranks,
         "fitting_workers": workers,
         "constant_cell_ids": np.flatnonzero(constant).tolist(),
@@ -324,8 +435,9 @@ def estimate_grid_run(
 def format_grid_estimate(estimate: Mapping[str, Any]) -> str:
     """Return a human-readable report for ``estimate_grid_run`` results."""
     lines = [
-        f"Cells to fit: {estimate['fitted_cells']} of {estimate['grid_cells']} "
-        f"({estimate['skipped_cells']} skipped: no finite data or not selected)",
+        f"Cells to fit: {estimate['fitted_cells']} of {estimate['grid_cells']} ("
+        + (f"{estimate['completed_cells']} already complete, " if estimate.get("completed_cells") else "")
+        + f"{estimate['skipped_cells']} skipped: no finite data or not selected)",
         f"Ranks: {estimate['ranks']} ({estimate['fitting_workers']} fitting worker"
         f"{'s' if estimate['fitting_workers'] != 1 else ''}"
         f"{'; rank 0 also fits' if estimate['ranks'] == 1 else '; rank 0 writes'})",
@@ -369,6 +481,7 @@ def fit_grid_mpi(
     output_variables: Mapping[str, Literal["single", "double"]] | None = None,
     posterior_means: bool = True,
     overwrite: bool = False,
+    resume: bool = False,
     **fit_options: Any,
 ) -> xr.Dataset | None:
     """Fit a time series at each grid cell and stream results to one NetCDF file.
@@ -381,7 +494,20 @@ def fit_grid_mpi(
     ``data`` must have dimensions ``time`` plus the grid dimensions to fit over.
     ``uncertainty`` and xarray ``regressors`` may be shared over time or include
     grid dimensions that are sliced for each fit. Existing output is protected
-    unless ``overwrite=True``.
+    unless ``overwrite=True`` or ``resume=True``.
+
+    With ``resume=True``, an existing ``output`` is reused and only cells whose
+    ``fit_status`` is not complete (1) are fitted, so a large grid can be split
+    across several batch jobs that each stop at a wall-clock limit. Failed cells
+    (-1) are retried. The file must have been written with the same model,
+    grid, sampler settings, priors, and output variables; otherwise a
+    ``ValueError`` explains the mismatch. If ``output`` does not exist, a new
+    run starts, so the same command can be used for every submission. Results
+    are written one cell at a time, so an interrupted run loses only the cells
+    in progress.
+
+    Cells with at least one finite value that still need fitting are dealt
+    round-robin, in flat (row-major) order, to ranks ``1..N-1``.
 
     ``output_variables`` maps posterior variable names to ``"single"`` (float32)
     or ``"double"`` (float64). Only listed posterior variables are saved; ``None``
@@ -464,35 +590,60 @@ def fit_grid_mpi(
                 sampling=fit_options.get("sampling", "monthly"),
                 sampler_options=fit_options,
             )
-            if output_path.exists() and not overwrite:
-                raise FileExistsError(f"Output already exists: {output_path}; set overwrite=True to replace it.")
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            if output_path.exists():
-                output_path.unlink()
+            if overwrite and resume:
+                raise ValueError("Set only one of overwrite=True and resume=True.")
+            mean_schema = _mean_schema(_posterior_dims(selected_grid_dims, spec)) if posterior_means else {}
+            completed = np.zeros(cell_count, dtype=bool)
+            resuming = resume and output_path.exists()
+            if output_path.exists() and not (overwrite or resume):
+                raise FileExistsError(
+                    f"Output already exists: {output_path}; set resume=True to continue it "
+                    "or overwrite=True to replace it."
+                )
+            if resuming:
+                _check_resumable(
+                    output_path, data, selected_grid_dims, nreg, metadata,
+                    output_schema, mean_schema, chains, samples,
+                )
+                completed = _read_completed_cells(output_path, selected_grid_dims)
+            has_data = np.isfinite(data.to_numpy().reshape(data.sizes["time"], -1)).any(axis=0)
+            pending = np.flatnonzero(has_data & ~completed)
             _get_compiled_model(model_name, spec, fit_options.get("cache_dir"))
-            _create_result_file(
-                output_path, data, selected_grid_dims, nreg, regressor_names,
-                metadata, output_schema,
-                _mean_schema(_posterior_dims(selected_grid_dims, spec)) if posterior_means else {},
-                chains, samples,
-            )
+            if resuming:
+                import netCDF4
+
+                with netCDF4.Dataset(output_path, "r+") as output_file:
+                    entry = (
+                        f"{datetime.now(timezone.utc).isoformat(timespec='seconds')} resumed: "
+                        f"{int(completed.sum())} cells complete, {pending.size} to fit"
+                    )
+                    history = getattr(output_file, "history", "")
+                    output_file.history = f"{history}\n{entry}" if history else entry
+            else:
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                if output_path.exists():
+                    output_path.unlink()
+                _create_result_file(
+                    output_path, data, selected_grid_dims, nreg, regressor_names,
+                    metadata, output_schema, mean_schema, chains, samples,
+                )
         except Exception as exc:
             setup_error = str(exc)
     setup_error = comm.bcast(setup_error, root=0)
     if setup_error:
         raise RuntimeError(f"Could not initialize grid fit: {setup_error}")
     output_schema = comm.bcast(output_schema, root=0)
+    pending = comm.bcast(pending if rank == 0 else None, root=0)
     mean_schema = _mean_schema(_posterior_dims(selected_grid_dims, spec)) if posterior_means else {}
     comm.Barrier()
 
     grid_shape = tuple(data.sizes[dim] for dim in selected_grid_dims)
-    indices = np.arange(cell_count)
     if process_count == 1:
-        local_indices = indices
+        local_indices = pending
     elif rank == 0:
         local_indices = np.empty(0, dtype=int)
     else:
-        local_indices = indices[indices % (process_count - 1) == rank - 1]
+        local_indices = pending[rank - 1 :: process_count - 1]
 
     def run_cell(flat_index: int) -> tuple[tuple[int, ...], dict[str, np.ndarray] | None, str | None]:
         cell_index = tuple(int(value) for value in np.unravel_index(flat_index, grid_shape))
@@ -527,15 +678,12 @@ def fit_grid_mpi(
             return cell_index, None, str(exc)
 
     if rank == 0:
-        with __import__("netCDF4").Dataset(output_path, "r+") as result_file:
-            if process_count == 1:
-                for flat_index in local_indices:
-                    cell_index, posterior_data, error = run_cell(int(flat_index))
-                    _write_result(result_file, cell_index, posterior_data, error)
-            else:
-                for _ in range(cell_count):
-                    cell_index, posterior_data, error = comm.recv(source=MPI.ANY_SOURCE, tag=1)
-                    _write_result(result_file, cell_index, posterior_data, error)
+        if process_count == 1:
+            for flat_index in local_indices:
+                _write_result_to_file(output_path, *run_cell(int(flat_index)))
+        else:
+            for _ in range(len(pending)):
+                _write_result_to_file(output_path, *comm.recv(source=MPI.ANY_SOURCE, tag=1))
     else:
         for flat_index in local_indices:
             comm.send(run_cell(int(flat_index)), dest=0, tag=1)

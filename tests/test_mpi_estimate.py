@@ -42,8 +42,8 @@ def test_estimate_reproduces_static_assignment_and_flags_constant_cells():
     assert estimate["fitted_cells"] == 9
     assert estimate["skipped_cells"] == 1
     assert estimate["constant_cell_ids"] == [8]
-    # Flat IDs 0,2..9 over three workers: residues 0 -> {0,3,6,9}, 1 -> {4,7}, 2 -> {2,5,8}.
-    assert (estimate["fitting_workers"], estimate["max_cells_per_worker"], estimate["min_cells_per_worker"]) == (3, 4, 2)
+    # The nine cells with data (flat IDs 0, 2..9) are dealt round-robin to three workers.
+    assert (estimate["fitting_workers"], estimate["max_cells_per_worker"], estimate["min_cells_per_worker"]) == (3, 3, 3)
     assert estimate["estimated_seconds"] is None
 
 
@@ -67,10 +67,10 @@ def test_idle_workers_are_reported():
 def test_time_estimate_and_limit_check():
     kwargs = dict(ranks=4, model="noregs_ar1", seconds_per_cell=100, safety_factor=1.5)
     ok = estimate_grid_run(_grid(), time_limit="0:10:00", **kwargs)
-    short = estimate_grid_run(_grid(), time_limit=500, **kwargs)
+    short = estimate_grid_run(_grid(), time_limit=400, **kwargs)
 
-    assert ok["estimated_seconds"] == 400
-    assert ok["estimated_seconds_with_margin"] == 600
+    assert ok["estimated_seconds"] == 300
+    assert ok["estimated_seconds_with_margin"] == 450
     assert ok["fits_time_limit"] is True
     assert short["fits_time_limit"] is False
     assert "WARNING: time limit" in format_grid_estimate(short)
