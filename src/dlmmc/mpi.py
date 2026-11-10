@@ -192,6 +192,172 @@ def _write_result(output: Any, index: tuple[int, ...], posterior: dict[str, np.n
     output["fit_status"][index] = 1
 
 
+def parse_time_limit(value: str) -> int:
+    """Convert a Slurm ``--time`` value to seconds.
+
+    Accepts ``MM``, ``MM:SS``, ``HH:MM:SS``, ``D-HH``, ``D-HH:MM``, and
+    ``D-HH:MM:SS``.
+    """
+    text = str(value).strip()
+    try:
+        if "-" in text:
+            days_text, rest = text.split("-", 1)
+            days = int(days_text)
+            parts = [int(part) for part in rest.split(":")]
+            if not 1 <= len(parts) <= 3:
+                raise ValueError
+            hours, minutes, seconds = (parts + [0, 0])[:3]
+        else:
+            days = 0
+            parts = [int(part) for part in text.split(":")]
+            if len(parts) == 1:
+                hours, minutes, seconds = 0, parts[0], 0
+            elif len(parts) == 2:
+                hours, minutes, seconds = 0, parts[0], parts[1]
+            elif len(parts) == 3:
+                hours, minutes, seconds = parts
+            else:
+                raise ValueError
+    except ValueError:
+        raise ValueError(f"Unrecognized Slurm time limit {value!r}.") from None
+    if min(days, hours, minutes, seconds) < 0:
+        raise ValueError(f"Time limit must not be negative: {value!r}.")
+    return ((days * 24 + hours) * 60 + minutes) * 60 + seconds
+
+
+def _format_seconds(seconds: float) -> str:
+    total = int(round(seconds))
+    return f"{total // 3600:d}:{total % 3600 // 60:02d}:{total % 60:02d}"
+
+
+def estimate_grid_run(
+    data: xr.DataArray,
+    ranks: int,
+    *,
+    regressors: xr.DataArray | xr.Dataset | np.ndarray | None = None,
+    model: str = "vanilla_ar1",
+    grid_dims: Sequence[str] | None = None,
+    output_variables: Mapping[str, Literal["single", "double"]] | None = None,
+    posterior_means: bool = True,
+    chains: int = 4,
+    samples: int = 1000,
+    seconds_per_cell: float | None = None,
+    safety_factor: float = 1.25,
+    time_limit: str | int | None = None,
+) -> dict[str, Any]:
+    """Preview a ``fit_grid_mpi`` run without fitting or initializing MPI.
+
+    Counts the cells that would be fitted (cells with at least one finite value)
+    and lists those whose finite values are all equal (``constant_cell_ids``),
+    reproduces the static assignment of cells to ``ranks - 1`` workers (or to
+    rank 0 when ``ranks == 1``), and estimates the uncompressed output size.
+
+    The busiest worker determines the run time, so with ``seconds_per_cell`` the
+    estimate is ``max cells per worker * seconds_per_cell * safety_factor``.
+    ``seconds_per_cell`` is not predicted: measure it for the same model,
+    chains, iterations, ``parallel_chains``, and node layout (for example, from a
+    previous run's wall time divided by its busiest worker's cell count).
+    ``time_limit`` (seconds or a Slurm ``--time`` string) is compared with the
+    estimate, and ``fits_time_limit`` is ``False`` when it is too short.
+    """
+    if ranks < 1:
+        raise ValueError("ranks must be at least 1.")
+    if seconds_per_cell is not None and seconds_per_cell <= 0:
+        raise ValueError("seconds_per_cell must be positive.")
+    if safety_factor < 1:
+        raise ValueError("safety_factor must be at least 1.")
+    if not isinstance(data, xr.DataArray) or "time" not in data.dims:
+        raise TypeError("data must be an xarray.DataArray with a 'time' dimension.")
+    selected_grid_dims = tuple(grid_dims or (dim for dim in data.dims if dim != "time"))
+    if not selected_grid_dims or set(data.dims) != {"time", *selected_grid_dims}:
+        raise ValueError("grid_dims must name every non-time dimension of data.")
+    data = data.transpose("time", *selected_grid_dims)
+    _, spec = _resolve_model(model)
+    nreg = 0 if spec["regressors"] == "none" else _regressor_count(regressors)
+
+    values = data.to_numpy().reshape(data.sizes["time"], -1)
+    fitted = np.isfinite(values).any(axis=0)
+    flat_ids = np.flatnonzero(fitted)
+    with np.errstate(invalid="ignore"):
+        constant = fitted & (np.nanmax(np.where(np.isfinite(values), values, -np.inf), axis=0)
+                             == np.nanmin(np.where(np.isfinite(values), values, np.inf), axis=0))
+    workers = 1 if ranks == 1 else ranks - 1
+    per_worker = np.bincount(flat_ids % workers, minlength=workers) if ranks > 1 else np.array([flat_ids.size])
+
+    sizes = {**{dim: data.sizes[dim] for dim in data.dims}, "chain": chains, "draw": samples, "regressor": nreg}
+    variables = _posterior_dims(selected_grid_dims, spec)
+    schema = _output_schema(selected_grid_dims, spec, output_variables)
+    means = _mean_schema(variables) if posterior_means else {}
+    output_bytes = sum(
+        np.dtype(dtype).itemsize * int(np.prod([sizes[dim] for dim in dims]))
+        for dtype, dims in schema.values()
+    ) + sum(8 * int(np.prod([sizes[dim] for dim in dims])) for _, dims in means.values())
+
+    estimate: dict[str, Any] = {
+        "grid_cells": int(fitted.size),
+        "fitted_cells": int(flat_ids.size),
+        "skipped_cells": int(fitted.size - flat_ids.size),
+        "ranks": ranks,
+        "fitting_workers": workers,
+        "constant_cell_ids": np.flatnonzero(constant).tolist(),
+        "max_cells_per_worker": int(per_worker.max()) if per_worker.size else 0,
+        "min_cells_per_worker": int(per_worker.min()) if per_worker.size else 0,
+        "idle_workers": int(np.sum(per_worker == 0)),
+        "uncompressed_output_bytes": int(output_bytes),
+        "estimated_seconds": None,
+        "estimated_seconds_with_margin": None,
+        "time_limit_seconds": None,
+        "fits_time_limit": None,
+    }
+    if seconds_per_cell is not None:
+        seconds = estimate["max_cells_per_worker"] * float(seconds_per_cell)
+        estimate["estimated_seconds"] = seconds
+        estimate["estimated_seconds_with_margin"] = seconds * safety_factor
+    if time_limit is not None:
+        limit = time_limit if isinstance(time_limit, int) else parse_time_limit(time_limit)
+        estimate["time_limit_seconds"] = limit
+        if estimate["estimated_seconds_with_margin"] is not None:
+            estimate["fits_time_limit"] = estimate["estimated_seconds_with_margin"] <= limit
+    return estimate
+
+
+def format_grid_estimate(estimate: Mapping[str, Any]) -> str:
+    """Return a human-readable report for ``estimate_grid_run`` results."""
+    lines = [
+        f"Cells to fit: {estimate['fitted_cells']} of {estimate['grid_cells']} "
+        f"({estimate['skipped_cells']} skipped: no finite data or not selected)",
+        f"Ranks: {estimate['ranks']} ({estimate['fitting_workers']} fitting worker"
+        f"{'s' if estimate['fitting_workers'] != 1 else ''}"
+        f"{'; rank 0 also fits' if estimate['ranks'] == 1 else '; rank 0 writes'})",
+        f"Cells per worker: {estimate['min_cells_per_worker']}-{estimate['max_cells_per_worker']}"
+        + (f" ({estimate['idle_workers']} workers idle)" if estimate["idle_workers"] else ""),
+        *(
+            [f"WARNING: {len(estimate['constant_cell_ids'])} cells have constant data and will be "
+             f"fitted but are likely to fail or be meaningless (flat IDs: "
+             f"{' '.join(map(str, estimate['constant_cell_ids']))})"]
+            if estimate["constant_cell_ids"] else []
+        ),
+        f"Uncompressed output size: {estimate['uncompressed_output_bytes'] / 1e9:.2f} GB "
+        "(compression usually makes the file smaller)",
+    ]
+    if estimate["estimated_seconds"] is None:
+        lines.append("Run time: not estimated; pass a measured seconds-per-cell value.")
+    else:
+        lines.append(
+            f"Estimated fitting time: {_format_seconds(estimate['estimated_seconds'])} "
+            f"(busiest worker), {_format_seconds(estimate['estimated_seconds_with_margin'])} with safety margin"
+        )
+    if estimate["time_limit_seconds"] is not None:
+        limit = _format_seconds(estimate["time_limit_seconds"])
+        if estimate["fits_time_limit"] is None:
+            lines.append(f"Time limit {limit}: cannot be checked without seconds per cell.")
+        elif estimate["fits_time_limit"]:
+            lines.append(f"Time limit {limit}: OK.")
+        else:
+            lines.append(f"WARNING: time limit {limit} is shorter than the estimate with margin.")
+    return "\n".join(lines)
+
+
 def fit_grid_mpi(
     data: xr.DataArray,
     output: str | os.PathLike[str],

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -12,6 +13,7 @@ import pandas as pd
 import xarray as xr
 
 import dlmmc
+from dlmmc.mpi import format_grid_estimate
 
 
 DATASET = Path('data/BASIC_V1_2017_lotus_seascyc_gcsw2017_fac2.nc')
@@ -73,7 +75,26 @@ def main() -> None:
     parser.add_argument('--seed', type=int, default=1234)
     parser.add_argument('--cache-dir', type=Path, help='Shared CmdStan cache directory for multi-node runs.')
     parser.add_argument('--overwrite', action='store_true')
+    dry_run = parser.add_argument_group(
+        'dry run', 'Preview the cell assignment, output size, and run time without fitting or starting MPI.'
+    )
+    dry_run.add_argument('-n', '--dry-run', action='store_true', help='Report the plan and exit without fitting.')
+    dry_run.add_argument(
+        '--ranks', type=int, default=int(os.environ.get('SLURM_NTASKS', 0)) or None,
+        help='Total MPI ranks, including the rank-0 writer (default: $SLURM_NTASKS).',
+    )
+    dry_run.add_argument(
+        '--seconds-per-cell', type=float,
+        help='Measured wall seconds per cell for this model, sampling settings, and node layout.',
+    )
+    dry_run.add_argument(
+        '--safety-factor', type=float, default=1.25,
+        help='Multiplier applied to the time estimate (default: 1.25).',
+    )
+    dry_run.add_argument('--time-limit', help='Requested Slurm --time (for example 4:00:00) to check.')
     args = parser.parse_args()
+    if args.dry_run and args.ranks is None:
+        parser.error('--dry-run requires --ranks (or run inside a Slurm job that sets SLURM_NTASKS).')
 
     with xr.open_dataset(DATASET) as source:
         data = source['o3']
@@ -82,6 +103,22 @@ def main() -> None:
         data = data.assign_coords(time=decoded_time)
         uncertainty = uncertainty.assign_coords(time=decoded_time)
         regressors = _load_regressors(data['time'], data['latitude'].to_numpy())
+        if args.dry_run:
+            estimate = dlmmc.estimate_grid_run(
+                data,
+                args.ranks,
+                regressors=regressors,
+                model='vanilla_ar1',
+                grid_dims=('pressure', 'latitude'),
+                output_variables=OUTPUT_VARIABLES,
+                chains=args.chains,
+                samples=args.samples,
+                seconds_per_cell=args.seconds_per_cell,
+                safety_factor=args.safety_factor,
+                time_limit=args.time_limit,
+            )
+            print(format_grid_estimate(estimate))
+            return
         result = dlmmc.fit_grid_mpi(
             data,
             output=args.output,
