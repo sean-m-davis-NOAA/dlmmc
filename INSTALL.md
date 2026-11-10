@@ -159,6 +159,29 @@ The benchmark writes a JSON result under `results/`. It may take several minutes
 
 After the benchmark succeeds, open `dlm_tutorial.ipynb` in JupyterLab or VS Code and run its cells in order. It demonstrates xarray-based time/data handling, CmdStanPy sampling, and posterior diagnostics. It uses four chains with 1,000 warmup and 2,000 sampling iterations per chain, so it takes longer than the benchmark.
 
+The first code cell in each notebook configures temporary storage before
+importing the fitting packages. It uses `DLMMC_TMPDIR` if set, otherwise the
+inherited `TMPDIR`, and falls back to the system temporary directory. To use a
+scratch filesystem, set one of those variables to a writable directory with
+sufficient space before starting Jupyter. For example, set `TMPDIR` as shown in
+[Temporary storage](#temporary-storage), or set `DLMMC_TMPDIR` to override it.
+
+If Jupyter reports `TqdmWarning: IProgress not found`, install `ipywidgets` in
+the active notebook environment with `python -m pip install ipywidgets`, then
+restart the kernel. This enables widget progress bars; it is not a required
+`dlmmc` runtime dependency.
+
+For terminal execution with `nbconvert`, set `TMPDIR` in the shell before
+launching it, since the notebook cell runs too late to configure nbconvert's
+own temporary files. Use a user-owned scratch directory on a filesystem that
+supports the required file permissions:
+
+```bash
+mkdir -p /path/to/your/scratch/dlmmc-tmp
+chmod 700 /path/to/your/scratch/dlmmc-tmp
+TMPDIR=/path/to/your/scratch/dlmmc-tmp jupyter nbconvert --to notebook --execute dlm_tutorial.ipynb
+```
+
 Next, run `dlm_validation_tests.ipynb`. It generates synthetic data with `utils/dlm.py` and calls the public `dlmmc.fit()` API to test parameter recovery for four model variants. Each test uses four chains with 250 warmup and 500 sampling iterations per chain and reports posterior intervals, R-hat/ESS, trend coverage, and divergences. These are validation demonstrations; warnings or missed recovery intervals indicate that a model/parameter needs further investigation, not necessarily an installation failure.
 
 ## Test the MPI example
@@ -167,6 +190,12 @@ The MPI example calls `dlmmc.fit_grid_mpi()` to fit the pressure/latitude grid i
 
 ```bash
 mpirun -np 4 python dlm_lat_alt_mpi_run.py
+```
+
+To save all standard output and warnings to a log file instead, run:
+
+```bash
+mkdir -p results && mpirun -np 4 python dlm_lat_alt_mpi_run.py > results/mpi_run.log 2>&1
 ```
 
 The example defaults to one chain, one warmup iteration, and two sampling iterations per grid cell. These settings are only for a pipeline smoke test and do not provide converged posterior estimates. Increase them for scientific runs. The output is `results/BASIC_V1_2017.nc`; `fit_status` is 1 for completed cells, 0 for skipped cells, and -1 for failed fits. Existing output is not overwritten unless `--overwrite` is specified.
