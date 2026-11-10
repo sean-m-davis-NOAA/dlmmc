@@ -27,6 +27,34 @@ The output is created as a new file; by default, an existing output path is not 
 
 The defaults are one chain, one warmup iteration, and two sampling draws per cell. They are only a pipeline smoke test and do not produce converged posterior estimates. For longer runs, set the `--chains`, `--warmup`, and `--samples` options. Choose `--output` to set a different output path. Existing output is not overwritten unless `--overwrite` is specified. Short smoke-test chains can emit Stan warnings; check `fit_status` and the output file rather than treating convergence warnings as a pipeline failure.
 
+### Previewing a run (`--dry-run`)
+
+Add `--dry-run` (or `-n`) to preview a run without fitting, compiling, or
+starting MPI, so it is safe on a login node. Give the total rank count (including
+the rank-0 writer) with `--ranks`; inside a Slurm job it defaults to
+`$SLURM_NTASKS`. The report lists how many cells will be fitted, how the static
+assignment spreads them across workers (the busiest worker sets the run time),
+cells with constant data, which usually fail or are meaningless, and the
+uncompressed output size.
+
+```bash
+python dlm_lat_alt_mpi_run.py --dry-run --ranks 20 --chains 4 --warmup 500 --samples 500 \
+    --seconds-per-cell 570 --time-limit 4:00:00
+```
+
+To estimate the run time, pass `--seconds-per-cell`: the wall seconds per cell
+measured for the same model, chain count, iterations, `--parallel-chains`, and
+node layout. dlmmc does not predict this value, because it depends on the data,
+model, and hardware. A good measurement is a previous run's fitting wall time
+divided by its busiest worker's cell count. As a rough guide, time per cell scales
+with `chains * (warmup + samples) / parallel_chains`, but contention on a busy
+node can make it longer. The estimate is the busiest worker's cell count times
+`--seconds-per-cell`, multiplied by `--safety-factor` (default 1.25). With
+`--time-limit` (any Slurm `--time` format), the report warns if the limit is
+shorter than the estimate with margin. Model compilation and startup add time
+that the margin should cover. The same preview is available from Python as
+`dlmmc.estimate_grid_run()`.
+
 ### Output variables and precision
 
 Edit `OUTPUT_VARIABLES` near the top of `dlm_lat_alt_mpi_run.py` to choose which
@@ -62,7 +90,16 @@ unchanged; existing NetCDF files are not modified.
 Every grid file also contains `fit_status` and an integer `divergent_transitions`
 variable over the grid dimensions (missing for skipped or failed cells), plus
 global attributes describing the model, sampler settings, priors, and software
-versions. See [Output metadata and sampler diagnostics](README.md#output-metadata-and-sampler-diagnostics)
+versions.
+
+By default, each non-time-varying parameter also gets a per-cell posterior mean,
+named `<name>_mean` (for example `sigma_AR_mean`, `rhoAR1_mean`, and, for static
+regressor models, `beta_mean` with a `regressor` dimension). Means are stored in
+double precision, are computed from the full-precision draws, and are written
+even when that parameter's draws are omitted from `OUTPUT_VARIABLES`, so you can
+drop large draw arrays and keep a compact summary. Time-varying variables
+(`trend`, `slope`, `ar`, `seasonal`, dynamic `beta`) do not get means. Pass
+`posterior_means=False` to `fit_grid_mpi()` to omit them. See [Output metadata and sampler diagnostics](README.md#output-metadata-and-sampler-diagnostics)
 for what these mean and how to interpret divergences.
 
 ### Checking output
