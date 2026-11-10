@@ -95,6 +95,17 @@ Each row merges `runs/JOBID/run-metadata.txt`, `sacct`, and the grid NetCDF. `wa
 
 The grid NetCDF contains posterior draws but does not retain per-cell CmdStan CSVs or divergence counts, so the divergence columns stay blank. Latent time series (`trend`, `slope`, `ar`, `seasonal`) are excluded from the per-cell summary.
 
+Edit `OUTPUT_VARIABLES` in [dlm_lat_alt_mpi_run.py](../../dlm_lat_alt_mpi_run.py)
+to choose retained posterior variables and single/double storage precision;
+see [Output variables and precision](../../MPI-README.md#output-variables-and-precision).
+The default now saves every posterior variable in single precision (float32).
+All measurements below, including full-grid job `34668570`, were recorded with
+the earlier all-double (float64) output, so their output sizes and transfer and
+write costs are not directly comparable with single-precision runs. Keep the
+same output configuration when comparing layouts. The diagnostics collector can
+assess only retained non-time-varying parameters and requires at least one such
+parameter.
+
 ### Initial measurements (2026-11-05)
 
 All MPI measurements below used 4 chains, 500 warmup iterations, 500 retained draws, seed `20261104`, and the listed cell set. The one-cell runs used flat ID 0; the grid runs used the fixed 16-cell set above.

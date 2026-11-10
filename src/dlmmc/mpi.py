@@ -7,7 +7,7 @@ import os
 import time as _time
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import xarray as xr
@@ -33,6 +33,50 @@ def _coordinate_values(data: xr.DataArray, dim: str) -> np.ndarray:
     return np.arange(data.sizes[dim])
 
 
+def _output_schema(
+    grid_dims: tuple[str, ...],
+    spec: Mapping[str, Any],
+    output_variables: Mapping[str, Literal["single", "double"]] | None,
+) -> dict[str, tuple[str, tuple[str, ...]]]:
+    scalar_dims = ("chain", "draw") + grid_dims
+    time_dims = ("chain", "draw", "time") + grid_dims
+    variables = {
+        "trend": time_dims,
+        "slope": time_dims,
+        "ar": time_dims,
+        "sigma_trend": scalar_dims,
+        "sigma_AR": scalar_dims,
+        "rhoAR1": scalar_dims,
+    }
+    if spec["seasonal"]:
+        variables["seasonal"] = time_dims
+        variables["sigma_seas"] = scalar_dims
+    if spec["ar2"]:
+        variables["rhoAR2"] = scalar_dims
+    if spec["regressors"] != "none":
+        if spec["regressors"] == "dynamic":
+            variables["beta"] = ("chain", "draw", "time", "regressor") + grid_dims
+            variables["sigma_reg"] = ("chain", "draw", "regressor") + grid_dims
+        else:
+            variables["beta"] = ("chain", "draw", "regressor") + grid_dims
+
+    if output_variables is None:
+        return {name: ("f4", dims) for name, dims in variables.items()}
+    if not isinstance(output_variables, Mapping):
+        raise TypeError("output_variables must map posterior variable names to 'single' or 'double'.")
+    schema = {}
+    for name, precision in output_variables.items():
+        if name not in variables:
+            raise ValueError(
+                f"Output variable {name!r} is not available for this model. "
+                f"Choose from: {', '.join(variables)}."
+            )
+        if precision not in ("single", "double"):
+            raise ValueError(f"Precision for {name!r} must be 'single' or 'double', not {precision!r}.")
+        schema[name] = ("f4" if precision == "single" else "f8", variables[name])
+    return schema
+
+
 def _create_result_file(
     path: Path,
     data: xr.DataArray,
@@ -40,7 +84,7 @@ def _create_result_file(
     nreg: int,
     regressor_names: list[str],
     model_name: str,
-    spec: Mapping[str, Any],
+    output_schema: Mapping[str, tuple[str, tuple[str, ...]]],
     chains: int,
     samples: int,
 ) -> None:
@@ -88,31 +132,8 @@ def _create_result_file(
             regressor_coordinate = output.createVariable("regressor", str, ("regressor",))
             regressor_coordinate[:] = np.asarray(regressor_names, dtype=str)
 
-        grid_suffix = grid_dims
-        scalar_dims = ("chain", "draw") + grid_suffix
-        time_dims = ("chain", "draw", "time") + grid_suffix
-        variables: dict[str, tuple[str, ...]] = {
-            "trend": time_dims,
-            "slope": time_dims,
-            "ar": time_dims,
-            "sigma_trend": scalar_dims,
-            "sigma_AR": scalar_dims,
-            "rhoAR1": scalar_dims,
-        }
-        if spec["seasonal"]:
-            variables["seasonal"] = time_dims
-            variables["sigma_seas"] = scalar_dims
-        if spec["ar2"]:
-            variables["rhoAR2"] = scalar_dims
-        if spec["regressors"] != "none":
-            if spec["regressors"] == "dynamic":
-                variables["beta"] = ("chain", "draw", "time", "regressor") + grid_suffix
-                variables["sigma_reg"] = ("chain", "draw", "regressor") + grid_suffix
-            else:
-                variables["beta"] = ("chain", "draw", "regressor") + grid_suffix
-
-        for name, dims in variables.items():
-            output.createVariable(name, "f8", dims, zlib=True, fill_value=np.nan)
+        for name, (dtype, dims) in output_schema.items():
+            output.createVariable(name, dtype, dims, zlib=True, fill_value=np.nan)
         status = output.createVariable("fit_status", "i1", grid_dims)
         status[:] = 0
         status.flag_values = np.array([-1, 0, 1], dtype=np.int8)
@@ -147,6 +168,7 @@ def fit_grid_mpi(
     regressors: xr.DataArray | xr.Dataset | np.ndarray | None = None,
     model: str = "vanilla_ar1",
     grid_dims: Sequence[str] | None = None,
+    output_variables: Mapping[str, Literal["single", "double"]] | None = None,
     overwrite: bool = False,
     **fit_options: Any,
 ) -> xr.Dataset | None:
@@ -161,6 +183,11 @@ def fit_grid_mpi(
     ``uncertainty`` and xarray ``regressors`` may be shared over time or include
     grid dimensions that are sliced for each fit. Existing output is protected
     unless ``overwrite=True``.
+
+    ``output_variables`` maps posterior variable names to ``"single"`` (float32)
+    or ``"double"`` (float64). Only listed posterior variables are saved; ``None``
+    saves all in single precision, and an empty mapping saves only coordinates
+    and ``fit_status``. This affects storage and MPI transfers, not sampling.
     """
     try:
         from mpi4py import MPI
@@ -204,9 +231,11 @@ def fit_grid_mpi(
     chains = int(fit_options.get("chains", 4))
     samples = int(fit_options.get("samples", 1000))
     setup_error = None
+    output_schema: dict[str, tuple[str, tuple[str, ...]]] = {}
 
     if rank == 0:
         try:
+            output_schema = _output_schema(selected_grid_dims, spec, output_variables)
             if output_path.exists() and not overwrite:
                 raise FileExistsError(f"Output already exists: {output_path}; set overwrite=True to replace it.")
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -215,13 +244,14 @@ def fit_grid_mpi(
             _get_compiled_model(model_name, spec, fit_options.get("cache_dir"))
             _create_result_file(
                 output_path, data, selected_grid_dims, nreg, regressor_names,
-                model_name, spec, chains, samples,
+                model_name, output_schema, chains, samples,
             )
         except Exception as exc:
             setup_error = str(exc)
     setup_error = comm.bcast(setup_error, root=0)
     if setup_error:
         raise RuntimeError(f"Could not initialize grid fit: {setup_error}")
+    output_schema = comm.bcast(output_schema, root=0)
     comm.Barrier()
 
     grid_shape = tuple(data.sizes[dim] for dim in selected_grid_dims)
@@ -254,7 +284,10 @@ def fit_grid_mpi(
                 uncertainty=cell_uncertainty,
                 **fit_options,
             )
-            result = cell_index, {name: posterior[name].to_numpy() for name in posterior.data_vars}, None
+            result = cell_index, {
+                name: posterior[name].to_numpy().astype(dtype, copy=False)
+                for name, (dtype, _) in output_schema.items()
+            }, None
         except Exception as exc:
             result = cell_index, None, str(exc)
         _LOGGER.info(

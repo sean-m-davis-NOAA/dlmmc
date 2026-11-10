@@ -15,6 +15,12 @@ On a local machine with Open MPI, launch four ranks from the repository root wit
 mpirun -np 4 python dlm_lat_alt_mpi_run.py
 ```
 
+To capture all standard output and warnings in a file:
+
+```bash
+mkdir -p results && mpirun -np 4 python dlm_lat_alt_mpi_run.py > results/mpi_run.log 2>&1
+```
+
 The script calls `dlmmc.fit_grid_mpi()`. With multiple ranks, rank 0 creates and writes `results/BASIC_V1_2017.nc`; all other ranks fit assigned grid cells and send each result to rank 0 as soon as the fit completes. Rank 0 is reserved for writing, so four ranks means three fitting workers. This single-writer design avoids concurrent NetCDF/HDF5 writes and does not require parallel-I/O-enabled libraries. Running the script directly with one process also works, but performs the fits serially.
 
 The output is created as a new file; by default, an existing output path is not overwritten. Use `--overwrite` to replace it; runs do not resume or append. The result is readable with xarray. `fit_status` is 1 for completed fits, 0 for skipped cells, and -1 for cells where fitting raised an error.
@@ -22,6 +28,45 @@ The output is created as a new file; by default, an existing output path is not 
 The defaults are one chain, one warmup iteration, and two sampling draws per cell. They are only a pipeline smoke test and do not produce converged posterior estimates. For longer runs, set the `--chains`, `--warmup`, and `--samples` options. Choose `--output` to set a different output path. Existing output is not overwritten unless `--overwrite` is specified. Short smoke-test chains can emit Stan warnings; check `fit_status` and the output file rather than treating convergence warnings as a pipeline failure.
 
 Use `--parallel-chains` to limit concurrent chains per cell and allocate at least that many CPUs per fitting worker. `--cell-indices` selects flat row-major `(pressure, latitude)` indices; unselected cells remain in the output grid with skipped status `0`.
+
+### Output variables and precision
+
+Edit `OUTPUT_VARIABLES` near the top of `dlm_lat_alt_mpi_run.py` to choose which
+posterior variables are saved and their precision. Remove an entry to omit that
+variable; use `"single"` for float32 or `"double"` for float64. For example:
+
+```python
+OUTPUT_VARIABLES = {
+    "trend": "single",
+    "sigma_trend": "double",
+    "sigma_AR": "double",
+    "rhoAR1": "double",
+    "sigma_seas": "double",
+    "beta": "single",
+}
+```
+
+This example omits `slope`, `ar`, and `seasonal`. The supplied configuration saves
+every posterior variable in single precision (float32), which halves the
+uncompressed storage per value compared with double precision; compressed file
+sizes vary. Earlier versions saved all posterior variables as float64; set entries
+to `"double"` to reproduce that. Coordinates keep their existing precision
+(including double-precision timestamps), and `fit_status` remains an integer.
+
+Direct API callers can pass the same mapping as
+`fit_grid_mpi(..., output_variables=...)`. `None` (the API default) saves all
+posterior variables in single precision; `{}` saves only coordinates and
+`fit_status`. Unknown names or precisions fail during setup, before an existing
+file is replaced. Only selected variables are transferred to rank 0, converted
+to the requested precision. Sampling itself runs in double precision and is
+unchanged; existing NetCDF files are not modified.
+
+The HERA Slurm templates invoke this runner, so they use the same configuration.
+The R-hat/ESS collector can inspect only retained non-time-varying parameters;
+omitting them narrows diagnostic coverage, and omitting all of them prevents
+that collector from computing diagnostics.
+
+### Checking output
 
 Verify that the output opens and inspect the grid dimensions and fit-status counts:
 

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import logging
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,19 @@ import dlmmc
 
 DATASET = Path('data/BASIC_V1_2017_lotus_seascyc_gcsw2017_fac2.nc')
 RESULT = Path('results/BASIC_V1_2017.nc')
+
+# Remove entries to omit variables; use 'single' (float32) or 'double' (float64).
+OUTPUT_VARIABLES: dict[str, Literal['single', 'double']] = {
+    'trend': 'single',
+    'slope': 'single',
+    'ar': 'single',
+    'sigma_trend': 'single',
+    'sigma_AR': 'single',
+    'rhoAR1': 'single',
+    'seasonal': 'single',
+    'sigma_seas': 'single',
+    'beta': 'single',
+}
 
 
 def _interpolate_regressor(path: str, column: int, time: xr.DataArray) -> xr.DataArray:
@@ -121,6 +135,7 @@ def main() -> None:
             regressors=regressors,
             model='vanilla_ar1',
             grid_dims=('pressure', 'latitude'),
+            output_variables=OUTPUT_VARIABLES,
             chains=args.chains,
             parallel_chains=args.parallel_chains,
             warmup=args.warmup,
