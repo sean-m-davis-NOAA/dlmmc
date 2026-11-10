@@ -10,10 +10,10 @@ On HERA, run the suite with the project environment:
 /home/Sean.M.Davis/miniforge3/envs/dlmmc-hera/bin/python -m pytest -q
 ```
 
-## HERA CPU/MPI validation (in progress)
+## HERA CPU/MPI validation
 
-The plan, results, recommended layout, and exact next commands are in [experiments/hpc/README.md](experiments/hpc/README.md). Read its "Initial measurements", "Interpretation and recommended layout", and "Next step: full-grid run" sections before continuing that work.
-
+- New-user recipe: [HERA.md](HERA.md). Testing record (measurements, interpretation, full-grid result, open items): [experiments/hpc/TESTING.md](experiments/hpc/TESTING.md). File index: [experiments/hpc/README.md](experiments/hpc/README.md). Keep recommendations in HERA.md and measurements in TESTING.md.
+- The layout work is done (20 ranks × 2 CPUs, `--parallel-chains 2`, about 570 s/cell). Remaining work is listed under "Open items" in TESTING.md.
 - Repository checkout: `/scratch3/BMC/chimera/Sean.M.Davis/dlmmc` (branch `hpc/hera-cmdstanpy-mpi`).
 - Run outputs, Slurm logs, and the run-record CSV: `/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work` (`runs/JOBID/`, `hera-cpu-mpi-run-record.csv`). This is Work storage: not backed up and subject to purge.
 - Environment: Miniforge at `/home/Sean.M.Davis/miniforge3`, env `dlmmc-hera` (Python 3.12, CmdStan 2.40, `mpi4py` built with `MPICC=mpiicx` against `impi/2024.2.1`).

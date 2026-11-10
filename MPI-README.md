@@ -121,16 +121,13 @@ On multi-node HPC systems, pass `--cache-dir` pointing to a shared filesystem so
 
 ## HERA CPU/MPI evaluation
 
-For the HERA-first CPU workflow, site-specific setup checks, and a Slurm smoke
-template, see [experiments/hpc/README.md](experiments/hpc/README.md) and
-[experiments/hpc/hera_cpu_mpi.sbatch.example](experiments/hpc/hera_cpu_mpi.sbatch.example).
-That directory also contains single-cell, single-node, and multi-node
-performance Slurm templates and blank run-level/per-cell CSV templates.
-The examples contain site- and project-specific values: verify the project account,
-Miniforge prefix, exact MPI module versions, `mpi4py` linkage, `srun` MPI plugin,
-and Work/TMPDIR paths on HERA first. The initial template uses one node, rank 0
-as writer, and two fitting workers; it is a pipeline smoke test, not a speed or
-convergence result.
+To run grid fits on NOAA RDHPCS HERA, follow [HERA.md](HERA.md): environment
+setup with Intel MPI, the recommended 20 ranks × 2 CPUs layout, wall-time
+planning with `--dry-run`, and a production Slurm template. The validation and
+benchmark record behind those recommendations is in
+[experiments/hpc/TESTING.md](experiments/hpc/TESTING.md), and
+[experiments/hpc/README.md](experiments/hpc/README.md) lists the scripts and
+templates.
 
 ### Temporary storage
 
