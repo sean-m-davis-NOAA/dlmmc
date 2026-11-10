@@ -90,7 +90,8 @@ Alternatively, give only a cell count with `--max-cells N`: each run fits the
 first N cells (in flat order) that are not yet complete, starting from the
 beginning of the grid when the file is new. Repeating the same command works
 through the grid in batches of N; once every cell is done, a further run fits
-nothing. `--max-cells` and `--cell-indices` cannot be combined. For example, the
+nothing. Failed cells (-1) are retried, so they count toward N again in each
+run. `--max-cells` and `--cell-indices` cannot be combined. For example, the
 same 324-cell grid in two equal runs:
 
 ```bash
