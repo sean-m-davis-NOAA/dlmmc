@@ -141,6 +141,32 @@ sizes vary. Earlier versions saved all posterior variables as float64; set entri
 to `"double"` to reproduce that. Coordinates keep their existing precision
 (including double-precision timestamps), and `fit_status` remains an integer.
 
+New output files use cell-aligned compressed chunks, so writing one cell does
+not rewrite chunks containing other cells. Older files can contain substantial
+unused HDF5 space from repeated chunk rewrites; changing precision alone does
+not recover that space. With the NetCDF command-line tools installed, compact a
+closed file into a new file without changing its values:
+
+```bash
+nccopy results/BASIC_V1_2017.nc results/BASIC_V1_2017_compact.nc
+```
+
+Keep the original until the copy is checked. Existing files retain their chunk
+layout on resume. To both compact and align an older pressure/latitude grid for
+future cell writes, use `nccopy -c pressure/1,latitude/1 input.nc output.nc`
+(substitute your grid dimension names).
+
+Choose variables according to the analyses you need:
+
+- Keep all draws for component-by-component posterior uncertainty.
+- Keep `trend` and the scalar/regressor parameters to save trend uncertainty
+  and parameter diagnostics without `slope`, `ar`, or `seasonal` draws.
+- Keep only `sigma_trend`, `sigma_AR`, `rhoAR1`, `sigma_seas`, and `beta` for
+  parameter distributions and R-hat/ESS diagnostics, but no latent time series.
+- Use `{}` for means and fit/divergence counts only (with the default
+  `posterior_means=True`). Means alone cannot recover credible intervals or
+  R-hat/ESS. Omitting outputs reduces storage and MPI transfers, not sampling work.
+
 Direct API callers can pass the same mapping as
 `fit_grid_mpi(..., output_variables=...)`. `None` (the API default) saves all
 posterior variables in single precision; `{}` saves only coordinates,

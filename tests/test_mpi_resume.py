@@ -131,6 +131,23 @@ def test_resume_without_existing_file_starts_new_run(single_rank_mpi, monkeypatc
         result.close()
 
 
+def test_resume_accepts_legacy_cross_cell_chunks(single_rank_mpi, monkeypatch, tmp_path):
+    path = tmp_path / "legacy.nc"
+    monkeypatch.setattr(dlmmc_mpi, "fit", lambda series, **kwargs: _posterior(1))
+    with monkeypatch.context() as legacy:
+        legacy.setattr(
+            dlmmc_mpi, "_cell_chunks",
+            lambda dims, sizes, grid_dims, dtype: tuple(sizes[dim] for dim in dims),
+        )
+        _fit_grid(path, max_cells=1).close()
+
+    result = _fit_grid(path, resume=True)
+    try:
+        np.testing.assert_array_equal(result["fit_status"], [[1, 1, 0, 1]])
+    finally:
+        result.close()
+
+
 @pytest.mark.parametrize(
     ("change", "message"),
     [
