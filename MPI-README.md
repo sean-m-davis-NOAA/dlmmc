@@ -136,12 +136,25 @@ OUTPUT_VARIABLES = {
 }
 ```
 
-This example omits `slope`, `ar`, and `seasonal`. The supplied configuration saves
-every posterior variable in single precision (float32), which halves the
-uncompressed storage per value compared with double precision; compressed file
-sizes vary. Earlier versions saved all posterior variables as float64; set entries
-to `"double"` to reproduce that. Coordinates keep their existing precision
-(including double-precision timestamps), and `fit_status` remains an integer.
+For the example's `vanilla_ar1` model, saving **all draws** means saving:
+
+- The time-varying components `trend`, `slope`, `ar`, and `seasonal`.
+- The parameters `sigma_trend`, `sigma_AR`, `rhoAR1`, `sigma_seas`, and `beta`.
+  The `beta` draws contain one coefficient for each regressor: ENSO, SOLAR,
+  QBO30, QBO50, and SAOD in the supplied example.
+
+The mapping above is **trend plus parameter draws**: it retains `trend` and all
+five parameter variables, but omits `slope`, `ar`, and `seasonal`. Omitting
+those time-varying components means their posterior summaries cannot be
+computed from that file; they do not have automatically saved mean variables.
+The same model and number of samples are fitted in either case.
+
+The supplied configuration saves every posterior variable in single precision
+(float32), which halves the uncompressed storage per value compared with double
+precision; compressed file sizes vary. Earlier versions saved all posterior
+variables as float64; set entries to `"double"` to reproduce that. Coordinates
+keep their existing precision (including double-precision timestamps), and
+`fit_status` remains an integer.
 
 New output files use cell-aligned compressed chunks, so writing one cell does
 not rewrite chunks containing other cells. Older files can contain substantial
@@ -171,11 +184,12 @@ Choose variables according to the analyses you need:
 
 Direct API callers can pass the same mapping as
 `fit_grid_mpi(..., output_variables=...)`. `None` (the API default) saves all
-posterior variables in single precision; `{}` saves only coordinates,
-`fit_status`, and `divergent_transitions`. Unknown names or precisions fail during setup, before an existing
-file is replaced. Only selected variables are transferred to rank 0, converted
-to the requested precision. Sampling itself runs in double precision and is
-unchanged; existing NetCDF files are not modified.
+posterior variables in single precision; `{}` saves no posterior draws, but
+still writes coordinates, `fit_status`, `divergent_transitions`, and the default
+non-time-varying posterior means. Unknown names or precisions fail during setup,
+before an existing file is replaced. Only selected variables are transferred to
+rank 0, converted to the requested precision. Sampling itself runs in double
+precision and is unchanged; existing NetCDF files are not modified.
 
 Every grid file also contains `fit_status` and an integer `divergent_transitions`
 variable over the grid dimensions (missing for skipped or failed cells), plus
