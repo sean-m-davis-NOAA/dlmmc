@@ -60,8 +60,10 @@ regressors, and the model. Also review:
   [Output variables and precision](MPI-README.md#output-variables-and-precision).
   The latent time series (`trend`, `ar`, `seasonal`, ...) dominate the file
   size. Per-cell posterior means of the scalar parameters are always written.
-  Float32 reduces the uncompressed data size but did not reduce the compressed
-  full-grid NetCDF size in our test; see the [testing record](experiments/hpc/TESTING.md#single-precision-full-grid-run-2026-11-10-to-2026-11-11).
+  The compacted test grid was 3.01 GB with all float32 draws, or 550 MB with
+  only `trend` and parameter draws. New outputs use cell-aligned chunks to avoid
+  unused HDF5 space growth; older files can be compacted with `nccopy`. See the
+  [storage investigation](experiments/hpc/TESTING.md#storage-investigation-and-output-choices-2026-11-12).
 - **`--cell-indices`**: fit only these row-major flat `(pressure, latitude)`
   cells. Cells with no finite data are skipped automatically, but constant
   cells (for example all zeros) are not. In the example dataset, flat IDs 3–8

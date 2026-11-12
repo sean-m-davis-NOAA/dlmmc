@@ -178,7 +178,7 @@ Job `34827902` re-fitted the four flat IDs above (132, 90, 26, 281) with 4 chain
 | 132 | 1.0174 | 1.0012 | 2065 | 1025 | 0 |
 | 281 | 1.0104 | 1.0014 | 2402 | 1332 | 0 |
 
-The earlier flags came from too few draws, not from a problem with the model or data. For a production run that must keep every cell below R-hat 1.01, either use 1000+1000 or re-fit any flagged cells this way.
+Increasing warmup and retained draws resolved these flags in this test; it does not by itself establish model adequacy. Use 1000+1000 or re-fit flagged cells, and check the resulting diagnostics rather than assuming an iteration count guarantees convergence.
 
 ### Single-precision full-grid run (2026-11-10 to 2026-11-11)
 
@@ -195,14 +195,61 @@ Job `34827903` fitted the 312 valid cells with the same model, seed, and layout 
 
 The four cells flagged in the earlier full-grid run again had R-hat above 1.01: IDs 132 (1.0174), 90 (1.0158), 26 (1.0107), and 281 (1.0104). The higher-draw re-fit in job `34827902` brought these cells below 1.0015, but that separate re-fit is not incorporated into this full-grid file.
 
-**Storage finding:** despite storing posterior draws as float32, this file is about 3.5% larger than the earlier all-float64 file (7,434,190,077 bytes). Both use zlib level 4 with shuffle enabled. Float32 reduces the uncompressed size, but does not guarantee a smaller compressed file for these draws. Do not promise users a smaller NetCDF based on precision alone; investigate compression and/or output-variable selection before making storage recommendations.
+**Initial storage finding:** despite storing posterior draws as float32, this file is about 3.5% larger than the earlier all-float64 file (7,434,190,077 bytes). Both use zlib level 4 with shuffle enabled. The investigation below identified unused HDF5 space, rather than ineffective float32 compression, as the cause.
+
+### Storage investigation and output choices (2026-11-12)
+
+`h5stat -S` separated live compressed data from unused/unaccounted file space:
+
+| File | Total bytes | Live data bytes | Unaccounted bytes |
+|---|---:|---:|---:|
+| Earlier float64 grid | 7,434,190,077 | 6,755,832,495 | 678,176,408 |
+| Float32 grid before compaction | 7,695,494,207 | 3,022,328,911 | 4,672,961,915 |
+| Float32 grid after `nccopy` | 3,014,575,403 | 3,014,350,754 | 4,625 |
+
+The remainder in each row is file metadata. Float32 did reduce the live compressed data, but the per-cell writer exposed an HDF5 allocation problem: default chunks span multiple cells (for the latent states, 9 pressures by 4 latitudes). Updating one cell rewrites shared compressed chunks. Closing and reopening after each result, which keeps partial results readable on interruption, can leave the old allocations unused.
+
+A four-variable, 16-cell reproducer with zlib level 4 grew to 15.79 MB with shared chunks, versus 2.78 MB with cell-aligned chunks. The shared-chunk case took 1.72 s to write versus 0.19 s for cell-aligned chunks; these are small synthetic measurements, not full-grid performance claims.
+
+The fix on `main` and both HPC branches gives each compressed chunk a grid extent of one cell and caps its uncompressed size at 4 MiB. It applies to draws and posterior means, preserves the close-after-each-cell behavior, and still accepts older files on resume. Existing files retain their chunk layout; compact them with `nccopy`, or also rechunk them for further writes with `nccopy -c pressure/1,latitude/1 input.nc output.nc`. See [MPI-README.md](../../MPI-README.md#output-variables-and-precision).
+
+The full-grid compacted copy is in `<WORK_ROOT>/storage-analysis/full-single-nccopy.nc`. Every variable, value, dtype, dimension, and NetCDF attribute was compared with the original and matched exactly. The original is unchanged. The copy saves 4.68 GB (60.8%).
+
+Compression-level comparison on the four latent variables for real cells 0, 26, 132, and 281, using cell-aligned chunks:
+
+| zlib level | File size | Write time |
+|---|---:|---:|
+| 1 | 37.26 MB | 1.21 s |
+| 4 | 36.97 MB | 1.44 s |
+| 9 | 36.50 MB | 9.06 s |
+
+Keep level 4: level 9 saved only 1.3% in this sample but cost over six times as much write time. Changing the chunk layout is the important fix.
+
+The four latent variables account for over 99% of the compacted grid's live data. Copies retaining different variable sets measured:
+
+| Saved posterior variables | File size | What remains available |
+|---|---:|---|
+| All (current default) | 3.01 GB | All component posterior draws |
+| `trend` plus scalar/regressor parameters | 549.73 MB | Trend uncertainty and parameter R-hat/ESS |
+| Scalar/regressor parameters only | 18.88 MB | Parameter distributions and R-hat/ESS, but no latent time-series draws |
+| Means only (`OUTPUT_VARIABLES = {}`) | 61.65 kB | Posterior means, fit status, and divergences; no credible intervals or R-hat/ESS |
+
+Every profile keeps coordinates, status/divergence counts, and default posterior means. Sizes describe copies of this run, not guarantees for other data or chunk layouts. Keep all variables as the package default to preserve analyses; recommend `trend` plus `sigma_trend`, `sigma_AR`, `rhoAR1`, `sigma_seas`, and `beta` when the user does not need the other latent components. Omitting outputs saves storage and MPI traffic, not fitting work.
+
+### High-R-hat refit with corrected chunks (2026-11-12)
+
+Job `34877319` repeated the four high-R-hat cells (26, 90, 132, 281) with 4 chains x (1000 warmup + 1000 draws), 5 ranks x 4 CPUs, and `PARALLEL_CHAINS=4`. This both fulfills the requested refit and validates the corrected writer in a real MPI job. It completed with exit code 0 in 5 min 58 s.
+
+All four cells have zero divergences. Their R-hat and ESS values match the earlier higher-draw refit table exactly (maximum R-hat 1.0014, minimum bulk ESS 1422.6, minimum tail ESS 868.4). Every saved draw and posterior mean for the fitted cells matches the earlier refit exactly, while every compressed posterior/mean variable now has cell-aligned chunks.
+
+The new file is 73,902,011 bytes (73.90 MB), versus 197,475,838 bytes before the fix: a 62.6% reduction with unchanged values. `h5stat -S` reports 73,826,288 bytes of live data, 69,749 bytes of metadata, and only 5,974 unaccounted bytes. Results and diagnostics are in `<WORK_ROOT>/refit-rhat-cellchunks/`. They remain a separate higher-draw output, not replacements in the 500+500 full grid.
 
 ## Conclusions
 
 - The CmdStanPy/MPI path works on HERA with Intel MPI and `srun --mpi=pmi2`, single- and multi-node, with rank 0 as the sole writer.
 - Use one whole node as 20 ranks × 2 CPUs with `--parallel-chains` equal to the CPUs per task. 10 × 4 is practically tied; 40 × 1 is about 8% slower.
-- Peak memory was 6.19 GiB in the latest full-grid run; output writing completed successfully, but compressed file size did not decrease with float32 output.
-- Run time is set by the busiest worker, which `--dry-run` reports. dlmmc deals the cells to fit round-robin to the workers; the runs above used the earlier `flat_index % (nranks - 1)` assignment, which gives the same or nearly the same counts.
+- Peak memory was 6.19 GiB in the latest full-grid run. Its compacted float32 output is 3.01 GB; the writer now uses cell-aligned chunks to avoid the unused-space growth found in that run.
+- Run time is set by the busiest worker, which `--dry-run` reports. dlmmc deals the cells to fit round-robin to the workers; the earlier layout tests used `flat_index % (nranks - 1)`, which gives the same or nearly the same counts.
 - Grids that need more than one job's wall time can be split across jobs with `--resume` (see HERA.md).
 
 ## Open items
@@ -210,8 +257,9 @@ The four cells flagged in the earlier full-grid run again had R-hat above 1.01: 
 1. ~~Smoke-test the single-precision output, divergences, means, and resume in real MPI jobs.~~ Done: jobs `34827576` and `34827577`.
 2. ~~Re-fit flat IDs 132, 90, 26, and 281 with more warmup and draws.~~ Done: job `34827902`; all below R-hat 1.0015.
 3. ~~Rerun the full grid with single-precision output to measure the file size and confirm the run time.~~ Done: job `34827903`; it completed in 2 h 24 min 46 s, but its file was 3.5% larger than the prior double-precision file.
-4. Investigate why zlib-compressed single-precision output is larger than the prior double-precision output. Compare alternative compression settings and consider whether a default precision or variable selection change actually improves file size.
-5. Decide whether the production guidance should require re-fitting cells with R-hat above 1.01 (IDs 26, 90, 132, 281) and investigate the five cells with divergences (IDs 58, 92, 112, 141, 146). A re-fit with different chain counts or iterations cannot be resumed into the existing file because resume requires matching settings.
+4. ~~Investigate compression and output-variable choices.~~ Done: unused HDF5 space caused the growth; the chunk-layout fix is on `main` and both HPC branches. Keep zlib level 4 and all variables by default; optional slimmer profiles are measured above.
+5. ~~Validate the corrected writer in a real MPI refit of high-R-hat IDs 26, 90, 132, and 281.~~ Done: job `34877319`; max R-hat 1.0014, no divergences, unchanged draws, and a 62.6% smaller file.
+6. Investigate the five cells with divergences (IDs 58, 92, 112, 141, 146) before treating the full grid as scientifically final. A refit with different iterations cannot be resumed into the existing file because resume requires matching settings. The successful higher-draw refits remain separate outputs, not replacements in the 500+500 grid.
 
 ## Decision Gate
 
