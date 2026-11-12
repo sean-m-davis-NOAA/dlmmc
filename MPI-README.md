@@ -126,10 +126,10 @@ variable; use `"single"` for float32 or `"double"` for float64. For example:
 ```python
 OUTPUT_VARIABLES = {
     "trend": "single",
-    "sigma_trend": "double",
-    "sigma_AR": "double",
-    "rhoAR1": "double",
-    "sigma_seas": "double",
+    "sigma_trend": "single",
+    "sigma_AR": "single",
+    "rhoAR1": "single",
+    "sigma_seas": "single",
     "beta": "single",
 }
 ```
@@ -141,18 +141,21 @@ For the example's `vanilla_ar1` model, saving **all draws** means saving:
   The `beta` draws contain one coefficient for each regressor: ENSO, SOLAR,
   QBO30, QBO50, and SAOD in the supplied example.
 
-The mapping above is **trend plus parameter draws**: it retains `trend` and all
-five parameter variables, but omits `slope`, `ar`, and `seasonal`. Omitting
-those time-varying components means their posterior summaries cannot be
-computed from that file; they do not have automatically saved mean variables.
-The same model and number of samples are fitted in either case.
+The mapping above is the recommended **trend plus parameter draws** subset: it
+retains `trend` and all five parameter variables, but omits `slope`, `ar`, and
+`seasonal` draws. By default, the output still includes the component means
+`trend_mean`, `ar_mean`, and (when the model has seasonality) `seasonal_mean`,
+as well as parameter means such as `beta_mean`. Thus these component means can
+be combined to reconstruct the posterior mean fit even though some component
+draws are omitted. The same model and number of samples are fitted in either
+case.
 
-The supplied configuration saves every posterior variable in single precision
-(float32), which halves the uncompressed storage per value compared with double
-precision; compressed file sizes vary. Earlier versions saved all posterior
-variables as float64; set entries to `"double"` to reproduce that. Coordinates
-keep their existing precision (including double-precision timestamps), and
-`fit_status` remains an integer.
+The supplied configuration saves the selected posterior draws in single
+precision (float32), which halves the uncompressed storage per selected value
+compared with double precision; compressed file sizes vary. Earlier versions
+saved all posterior variables as float64; set entries to `"double"` to reproduce
+that. Coordinates keep their existing precision (including double-precision
+timestamps), and `fit_status` remains an integer.
 
 New output files use cell-aligned compressed chunks, so writing one cell does
 not rewrite chunks containing other cells. Older files can contain substantial
@@ -173,36 +176,52 @@ Choose variables according to the analyses you need:
 
 - Keep all draws for component-by-component posterior uncertainty.
 - Keep `trend` and the scalar/regressor parameters to save trend uncertainty
-  and parameter diagnostics without `slope`, `ar`, or `seasonal` draws.
+  and parameter diagnostics without `slope`, `ar`, or `seasonal` draws. The
+  component means are still available for reconstructing the mean fit.
 - Keep only `sigma_trend`, `sigma_AR`, `rhoAR1`, `sigma_seas`, and `beta` for
-  parameter distributions and R-hat/ESS diagnostics, but no latent time series.
-- Use `{}` for means and fit/divergence counts only (with the default
-  `posterior_means=True`). Means alone cannot recover credible intervals or
-  R-hat/ESS. Omitting outputs reduces storage and MPI transfers, not sampling work.
+  parameter distributions and R-hat/ESS diagnostics, with no component draws.
+- Use `{}` for component and parameter means plus fit/divergence counts only
+  (with the default `posterior_means=True`). Means alone cannot recover credible
+  intervals or R-hat/ESS. Omitting outputs reduces storage and MPI transfers,
+  not sampling work.
 
 Direct API callers can pass the same mapping as
 `fit_grid_mpi(..., output_variables=...)`. `None` (the API default) saves all
 posterior variables in single precision; `{}` saves no posterior draws, but
 still writes coordinates, `fit_status`, `divergent_transitions`, and the default
-non-time-varying posterior means. Unknown names or precisions fail during setup,
-before an existing file is replaced. Only selected variables are transferred to
-rank 0, converted to the requested precision. Sampling itself runs in double
-precision and is unchanged; existing NetCDF files are not modified.
+parameter and additive-component posterior means. Unknown names or precisions
+fail during setup, before an existing file is replaced. Only selected variables
+are transferred to rank 0, converted to the requested precision. Sampling itself
+runs in double precision and is unchanged; existing NetCDF files are not modified.
+Files created before component means were added with `posterior_means=True`
+cannot be resumed with that option enabled because they lack the new means.
+Resume validation reports the schema mismatch; use the original version to
+finish such a file or start a new output file. Files created with
+`posterior_means=False` can still be resumed with that setting if the other
+output settings match.
 
 Every grid file also contains `fit_status` and an integer `divergent_transitions`
 variable over the grid dimensions (missing for skipped or failed cells), plus
 global attributes describing the model, sampler settings, priors, and software
 versions.
 
-By default, each non-time-varying parameter also gets a per-cell posterior mean,
+By default, each non-time-varying parameter gets a per-cell posterior mean,
 named `<name>_mean` (for example `sigma_AR_mean`, `rhoAR1_mean`, and, for static
-regressor models, `beta_mean` with a `regressor` dimension). Means are stored in
-double precision, are computed from the full-precision draws, and are written
-even when that parameter's draws are omitted from `OUTPUT_VARIABLES`, so you can
-drop large draw arrays and keep a compact summary. Time-varying variables
-(`trend`, `slope`, `ar`, `seasonal`, dynamic `beta`) do not get means. Pass
-`posterior_means=False` to `fit_grid_mpi()` to omit them. See [Output metadata and sampler diagnostics](README.md#output-metadata-and-sampler-diagnostics)
-for what these mean and how to interpret divergences.
+regressor models, `beta_mean` with a `regressor` dimension). The additive
+time-varying fit components `trend`, `ar`, and, when present, `seasonal` also
+get pointwise means over `time` and the grid. These double-precision means are
+computed from the full-precision draws and written even when the corresponding
+draws are omitted from `OUTPUT_VARIABLES`.
+
+For the example's additive fit, reconstruct the posterior mean time series as
+`trend_mean + seasonal_mean + ar_mean + sum(beta_mean * regressors)` after
+aligning the regressors to the saved `time` and grid coordinates. This is the
+mean model fit, not a credible interval; use component draws when uncertainty
+in the fit is needed. There is no `slope_mean` because slope is a trend-state
+derivative, not a separate term in the observation fit. Pass
+`posterior_means=False` to `fit_grid_mpi()` to omit all parameter and component
+means. See [Output metadata and sampler diagnostics](README.md#output-metadata-and-sampler-diagnostics)
+for how to interpret divergences.
 
 ### Checking output
 

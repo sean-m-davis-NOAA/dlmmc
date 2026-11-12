@@ -351,7 +351,7 @@ def test_invalid_prior_fails_before_compilation(single_rank_mpi, monkeypatch, tm
         dlmmc_mpi.fit_grid_mpi(data, tmp_path / "grid.nc", model="noregs_ar1", sigma_AR_prior=-1.0)
 
 
-def test_posterior_means_cover_non_time_parameters_even_when_draws_are_omitted(
+def test_posterior_means_cover_fit_components_and_parameters_even_when_draws_are_omitted(
     single_rank_mpi, monkeypatch, tmp_path
 ):
     import netCDF4
@@ -382,17 +382,41 @@ def test_posterior_means_cover_non_time_parameters_even_when_draws_are_omitted(
     )
     try:
         means = {name for name in result.data_vars if name.endswith("_mean")}
-        assert means == {"sigma_trend_mean", "sigma_AR_mean", "rhoAR1_mean", "sigma_seas_mean", "beta_mean"}
+        assert means == {
+            "trend_mean", "ar_mean", "seasonal_mean",
+            "sigma_trend_mean", "sigma_AR_mean", "rhoAR1_mean", "sigma_seas_mean", "beta_mean",
+        }
         assert "sigma_AR" not in result
+        assert result["trend_mean"].dims == ("time", "pressure", "latitude")
+        assert result["seasonal_mean"].dims == ("time", "pressure", "latitude")
+        assert result["ar_mean"].dims == ("time", "pressure", "latitude")
         assert result["sigma_AR_mean"].dims == ("pressure", "latitude")
         assert result["beta_mean"].dims == ("regressor", "pressure", "latitude")
+        for name in ("trend", "seasonal", "ar"):
+            np.testing.assert_allclose(
+                result[f"{name}_mean"].isel(pressure=0, latitude=0),
+                posterior[name].mean(("chain", "draw")),
+            )
         np.testing.assert_allclose(
             result["sigma_AR_mean"].isel(pressure=0, latitude=0), posterior["sigma_AR"].mean()
         )
         np.testing.assert_allclose(
             result["beta_mean"].isel(pressure=0, latitude=0), posterior["beta"].mean(("chain", "draw"))
         )
+        mean_fit = (
+            result["trend_mean"] + result["seasonal_mean"] + result["ar_mean"]
+            + (result["beta_mean"] * xr.DataArray(np.ones((6, 2)), dims=("time", "regressor"))).sum("regressor")
+        )
+        expected_mean_fit = (
+            posterior["trend"].mean(("chain", "draw"))
+            + posterior["seasonal"].mean(("chain", "draw"))
+            + posterior["ar"].mean(("chain", "draw"))
+            + posterior["beta"].mean(("chain", "draw")).sum("regressor")
+        )
+        np.testing.assert_allclose(mean_fit.isel(pressure=0, latitude=0), expected_mean_fit)
         assert np.isnan(result["sigma_AR_mean"].isel(pressure=0, latitude=[1, 2])).all()
+        assert np.isnan(result["trend_mean"].isel(pressure=0, latitude=1)).all()
+        assert np.isnan(result["ar_mean"].isel(pressure=0, latitude=2)).all()
         assert "posterior mean" in result["sigma_AR_mean"].attrs["long_name"]
     finally:
         result.close()

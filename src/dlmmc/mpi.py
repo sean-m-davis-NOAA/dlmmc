@@ -68,11 +68,11 @@ def _posterior_dims(grid_dims: tuple[str, ...], spec: Mapping[str, Any]) -> dict
 
 
 def _mean_schema(variables: Mapping[str, tuple[str, ...]]) -> dict[str, tuple[str, tuple[str, ...]]]:
-    """Map each non-time-varying parameter to its per-cell posterior-mean variable."""
+    """Map parameter and additive-component means to NetCDF variables."""
     return {
         f"{name}_mean": (name, tuple(dim for dim in dims if dim not in ("chain", "draw")))
         for name, dims in variables.items()
-        if "time" not in dims
+        if "time" not in dims or name in {"trend", "seasonal", "ar"}
     }
 
 
@@ -553,9 +553,11 @@ def fit_grid_mpi(
 
     With ``posterior_means=True`` (the default), each non-time-varying parameter
     (for example ``sigma_AR``, ``rhoAR1``, or static ``beta``) also gets a
-    ``<name>_mean`` variable over the grid (plus ``regressor`` where applicable),
-    holding the double-precision posterior mean for each cell. Means are written
-    whether or not that parameter's draws are selected in ``output_variables``.
+    ``<name>_mean`` variable over the grid (plus ``regressor`` where applicable).
+    The additive fit components ``trend``, ``seasonal`` (when present), and
+    ``ar`` also get pointwise ``<name>_mean`` variables over time and the grid.
+    Means are computed in double precision and written whether or not their
+    draws are selected in ``output_variables``.
 
     The file always contains ``fit_status`` and a per-cell
     ``divergent_transitions`` count, and its global attributes record the model,
