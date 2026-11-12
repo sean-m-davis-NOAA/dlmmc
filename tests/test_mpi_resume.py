@@ -56,6 +56,10 @@ def _posterior(value):
         name: (("chain", "draw"), np.full((2, 3), value))
         for name in ("sigma_trend", "sigma_AR", "rhoAR1", "sigma_seas")
     })
+    posterior.update({
+        name: (("chain", "draw", "time"), np.full((2, 3, 6), value))
+        for name in ("trend", "slope", "ar", "seasonal")
+    })
     posterior.attrs["divergent_transitions"] = 0
     return posterior
 
