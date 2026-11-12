@@ -227,6 +227,52 @@ def test_single_precision_reduces_file_size_for_identical_draws(single_rank_mpi,
     assert sizes["single"] < sizes["double"]
 
 
+@pytest.mark.parametrize("dtype", ["f4", "f8"])
+def test_cell_chunks_bound_size_without_crossing_grid_cells(dtype):
+    sizes = dict(chain=4, draw=10000, time=10000, regressor=5, pressure=27, latitude=12)
+    dims = tuple(sizes)
+    chunks = dlmmc_mpi._cell_chunks(dims, sizes, ("pressure", "latitude"), dtype)
+
+    assert chunks[-2:] == (1, 1)
+    assert all(1 <= chunk <= sizes[dim] for dim, chunk in zip(dims, chunks))
+    assert np.prod(chunks) * np.dtype(dtype).itemsize <= 4 * 1024**2
+
+
+def test_cell_writes_do_not_bloat_compressed_file_on_resume(single_rank_mpi, monkeypatch, tmp_path):
+    import netCDF4
+
+    names = ("trend", "slope", "ar", "seasonal")
+    draws = np.random.default_rng(42).normal(size=(2, 64, 96, 4, 4)).astype("f4")
+
+    def fake_fit(series, **kwargs):
+        i, j = divmod(int(series.values[0]), 4)
+        return xr.Dataset({
+            name: (("chain", "draw", "time"), draws[:, :, :, i, j])
+            for name in names
+        })
+
+    monkeypatch.setattr(dlmmc_mpi, "fit", fake_fit)
+    data = xr.DataArray(
+        np.broadcast_to(np.arange(16).reshape(1, 4, 4), (96, 4, 4)),
+        dims=("time", "pressure", "latitude"),
+    )
+    path = tmp_path / "grid.nc"
+    options = dict(
+        model="noregs_ar1", chains=2, samples=64,
+        output_variables={name: "single" for name in names},
+        posterior_means=False, max_cells=8,
+    )
+    dlmmc_mpi.fit_grid_mpi(data, path, **options).close()
+    dlmmc_mpi.fit_grid_mpi(data, path, resume=True, **options).close()
+
+    assert path.stat().st_size < draws.nbytes * len(names) * 1.25
+    with netCDF4.Dataset(path) as output:
+        np.testing.assert_array_equal(output["fit_status"][:], np.ones((4, 4)))
+        for name in names:
+            assert output[name].chunking()[-2:] == [1, 1]
+            np.testing.assert_array_equal(output[name][:], draws)
+
+
 def test_runner_forwards_output_variables(monkeypatch, tmp_path):
     from pathlib import Path
 
@@ -352,6 +398,8 @@ def test_posterior_means_cover_non_time_parameters_even_when_draws_are_omitted(
         result.close()
     with netCDF4.Dataset(path) as output:
         assert output["sigma_AR_mean"].dtype == np.dtype("float64")
+        for name in means:
+            assert output[name].chunking()[-2:] == [1, 1]
 
 
 def test_posterior_means_can_be_disabled(single_rank_mpi, monkeypatch, tmp_path):

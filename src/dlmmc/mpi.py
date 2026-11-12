@@ -7,6 +7,7 @@ import os
 import time as _time
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
+from math import prod
 from pathlib import Path
 from typing import Any, Literal
 
@@ -101,6 +102,17 @@ def _output_schema(
     return schema
 
 
+def _cell_chunks(
+    dims: tuple[str, ...], sizes: Mapping[str, int], grid_dims: tuple[str, ...], dtype: str
+) -> tuple[int, ...]:
+    """Keep compressed chunks within one cell and at most 4 MiB."""
+    chunks = [1 if dim in grid_dims else max(1, sizes[dim]) for dim in dims]
+    while prod(chunks) * np.dtype(dtype).itemsize > 4 * 1024**2:
+        largest = max(range(len(chunks)), key=chunks.__getitem__)
+        chunks[largest] = (chunks[largest] + 1) // 2
+    return tuple(chunks)
+
+
 def _create_result_file(
     path: Path,
     data: xr.DataArray,
@@ -157,10 +169,19 @@ def _create_result_file(
             regressor_coordinate = output.createVariable("regressor", str, ("regressor",))
             regressor_coordinate[:] = np.asarray(regressor_names, dtype=str)
 
+        sizes = {name: len(dim) for name, dim in output.dimensions.items()}
+        # Cross-cell chunks are rewritten for each result and leave unused space
+        # when the file is closed and reopened between cells.
         for name, (dtype, dims) in output_schema.items():
-            output.createVariable(name, dtype, dims, zlib=True, fill_value=np.nan)
+            output.createVariable(
+                name, dtype, dims, zlib=True, fill_value=np.nan,
+                chunksizes=_cell_chunks(dims, sizes, grid_dims, dtype),
+            )
         for name, (source, dims) in mean_schema.items():
-            mean = output.createVariable(name, "f8", dims, zlib=True, fill_value=np.nan)
+            mean = output.createVariable(
+                name, "f8", dims, zlib=True, fill_value=np.nan,
+                chunksizes=_cell_chunks(dims, sizes, grid_dims, "f8"),
+            )
             mean.long_name = f"posterior mean of {source}"
             mean.comment = (
                 f"Mean of all post-warmup draws of {source} over every chain, computed from "
