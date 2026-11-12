@@ -55,14 +55,18 @@ Notes:
 pressure/latitude grid. For your own data, copy it and edit `DATASET`, the
 regressors, and the model. Also review:
 
-- **`OUTPUT_VARIABLES`**: which posterior variables to save and whether each is
-  saved as `'single'` (default) or `'double'` precision. See
+- **`OUTPUT_VARIABLES`**: the example saves single-precision draws for `trend`,
+  `sigma_trend`, `sigma_AR`, `rhoAR1`, `sigma_seas`, and `beta` by default,
+  omitting `slope`, `ar`, and `seasonal` draws. Its output also includes
+  double-precision `trend_mean`, `ar_mean`, `seasonal_mean`, and parameter means
+  such as `beta_mean`. For this model, reconstruct the mean fit as
+  `trend_mean + seasonal_mean + ar_mean + sum(beta_mean * regressors)` after
+  aligning the regressors to time and grid coordinates. See
   [Output variables and precision](MPI-README.md#output-variables-and-precision).
-  The latent time series (`trend`, `ar`, `seasonal`, ...) dominate the file
-  size. Per-cell posterior means of the scalar parameters are always written.
-  The compacted test grid was 3.01 GB with all float32 draws, or 550 MB with
-  only `trend` and parameter draws. New outputs use cell-aligned chunks to avoid
-  unused HDF5 space growth; older files can be compacted with `nccopy`. See the
+  In an earlier test, the compacted grid was 3.01 GB with all float32 draws, or
+  550 MB with only `trend` and parameter draws; those copies predate the added
+  component means, so current files will differ. New outputs use cell-aligned
+  chunks to avoid unused HDF5 space growth. See the
   [storage investigation](experiments/hpc/TESTING.md#storage-investigation-and-output-choices-2026-11-12).
 - **`--cell-indices`**: fit only these row-major flat `(pressure, latitude)`
   cells. Cells with no finite data are skipped automatically, but constant
@@ -102,7 +106,7 @@ python dlm_lat_alt_mpi_run.py -n --ranks 20 --chains 4 --samples 500 \
 Cells to fit: 312 of 324 (12 skipped: no finite data or not selected)
 Ranks: 20 (19 fitting workers; rank 0 writes)
 Cells per worker: 16-17
-Uncompressed output size: 4.13 GB (compression usually makes the file smaller)
+Uncompressed output size: 1.05 GB (compression usually makes the file smaller)
 Estimated fitting time: 2:41:30 (busiest worker), 3:21:52 with safety margin
 Time limit 4:00:00: OK.
 ```
@@ -150,7 +154,10 @@ sbatch --time=02:00:00 --dependency=afterany:$JOB my-dlmmc-grid.sbatch
 
 Keep every setting the same across the jobs. A resumed run refuses to start if
 the chains, warmup, samples, seed, priors, or output variables differ from the
-file's. Check how many cells remain, and whether one more job will finish them:
+file's. Files created before component means were added with means enabled
+cannot be resumed with the new mean schema; use the original version to finish
+them or start a new output file. Check how many cells remain, and whether one
+more job will finish them:
 
 ```bash
 python dlm_lat_alt_mpi_run.py -n --resume --output "$OUTPUT_FILE" --ranks 20 --chains 4 \

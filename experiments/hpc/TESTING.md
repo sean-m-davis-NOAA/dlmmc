@@ -211,7 +211,7 @@ The remainder in each row is file metadata. Float32 did reduce the live compress
 
 A four-variable, 16-cell reproducer with zlib level 4 grew to 15.79 MB with shared chunks, versus 2.78 MB with cell-aligned chunks. The shared-chunk case took 1.72 s to write versus 0.19 s for cell-aligned chunks; these are small synthetic measurements, not full-grid performance claims.
 
-The fix on `main` and both HPC branches gives each compressed chunk a grid extent of one cell and caps its uncompressed size at 4 MiB. It applies to draws and posterior means, preserves the close-after-each-cell behavior, and still accepts older files on resume. Existing files retain their chunk layout; compact them with `nccopy`, or also rechunk them for further writes with `nccopy -c pressure/1,latitude/1 input.nc output.nc`. See [MPI-README.md](../../MPI-README.md#output-variables-and-precision).
+The fix on `main` and both HPC branches gives each compressed chunk a grid extent of one cell and caps its uncompressed size at 4 MiB. It applies to draws and posterior means, preserves the close-after-each-cell behavior, and accepts older chunk layouts on resume when the output schema and other settings match. Adding component means later changed that schema for runs with means enabled. Existing files retain their chunk layout; compact them with `nccopy`, or also rechunk them for further writes with `nccopy -c pressure/1,latitude/1 input.nc output.nc`. See [MPI-README.md](../../MPI-README.md#output-variables-and-precision).
 
 The full-grid compacted copy is in `<WORK_ROOT>/storage-analysis/full-single-nccopy.nc`. Every variable, value, dtype, dimension, and NetCDF attribute was compared with the original and matched exactly. The original is unchanged. The copy saves 4.68 GB (60.8%).
 
@@ -225,16 +225,16 @@ Compression-level comparison on the four latent variables for real cells 0, 26, 
 
 Keep level 4: level 9 saved only 1.3% in this sample but cost over six times as much write time. Changing the chunk layout is the important fix.
 
-The four latent variables account for over 99% of the compacted grid's live data. Copies retaining different variable sets measured:
+The four latent variables account for over 99% of the compacted grid's live data. Copies retaining different variable sets measured before component means were added:
 
 | Saved posterior variables | File size | What remains available |
 |---|---:|---|
-| All (current default) | 3.01 GB | All component posterior draws |
+| All draws (API draw-selection default) | 3.01 GB | All component posterior draws |
 | `trend` plus scalar/regressor parameters | 549.73 MB | Trend uncertainty and parameter R-hat/ESS |
 | Scalar/regressor parameters only | 18.88 MB | Parameter distributions and R-hat/ESS, but no latent time-series draws |
-| Means only (`OUTPUT_VARIABLES = {}`) | 61.65 kB | Posterior means, fit status, and divergences; no credible intervals or R-hat/ESS |
+| Parameter means only (`OUTPUT_VARIABLES = {}` at the time) | 61.65 kB | Parameter means, fit status, and divergences; no credible intervals or R-hat/ESS |
 
-Every profile keeps coordinates, status/divergence counts, and default posterior means. Sizes describe copies of this run, not guarantees for other data or chunk layouts. Keep all variables as the package default to preserve analyses; recommend `trend` plus `sigma_trend`, `sigma_AR`, `rhoAR1`, `sigma_seas`, and `beta` when the user does not need the other latent components. Omitting outputs saves storage and MPI traffic, not fitting work.
+Every profile keeps coordinates, status/divergence counts, and the parameter means available at the time. These copies do not include the `trend_mean`, `ar_mean`, and `seasonal_mean` variables now written by default; their addition makes current outputs larger, especially means-only output. Sizes describe copies of this run, not guarantees for other data or chunk layouts. The API still selects all draws by default; the example runner now defaults to `trend` plus `sigma_trend`, `sigma_AR`, `rhoAR1`, `sigma_seas`, and `beta`. Omitting outputs saves storage and MPI traffic, not fitting work.
 
 ### High-R-hat refit with corrected chunks (2026-11-12)
 
@@ -258,7 +258,7 @@ Job `34877828` re-fitted the five cells that each had one divergence in the 500+
 
 These are encouraging diagnostics, but zero divergences in one longer refit does not prove that the posterior has no problematic regions. The higher-draw results are in `<WORK_ROOT>/divergent-cells-refit/` and are separate from the original grid.
 
-**Numerical warning:** the refit log contains five CmdStanPy "Non-fatal error during sampling" blocks reporting a NaN scale in `normal_lpdf` at the [Kalman likelihood](../../src/dlmmc/_stan_models.py#L179), which uses `sqrt(C_y[t])`. The original full-grid log contains 312 such blocks for 312 successful fits. The aggregated messages do not establish the affected sampling phase, cause, or impact, and are distinct from the stored divergence counts. Investigate these warnings before treating the output as scientifically final.
+**Numerical warning:** the original full-grid log contains 312 CmdStanPy "Non-fatal error during sampling" blocks reporting a NaN scale in `normal_lpdf` at the [Kalman likelihood](../../src/dlmmc/_stan_models.py#L179), which uses `sqrt(C_y[t])`. Targeted job `34878310` reproduced the warning for cell 58 with the same model, seed, regressors, uncertainty, and 4 chains x (500 warmup + 500 draws), while retaining each chain's CmdStan output. All four chains emitted the exception at iteration 1 of warmup while rejecting a Metropolis proposal (2, 2, 2, and 1 messages by chain), then completed successfully. Each CSV contains 500 finite post-warmup draws; chain 2 had one divergent transition, matching the original cell's count. This shows that the warning in this reproduction is a rejected warmup proposal, not a sampling-process failure. It does not identify why `sqrt(C_y[t])` became NaN or establish that such proposals have no inference impact; the divergence is a separate diagnostic that still warrants attention. Raw output is under `<WORK_ROOT>/warning-diagnostic/`.
 
 ## Conclusions
 
@@ -273,10 +273,10 @@ These are encouraging diagnostics, but zero divergences in one longer refit does
 1. ~~Smoke-test the single-precision output, divergences, means, and resume in real MPI jobs.~~ Done: jobs `34827576` and `34827577`.
 2. ~~Re-fit flat IDs 132, 90, 26, and 281 with more warmup and draws.~~ Done: job `34827902`; all below R-hat 1.0015.
 3. ~~Rerun the full grid with single-precision output to measure the file size and confirm the run time.~~ Done: job `34827903`; it completed in 2 h 24 min 46 s, but its file was 3.5% larger than the prior double-precision file.
-4. ~~Investigate compression and output-variable choices.~~ Done: unused HDF5 space caused the growth; the chunk-layout fix is on `main` and both HPC branches. Keep zlib level 4 and all variables by default; optional slimmer profiles are measured above.
+4. ~~Investigate compression and output-variable choices.~~ Done: unused HDF5 space caused the growth; the chunk-layout fix is on `main` and both HPC branches. Keep zlib level 4; the API selects all draws by default, while the example defaults to the slimmer trend-and-parameter profile.
 5. ~~Validate the corrected writer in a real MPI refit of high-R-hat IDs 26, 90, 132, and 281.~~ Done: job `34877319`; max R-hat 1.0014, no divergences, unchanged draws, and a 62.6% smaller file.
 6. ~~Re-fit the five divergent cells (IDs 58, 92, 112, 141, 146) with more warmup and draws.~~ Done: job `34877828`; all have zero divergences and worst R-hat at most 1.0031. This does not establish that the posterior has no problematic regions.
-7. Investigate the recurring non-fatal NaN likelihood-scale warnings in the original and refit logs, including when they occur and whether they affect inference. Preserve the relevant raw sampler logs in a targeted follow-up if needed.
+7. ~~Investigate when the recurring non-fatal NaN likelihood-scale warnings occur.~~ Done: job `34878310` reproduced them as rejected warmup proposals for cell 58 and preserved raw chain output. Their cause and possible inference impact remain unresolved.
 8. Decide how to use the successful higher-draw refits alongside the original grid. They are separate outputs: different iteration counts cannot be resumed into the 500+500 file because resume requires matching settings.
 
 ## Decision Gate
