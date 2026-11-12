@@ -163,19 +163,55 @@ PERF_CELL_INDICES="$ALL_VALID" PARALLEL_CHAINS=2 sbatch -J full-r20x2-pc2 --ntas
 
 Four cells had a worst-parameter R-hat above 1.01: flat IDs 132 (1.0174), 90 (1.0158), 26 (1.0107), and 281 (1.0104). This job predates per-cell divergence storage, so divergences are unknown. The throughput matched the 32-cell layout test (111 cells/hour), so 570 s/cell is the calibration used for `--dry-run` in HERA.md; the dry run predicts 2:41:30 for this grid.
 
+### Single-precision and resume smoke test (2026-11-10)
+
+Jobs `34827576` and `34827577` ran [hera_production.sbatch.example](hera_production.sbatch.example) (20 ranks × 2 CPUs, `PARALLEL_CHAINS=2`, 4 chains × (200 warmup + 200 draws), seed `20261104`) with `RESUME=1` and one fixed `OUTPUT_FILE`. The first job fitted the first 19 IDs of the 32-cell set in 5 min 41 s. The second, chained with `--dependency=afterany`, was given all 32 IDs, reported "13 of 324 (19 already complete ...)", and fitted only the 13 new cells. The resulting file had float32 posterior draws, float64 `*_mean` variables (matching the draw means to about 6e-8), int32 `divergent_transitions` (0 in every cell), the prior and sampler attributes, and a `history` entry for the resume. It was 262 MB for 32 cells. Maximum R-hat was 1.03, as expected for 200 draws.
+
+### High-R-hat re-fit (2026-11-10)
+
+Job `34827902` re-fitted the four flat IDs above (132, 90, 26, 281) with 4 chains × (1000 warmup + 1000 draws), `PARALLEL_CHAINS=4`, and 5 tasks × 4 CPUs. It finished in 5 min 55 s. Every cell now passes:
+
+| Flat ID | Max R-hat (500+500) | Max R-hat (1000+1000) | Min bulk ESS | Min tail ESS | Divergences |
+| --- | --- | --- | --- | --- | --- |
+| 26 | 1.0107 | 1.0011 | 1423 | 1063 | 0 |
+| 90 | 1.0158 | 1.0009 | 1956 | 868 | 0 |
+| 132 | 1.0174 | 1.0012 | 2065 | 1025 | 0 |
+| 281 | 1.0104 | 1.0014 | 2402 | 1332 | 0 |
+
+The earlier flags came from too few draws, not from a problem with the model or data. For a production run that must keep every cell below R-hat 1.01, either use 1000+1000 or re-fit any flagged cells this way.
+
+### Single-precision full-grid run (2026-11-10 to 2026-11-11)
+
+Job `34827903` fitted the 312 valid cells with the same model, seed, and layout as the earlier full-grid job: one node, 20 ranks × 2 CPUs/task, `PARALLEL_CHAINS=2`, 4 chains × (500 warmup + 500 draws), seed `20261104`. It completed successfully in 2 h 24 min 46 s (129.3 cells/hour); the dry-run estimate was 2 h 41 min 30 s before its safety margin. All 312 selected cells completed, and the 12 constant-zero cells were skipped.
+
+| Metric | Value |
+|---|---|
+| R-hat (per-cell worst parameter) | median 1.004, max 1.017 |
+| Bulk / tail ESS (per-cell minimum) | min 532 / 180 |
+| Divergences | 5 transitions across 5 cells (IDs 58, 92, 112, 141, 146; max 1 per cell) |
+| Peak memory (largest task) | 6.19 GiB |
+| Output variable storage types | posterior draws float32; `*_mean` float64; divergence counts int32 |
+| NetCDF file size | 7,695,494,207 bytes (7.70 GB) |
+
+The four cells flagged in the earlier full-grid run again had R-hat above 1.01: IDs 132 (1.0174), 90 (1.0158), 26 (1.0107), and 281 (1.0104). The higher-draw re-fit in job `34827902` brought these cells below 1.0015, but that separate re-fit is not incorporated into this full-grid file.
+
+**Storage finding:** despite storing posterior draws as float32, this file is about 3.5% larger than the earlier all-float64 file (7,434,190,077 bytes). Both use zlib level 4 with shuffle enabled. Float32 reduces the uncompressed size, but does not guarantee a smaller compressed file for these draws. Do not promise users a smaller NetCDF based on precision alone; investigate compression and/or output-variable selection before making storage recommendations.
+
 ## Conclusions
 
 - The CmdStanPy/MPI path works on HERA with Intel MPI and `srun --mpi=pmi2`, single- and multi-node, with rank 0 as the sole writer.
 - Use one whole node as 20 ranks × 2 CPUs with `--parallel-chains` equal to the CPUs per task. 10 × 4 is practically tied; 40 × 1 is about 8% slower.
-- Memory and output writing are not bottlenecks at this grid size.
+- Peak memory was 6.19 GiB in the latest full-grid run; output writing completed successfully, but compressed file size did not decrease with float32 output.
 - Run time is set by the busiest worker, which `--dry-run` reports. dlmmc deals the cells to fit round-robin to the workers; the runs above used the earlier `flat_index % (nranks - 1)` assignment, which gives the same or nearly the same counts.
 - Grids that need more than one job's wall time can be split across jobs with `--resume` (see HERA.md).
 
 ## Open items
 
-1. Smoke-test the single-precision default output and the `divergent_transitions` and `*_mean` variables in a real MPI job (all runs above wrote double precision without them).
-2. Re-fit flat IDs 132, 90, 26, and 281 with more warmup and draws and check whether R-hat drops below 1.01.
-3. Optionally rerun the full grid with single-precision output to measure the file size and confirm the run time.
+1. ~~Smoke-test the single-precision output, divergences, means, and resume in real MPI jobs.~~ Done: jobs `34827576` and `34827577`.
+2. ~~Re-fit flat IDs 132, 90, 26, and 281 with more warmup and draws.~~ Done: job `34827902`; all below R-hat 1.0015.
+3. ~~Rerun the full grid with single-precision output to measure the file size and confirm the run time.~~ Done: job `34827903`; it completed in 2 h 24 min 46 s, but its file was 3.5% larger than the prior double-precision file.
+4. Investigate why zlib-compressed single-precision output is larger than the prior double-precision output. Compare alternative compression settings and consider whether a default precision or variable selection change actually improves file size.
+5. Decide whether the production guidance should require re-fitting cells with R-hat above 1.01 (IDs 26, 90, 132, 281) and investigate the five cells with divergences (IDs 58, 92, 112, 141, 146). A re-fit with different chain counts or iterations cannot be resumed into the existing file because resume requires matching settings.
 
 ## Decision Gate
 
