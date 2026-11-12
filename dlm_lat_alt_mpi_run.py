@@ -23,12 +23,9 @@ RESULT = Path('results/BASIC_V1_2017.nc')
 # Remove entries to omit variables; use 'single' (float32) or 'double' (float64).
 OUTPUT_VARIABLES: dict[str, Literal['single', 'double']] = {
     'trend': 'single',
-    'slope': 'single',
-    'ar': 'single',
     'sigma_trend': 'single',
     'sigma_AR': 'single',
     'rhoAR1': 'single',
-    'seasonal': 'single',
     'sigma_seas': 'single',
     'beta': 'single',
 }

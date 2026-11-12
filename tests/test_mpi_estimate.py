@@ -88,8 +88,8 @@ def test_output_size_counts_selected_precision_and_means():
     assert single["uncompressed_output_bytes"] == 4 * 2 * 10 * 10
     assert double["uncompressed_output_bytes"] == 2 * single["uncompressed_output_bytes"]
     assert trend["uncompressed_output_bytes"] == 4 * 2 * 10 * 4 * 10
-    # noregs_ar1 has four non-time parameters: sigma_trend, sigma_AR, rhoAR1, sigma_seas.
-    assert means["uncompressed_output_bytes"] == 8 * 4 * 10
+    # Four parameter means and three time-varying component means.
+    assert means["uncompressed_output_bytes"] == 8 * 10 * (4 + 3 * 4)
 
 
 def test_regressor_dimension_is_sized():
