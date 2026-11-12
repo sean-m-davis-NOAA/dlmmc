@@ -73,7 +73,7 @@ python experiments/hpc/collect_run_record.py --output "$WORK_ROOT/hera-cpu-mpi-r
 
 Each row merges `runs/JOBID/run-metadata.txt`, `sacct`, and the grid NetCDF. `wall_seconds` and `peak_memory_mib` use the grid-fit `srun` step, excluding environment setup and the MPI check (whole-job elapsed time is in `notes`). `ess_per_second` is the sum over fitted cells of each cell's minimum bulk ESS divided by that wall time. `rank_utilization` reports the cells planned per fitting rank and the resulting busy fraction of all ranks; rank 0 counts as idle when it is only the writer. Per-cell rows are written to `runs/JOBID/cell-diagnostics.csv` by [cell_diagnostics.py](cell_diagnostics.py), which computes ArviZ rank-normalized R-hat and bulk/tail ESS over the non-time-varying parameters (`sigma_*`, `rhoAR1`, `beta`) and reports each cell's worst value. The [run record CSV template](hera_cpu_mpi_run_record.csv.example) and [cell diagnostics CSV template](hera_cpu_mpi_cell_diagnostics.csv.example) define the columns. Inspect per-cell diagnostics; aggregate throughput must not hide a poorly mixing cell. Compare end-to-end wall time and ESS/sec, not only likelihood timings.
 
-The grid NetCDF contains posterior draws and, for runs made after per-cell divergence storage was added, a `divergent_transitions` variable that fills the divergence columns. It does not retain per-cell CmdStan CSVs. All runs recorded below predate divergence storage, so their divergence columns are blank. Latent time series (`trend`, `slope`, `ar`, `seasonal`) are excluded from the per-cell summary.
+The grid NetCDF contains posterior draws and, for runs made after per-cell divergence storage was added, a `divergent_transitions` variable that fills the divergence columns. It does not retain per-cell CmdStan CSVs. The initial sweep and first full-grid run predate divergence storage; later runs below include it. Latent time series (`trend`, `slope`, `ar`, `seasonal`) are excluded from the per-cell summary.
 
 Edit `OUTPUT_VARIABLES` in [dlm_lat_alt_mpi_run.py](../../dlm_lat_alt_mpi_run.py)
 to choose retained posterior variables and single/double storage precision;
@@ -244,6 +244,22 @@ All four cells have zero divergences. Their R-hat and ESS values match the earli
 
 The new file is 73,902,011 bytes (73.90 MB), versus 197,475,838 bytes before the fix: a 62.6% reduction with unchanged values. `h5stat -S` reports 73,826,288 bytes of live data, 69,749 bytes of metadata, and only 5,974 unaccounted bytes. Results and diagnostics are in `<WORK_ROOT>/refit-rhat-cellchunks/`. They remain a separate higher-draw output, not replacements in the 500+500 full grid.
 
+### Divergent-cell refit (2026-11-12)
+
+Job `34877828` re-fitted the five cells that each had one divergence in the 500+500 full grid. It used the same model and seed (`20261104`), 4 chains x (1000 warmup + 1000 draws), 6 ranks x 4 CPUs, and `PARALLEL_CHAINS=4`. The job completed successfully in 6 min 32 s. The table reports each cell's worst R-hat and minimum ESS across the saved non-time-varying parameters, not the latent time series.
+
+| Flat ID | Divergences, 500+500 | Divergences, 1000+1000 | Max R-hat, 1000+1000 | Min bulk ESS | Min tail ESS |
+|---|---:|---:|---:|---:|---:|
+| 58 | 1 | 0 | 1.0031 | 1944.4 | 1193.8 |
+| 92 | 1 | 0 | 1.0023 | 2365.1 | 1501.6 |
+| 112 | 1 | 0 | 1.0024 | 1515.9 | 1009.9 |
+| 141 | 1 | 0 | 1.0018 | 2043.4 | 1206.4 |
+| 146 | 1 | 0 | 1.0016 | 2292.1 | 1408.1 |
+
+These are encouraging diagnostics, but zero divergences in one longer refit does not prove that the posterior has no problematic regions. The higher-draw results are in `<WORK_ROOT>/divergent-cells-refit/` and are separate from the original grid.
+
+**Numerical warning:** the refit log contains five CmdStanPy "Non-fatal error during sampling" blocks reporting a NaN scale in `normal_lpdf` at the [Kalman likelihood](../../src/dlmmc/_stan_models.py#L179), which uses `sqrt(C_y[t])`. The original full-grid log contains 312 such blocks for 312 successful fits. The aggregated messages do not establish the affected sampling phase, cause, or impact, and are distinct from the stored divergence counts. Investigate these warnings before treating the output as scientifically final.
+
 ## Conclusions
 
 - The CmdStanPy/MPI path works on HERA with Intel MPI and `srun --mpi=pmi2`, single- and multi-node, with rank 0 as the sole writer.
@@ -259,7 +275,9 @@ The new file is 73,902,011 bytes (73.90 MB), versus 197,475,838 bytes before the
 3. ~~Rerun the full grid with single-precision output to measure the file size and confirm the run time.~~ Done: job `34827903`; it completed in 2 h 24 min 46 s, but its file was 3.5% larger than the prior double-precision file.
 4. ~~Investigate compression and output-variable choices.~~ Done: unused HDF5 space caused the growth; the chunk-layout fix is on `main` and both HPC branches. Keep zlib level 4 and all variables by default; optional slimmer profiles are measured above.
 5. ~~Validate the corrected writer in a real MPI refit of high-R-hat IDs 26, 90, 132, and 281.~~ Done: job `34877319`; max R-hat 1.0014, no divergences, unchanged draws, and a 62.6% smaller file.
-6. Investigate the five cells with divergences (IDs 58, 92, 112, 141, 146) before treating the full grid as scientifically final. A refit with different iterations cannot be resumed into the existing file because resume requires matching settings. The successful higher-draw refits remain separate outputs, not replacements in the 500+500 grid.
+6. ~~Re-fit the five divergent cells (IDs 58, 92, 112, 141, 146) with more warmup and draws.~~ Done: job `34877828`; all have zero divergences and worst R-hat at most 1.0031. This does not establish that the posterior has no problematic regions.
+7. Investigate the recurring non-fatal NaN likelihood-scale warnings in the original and refit logs, including when they occur and whether they affect inference. Preserve the relevant raw sampler logs in a targeted follow-up if needed.
+8. Decide how to use the successful higher-draw refits alongside the original grid. They are separate outputs: different iteration counts cannot be resumed into the 500+500 file because resume requires matching settings.
 
 ## Decision Gate
 
