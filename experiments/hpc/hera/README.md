@@ -2,8 +2,8 @@
 
 A recipe for fitting a `dlmmc` grid with MPI on NOAA RDHPCS HERA CPU nodes.
 For how these recommendations were measured, see
-[experiments/hpc/TESTING.md](experiments/hpc/TESTING.md). For the general MPI
-interface, see [MPI-README.md](MPI-README.md).
+[TESTING.md](TESTING.md). For the general MPI
+interface, see [MPI-README.md](../../../MPI-README.md).
 
 **In short:** build a Miniforge environment with `mpi4py` compiled against
 HERA's Intel MPI, then run one whole node as 20 MPI ranks × 2 CPUs with
@@ -51,7 +51,7 @@ Notes:
 
 ## 2. Prepare the run script
 
-[dlm_lat_alt_mpi_run.py](dlm_lat_alt_mpi_run.py) fits the example
+[dlm_lat_alt_mpi_run.py](../../../dlm_lat_alt_mpi_run.py) fits the example
 pressure/latitude grid. For your own data, copy it and edit `DATASET`, the
 regressors, and the model. Also review:
 
@@ -62,12 +62,12 @@ regressors, and the model. Also review:
   such as `beta_mean`. For this model, reconstruct the mean fit as
   `trend_mean + seasonal_mean + ar_mean + sum(beta_mean * regressors)` after
   aligning the regressors to time and grid coordinates. See
-  [Output variables and precision](MPI-README.md#output-variables-and-precision).
+  [Output variables and precision](../../../MPI-README.md#output-variables-and-precision).
   In an earlier test, the compacted grid was 3.01 GB with all float32 draws, or
   550 MB with only `trend` and parameter draws; those copies predate the added
   component means, so current files will differ. New outputs use cell-aligned
   chunks to avoid unused HDF5 space growth. See the
-  [storage investigation](experiments/hpc/TESTING.md#storage-investigation-and-output-choices-2026-11-12).
+  [storage investigation](TESTING.md#storage-investigation-and-output-choices-2026-11-12).
 - **`--cell-indices`**: fit only these row-major flat `(pressure, latitude)`
   cells. Cells with no finite data are skipped automatically, but constant
   cells (for example all zeros) are not. In the example dataset, flat IDs 3–8
@@ -119,7 +119,7 @@ worker) and divide the wall time by the busiest worker's cell count.
 
 ## 4. Submit
 
-Copy [experiments/hpc/hera_production.sbatch.example](experiments/hpc/hera_production.sbatch.example),
+Copy [hera_production.sbatch.example](hera_production.sbatch.example),
 replace the `YOUR_*` placeholders (account, Work directory, Miniforge prefix),
 and set `--time` from the dry run. Submit from the repository root:
 
@@ -183,7 +183,7 @@ sbatch --time=01:30:00 my-dlmmc-grid.sbatch
 ## 5. Check the results
 
 The job ends by running
-[summarize_grid_output.py](experiments/hpc/summarize_grid_output.py), which you
+[summarize_grid_output.py](../summarize_grid_output.py), which you
 can also run on any output file. Example output:
 
 ```text
@@ -195,7 +195,7 @@ It exits with an error if any cell failed (`fit_status` -1). Then:
 
 - **Divergent transitions:** a few in a cell call for a closer look; many mean
   the cell's posterior is unreliable. See
-  [Output metadata and sampler diagnostics](README.md#output-metadata-and-sampler-diagnostics).
+  [Output metadata and sampler diagnostics](../../../README.md#output-metadata-and-sampler-diagnostics).
 - **R-hat and effective sample size** per cell (needs `arviz`):
 
   ```bash

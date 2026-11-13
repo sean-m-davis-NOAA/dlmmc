@@ -1,12 +1,12 @@
 #!/bin/bash
 # Production dlmmc grid fit on one HERA node (20 MPI ranks x 2 CPUs, 2 parallel chains).
-# See HERA.md. Replace every YOUR_* value, then submit from the repository root:
-#   sbatch experiments/hpc/hera_production.sbatch.example
+# See experiments/hpc/hera/README.md. Replace every YOUR_* value, then submit from the repository root:
+#   sbatch experiments/hpc/hera/hera_production.sbatch.example
 # Pick --time with a dry run first (no MPI, safe on a login node):
 #   python dlm_lat_alt_mpi_run.py -n --ranks 20 --chains 4 --samples 500 \
 #       --seconds-per-cell 570 --time-limit 4:00:00
 # To split a long grid across jobs, give every job the same OUTPUT_FILE and RESUME=1,
-# and chain them with --dependency=afterany (see HERA.md).
+# and chain them with --dependency=afterany (see the README).
 #SBATCH --job-name=dlmmc-grid
 #SBATCH --account=YOUR_ACCOUNT
 #SBATCH --partition=hera

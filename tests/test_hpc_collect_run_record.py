@@ -78,3 +78,10 @@ def test_worker_cell_counts_follow_round_robin_assignment():
     assert collect.worker_cell_counts(cells, 3) == [8, 8]
     assert collect.worker_cell_counts(cells, 9) == [2] * 8
     assert collect.worker_cell_counts(cells, 6) == [4, 3, 3, 3, 3]
+
+
+def test_work_root_is_required(monkeypatch, tmp_path):
+    monkeypatch.delenv("DLMMC_WORK_ROOT", raising=False)
+    with pytest.raises(SystemExit) as excinfo:
+        collect.main(["42", "--output", str(tmp_path / "record.csv")])
+    assert excinfo.value.code == 2

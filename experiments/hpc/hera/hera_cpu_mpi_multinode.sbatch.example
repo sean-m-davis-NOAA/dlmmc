@@ -14,4 +14,4 @@
 # Submit from the repository root. The shared performance script supplies the
 # workload and fit settings; the Slurm allocation above controls this run.
 set -euo pipefail
-exec bash "${SLURM_SUBMIT_DIR}/experiments/hpc/hera_cpu_mpi_performance.sbatch.example"
+exec bash "${SLURM_SUBMIT_DIR}/experiments/hpc/hera/hera_cpu_mpi_performance.sbatch.example"

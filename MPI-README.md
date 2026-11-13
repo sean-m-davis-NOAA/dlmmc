@@ -1,9 +1,7 @@
 ## Running the grid example with MPI
 
-For a HERA-first CPU workflow, environment checks, and a Slurm smoke template,
-see [experiments/hpc/README.md](experiments/hpc/README.md). Its HERA-specific
-module names, MPI plugin, account, and storage paths are placeholders that must
-be verified on the live system.
+For site-specific HPC recipes, Slurm templates, and test records (currently
+NOAA RDHPCS HERA), see [experiments/hpc/README.md](experiments/hpc/README.md).
 
 `dlm_lat_alt_mpi_run.py` fits one DLM for each pressure/latitude cell in the example ozone dataset through `dlmmc.fit_grid_mpi()`. The package uses xarray for inputs and writes a NetCDF result. Install the optional MPI dependencies with `python -m pip install 'dlmmc[mpi]'` (or `python -m pip install -e '.[mpi]'` from a source checkout). You also need a working MPI implementation compatible with `mpi4py`.
 
@@ -242,11 +240,12 @@ On multi-node HPC systems, pass `--cache-dir` pointing to a shared filesystem so
 
 ## HERA CPU/MPI evaluation
 
-To run grid fits on NOAA RDHPCS HERA, follow [HERA.md](HERA.md): environment
+To run grid fits on NOAA RDHPCS HERA, follow
+[experiments/hpc/hera/README.md](experiments/hpc/hera/README.md): environment
 setup with Intel MPI, the recommended 20 ranks × 2 CPUs layout, wall-time
 planning with `--dry-run`, and a production Slurm template. The validation and
 benchmark record behind those recommendations is in
-[experiments/hpc/TESTING.md](experiments/hpc/TESTING.md), and
+[experiments/hpc/hera/TESTING.md](experiments/hpc/hera/TESTING.md), and
 [experiments/hpc/README.md](experiments/hpc/README.md) lists the scripts and
 templates.
 

@@ -1,6 +1,6 @@
 # HERA CPU/MPI Testing Record
 
-This is the record of how `dlmmc.fit_grid_mpi()` was validated and benchmarked on NOAA RDHPCS HERA CPU nodes, and how the recommendations in [HERA.md](../../HERA.md) were reached. Use HERA.md to run dlmmc; use this document to reproduce or extend the measurements. These are performance and pipeline tests on the example dataset, not a scientific convergence study.
+This is the record of how `dlmmc.fit_grid_mpi()` was validated and benchmarked on NOAA RDHPCS HERA CPU nodes, and how the recommendations in the [HERA README](README.md) were reached. Use the README to run dlmmc; use this document to reproduce or extend the measurements. These are performance and pipeline tests on the example dataset, not a scientific convergence study.
 
 Run outputs, Slurm logs, and the run-record CSV are on project Work storage (`WORK_ROOT`, `/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work`), which is not backed up and is subject to purge.
 
@@ -21,7 +21,7 @@ Useful official references:
 
 ## Tested Environment
 
-The setup steps are in [HERA.md](../../HERA.md#1-one-time-setup). All runs below used:
+The setup steps are in [HERA README](README.md#1-one-time-setup). All runs below used:
 
 - Miniforge environment `dlmmc-hera` from conda-forge: Python 3.12.16, CmdStanPy 1.3.2, CmdStan 2.40.0.
 - `mpi4py` 4.1.2 built with `MPICC=mpiicx` under `intel/2024.2.1` and `impi/2024.2.1` (Intel MPI 2021.13), launched with `srun --mpi=pmi2`.
@@ -52,32 +52,32 @@ After the smoke succeeds, use fixed cell IDs, data, seeds, and sampling settings
 Configure [hera_cpu_mpi_performance.sbatch.example](hera_cpu_mpi_performance.sbatch.example) per run from the submit command rather than copying it: `sbatch` options override its `#SBATCH` defaults, and the exported environment variables `PERF_CELL_INDICES` (space-separated flat IDs), `CHAINS`, `PARALLEL_CHAINS`, `WARMUP`, `SAMPLES`, and `SEED` override its fit settings. Keep the Slurm allocation consistent with the fit settings. From the repository root, the sweep is:
 
 ```bash
-T=experiments/hpc/hera_cpu_mpi_performance.sbatch.example
-sbatch -J dlmmc-hera-fit experiments/hpc/hera_cpu_fit_baseline.sbatch.example
+T=experiments/hpc/hera/hera_cpu_mpi_performance.sbatch.example
+sbatch -J dlmmc-hera-fit experiments/hpc/hera/hera_cpu_fit_baseline.sbatch.example
 PERF_CELL_INDICES=0 sbatch -J perf-r1-c1 --ntasks=1 --time=01:00:00 "$T"
 sbatch -J perf-r1-c16 --ntasks=1 --time=04:00:00 "$T"
 sbatch -J perf-r3 --ntasks=3 --time=03:00:00 "$T"
 sbatch -J perf-r5 --ntasks=5 --time=02:00:00 "$T"
 sbatch -J perf-r9 --ntasks=9 --time=01:30:00 "$T"
 PARALLEL_CHAINS=2 sbatch -J perf-r5x2-pc2 --ntasks=5 --cpus-per-task=2 --time=01:30:00 "$T"
-sbatch -J perf-r9-2node --time=01:30:00 experiments/hpc/hera_cpu_mpi_multinode.sbatch.example
+sbatch -J perf-r9-2node --time=01:30:00 experiments/hpc/hera/hera_cpu_mpi_multinode.sbatch.example
 ```
 
 Set `CHAINS`, `WARMUP`, `SAMPLES`, and `SEED` identically across comparisons. The multi-node wrapper passes its environment to the performance template. The baseline and performance templates use shared Work for temporary output, so account for its I/O behavior when comparing configurations.
 
-After the jobs finish, collect one run-record row per job and the per-cell diagnostics with [collect_run_record.py](collect_run_record.py). It needs the `diagnostics` extra (`conda install -c conda-forge "arviz>=1.3,<2"` in the HERA environment):
+After the jobs finish, collect one run-record row per job and the per-cell diagnostics with [collect_run_record.py](../collect_run_record.py). It needs the `diagnostics` extra (`conda install -c conda-forge "arviz>=1.3,<2"` in the HERA environment):
 
 ```bash
-python experiments/hpc/collect_run_record.py --output "$WORK_ROOT/hera-cpu-mpi-run-record.csv" JOBID [JOBID ...]
+python experiments/hpc/collect_run_record.py --work-root "$WORK_ROOT" --output "$WORK_ROOT/hera-cpu-mpi-run-record.csv" JOBID [JOBID ...]
 ```
 
-Each row merges `runs/JOBID/run-metadata.txt`, `sacct`, and the grid NetCDF. `wall_seconds` and `peak_memory_mib` use the grid-fit `srun` step, excluding environment setup and the MPI check (whole-job elapsed time is in `notes`). `ess_per_second` is the sum over fitted cells of each cell's minimum bulk ESS divided by that wall time. `rank_utilization` reports the cells planned per fitting rank and the resulting busy fraction of all ranks; rank 0 counts as idle when it is only the writer. Per-cell rows are written to `runs/JOBID/cell-diagnostics.csv` by [cell_diagnostics.py](cell_diagnostics.py), which computes ArviZ rank-normalized R-hat and bulk/tail ESS over the non-time-varying parameters (`sigma_*`, `rhoAR1`, `beta`) and reports each cell's worst value. The [run record CSV template](hera_cpu_mpi_run_record.csv.example) and [cell diagnostics CSV template](hera_cpu_mpi_cell_diagnostics.csv.example) define the columns. Inspect per-cell diagnostics; aggregate throughput must not hide a poorly mixing cell. Compare end-to-end wall time and ESS/sec, not only likelihood timings.
+Each row merges `runs/JOBID/run-metadata.txt`, `sacct`, and the grid NetCDF. `wall_seconds` and `peak_memory_mib` use the grid-fit `srun` step, excluding environment setup and the MPI check (whole-job elapsed time is in `notes`). `ess_per_second` is the sum over fitted cells of each cell's minimum bulk ESS divided by that wall time. `rank_utilization` reports the cells planned per fitting rank and the resulting busy fraction of all ranks; rank 0 counts as idle when it is only the writer. Per-cell rows are written to `runs/JOBID/cell-diagnostics.csv` by [cell_diagnostics.py](../cell_diagnostics.py), which computes ArviZ rank-normalized R-hat and bulk/tail ESS over the non-time-varying parameters (`sigma_*`, `rhoAR1`, `beta`) and reports each cell's worst value. The [run record CSV template](../hera_cpu_mpi_run_record.csv.example) and [cell diagnostics CSV template](../hera_cpu_mpi_cell_diagnostics.csv.example) define the columns. Inspect per-cell diagnostics; aggregate throughput must not hide a poorly mixing cell. Compare end-to-end wall time and ESS/sec, not only likelihood timings.
 
 The grid NetCDF contains posterior draws and, for runs made after per-cell divergence storage was added, a `divergent_transitions` variable that fills the divergence columns. It does not retain per-cell CmdStan CSVs. The initial sweep and first full-grid run predate divergence storage; later runs below include it. Latent time series (`trend`, `slope`, `ar`, `seasonal`) are excluded from the per-cell summary.
 
-Edit `OUTPUT_VARIABLES` in [dlm_lat_alt_mpi_run.py](../../dlm_lat_alt_mpi_run.py)
+Edit `OUTPUT_VARIABLES` in [dlm_lat_alt_mpi_run.py](../../../dlm_lat_alt_mpi_run.py)
 to choose retained posterior variables and single/double storage precision;
-see [Output variables and precision](../../MPI-README.md#output-variables-and-precision).
+see [Output variables and precision](../../../MPI-README.md#output-variables-and-precision).
 The default now saves every posterior variable in single precision (float32).
 All measurements below, including full-grid job `34668570`, were recorded with
 the earlier all-double (float64) output, so their output sizes and transfer and
@@ -145,7 +145,7 @@ Layout tests completed on 2026-11-05 (all exit code 0, one whole 40-CPU node eac
 Job `34668570` fitted every valid cell with the recommended layout: one node, 20 ranks × 2 CPUs/task, `PARALLEL_CHAINS=2`, 4 chains × (500 warmup + 500 draws), seed `20261104`, and all 312 valid flat IDs passed explicitly (IDs 3–8 and 15–20 are constant zeros). It was submitted from the repository root with:
 
 ```bash
-T=experiments/hpc/hera_cpu_mpi_performance.sbatch.example
+T=experiments/hpc/hera/hera_cpu_mpi_performance.sbatch.example
 ALL_VALID="$(python -c 'print(" ".join(str(i) for i in range(324) if not (3 <= i <= 8 or 15 <= i <= 20)))')"
 PERF_CELL_INDICES="$ALL_VALID" PARALLEL_CHAINS=2 sbatch -J full-r20x2-pc2 --ntasks=20 --cpus-per-task=2 --time=04:00:00 "$T"
 ```
@@ -161,7 +161,7 @@ PERF_CELL_INDICES="$ALL_VALID" PARALLEL_CHAINS=2 sbatch -J full-r20x2-pc2 --ntas
 | Peak memory (largest task) | 6,994 MiB |
 | Output | 7.43 GB, all variables in double precision |
 
-Four cells had a worst-parameter R-hat above 1.01: flat IDs 132 (1.0174), 90 (1.0158), 26 (1.0107), and 281 (1.0104). This job predates per-cell divergence storage, so divergences are unknown. The throughput matched the 32-cell layout test (111 cells/hour), so 570 s/cell is the calibration used for `--dry-run` in HERA.md; the dry run predicts 2:41:30 for this grid.
+Four cells had a worst-parameter R-hat above 1.01: flat IDs 132 (1.0174), 90 (1.0158), 26 (1.0107), and 281 (1.0104). This job predates per-cell divergence storage, so divergences are unknown. The throughput matched the 32-cell layout test (111 cells/hour), so 570 s/cell is the calibration used for `--dry-run` in the HERA README; the dry run predicts 2:41:30 for this grid.
 
 ### Single-precision and resume smoke test (2026-11-10)
 
@@ -193,7 +193,7 @@ Job `34827903` fitted the 312 valid cells with the same model, seed, and layout 
 | Output variable storage types | posterior draws float32; `*_mean` float64; divergence counts int32 |
 | NetCDF file size | 7,695,494,207 bytes (7.70 GB) |
 
-The four cells flagged in the earlier full-grid run again had R-hat above 1.01: IDs 132 (1.0174), 90 (1.0158), 26 (1.0107), and 281 (1.0104). The higher-draw re-fit in job `34827902` brought these cells below 1.0015, but that separate re-fit is not incorporated into this full-grid file.
+The four cells flagged in the earlier full-grid run again had R-hat above 1.01: IDs 132 (1.0174), 90 (1.0158), 26 (1.0107), and 281 (1.0104). The higher-draw re-fit in job `34827902` brought these cells below 1.0015, but that separate re-fit is not incorporated into this full-grid file (see [Flagged cells in the 500+500 full grid](#flagged-cells-in-the-500500-full-grid)).
 
 **Initial storage finding:** despite storing posterior draws as float32, this file is about 3.5% larger than the earlier all-float64 file (7,434,190,077 bytes). Both use zlib level 4 with shuffle enabled. The investigation below identified unused HDF5 space, rather than ineffective float32 compression, as the cause.
 
@@ -211,7 +211,7 @@ The remainder in each row is file metadata. Float32 did reduce the live compress
 
 A four-variable, 16-cell reproducer with zlib level 4 grew to 15.79 MB with shared chunks, versus 2.78 MB with cell-aligned chunks. The shared-chunk case took 1.72 s to write versus 0.19 s for cell-aligned chunks; these are small synthetic measurements, not full-grid performance claims.
 
-The fix on `main` and both HPC branches gives each compressed chunk a grid extent of one cell and caps its uncompressed size at 4 MiB. It applies to draws and posterior means, preserves the close-after-each-cell behavior, and accepts older chunk layouts on resume when the output schema and other settings match. Adding component means later changed that schema for runs with means enabled. Existing files retain their chunk layout; compact them with `nccopy`, or also rechunk them for further writes with `nccopy -c pressure/1,latitude/1 input.nc output.nc`. See [MPI-README.md](../../MPI-README.md#output-variables-and-precision).
+The fix on `main` and both HPC branches gives each compressed chunk a grid extent of one cell and caps its uncompressed size at 4 MiB. It applies to draws and posterior means, preserves the close-after-each-cell behavior, and accepts older chunk layouts on resume when the output schema and other settings match. Adding component means later changed that schema for runs with means enabled. Existing files retain their chunk layout; compact them with `nccopy`, or also rechunk them for further writes with `nccopy -c pressure/1,latitude/1 input.nc output.nc`. See [MPI-README.md](../../../MPI-README.md#output-variables-and-precision).
 
 The full-grid compacted copy is in `<WORK_ROOT>/storage-analysis/full-single-nccopy.nc`. Every variable, value, dtype, dimension, and NetCDF attribute was compared with the original and matched exactly. The original is unchanged. The copy saves 4.68 GB (60.8%).
 
@@ -258,7 +258,18 @@ Job `34877828` re-fitted the five cells that each had one divergence in the 500+
 
 These are encouraging diagnostics, but zero divergences in one longer refit does not prove that the posterior has no problematic regions. The higher-draw results are in `<WORK_ROOT>/divergent-cells-refit/` and are separate from the original grid.
 
-**Numerical warning:** the original full-grid log contains 312 CmdStanPy "Non-fatal error during sampling" blocks reporting a NaN scale in `normal_lpdf` at the [Kalman likelihood](../../src/dlmmc/_stan_models.py#L179), which uses `sqrt(C_y[t])`. Targeted job `34878310` reproduced the warning for cell 58 with the same model, seed, regressors, uncertainty, and 4 chains x (500 warmup + 500 draws), while retaining each chain's CmdStan output. All four chains emitted the exception at iteration 1 of warmup while rejecting a Metropolis proposal (2, 2, 2, and 1 messages by chain), then completed successfully. Each CSV contains 500 finite post-warmup draws; chain 2 had one divergent transition, matching the original cell's count. This shows that the warning in this reproduction is a rejected warmup proposal, not a sampling-process failure. It does not identify why `sqrt(C_y[t])` became NaN or establish that such proposals have no inference impact; the divergence is a separate diagnostic that still warrants attention. Raw output is under `<WORK_ROOT>/warning-diagnostic/`.
+### Flagged cells in the 500+500 full grid
+
+These HERA runs demonstrate the pipeline; they are not a scientific product. The 500+500 full-grid file from job `34827903` is therefore kept as is, and the refits stay in their separate files. Treat these nine cells in that grid as flagged:
+
+| Flat ID | Flag in the 500+500 grid | Higher-draw refit (1000+1000) | Refit result |
+|---|---|---|---|
+| 26, 90, 132, 281 | Worst-parameter R-hat 1.0104–1.0174 | Job `34877319`, `<WORK_ROOT>/refit-rhat-cellchunks/` | Max R-hat 1.0014, no divergences |
+| 58, 92, 112, 141, 146 | One divergent transition each | Job `34877828`, `<WORK_ROOT>/divergent-cells-refit/` | Max R-hat ≤ 1.0031, no divergences |
+
+The flags are recorded here only; the grid NetCDF itself was not modified. For a production grid, use 1000+1000 throughout or re-fit flagged cells, as recommended above.
+
+**Numerical warning:** the original full-grid log contains 312 CmdStanPy "Non-fatal error during sampling" blocks reporting a NaN scale in `normal_lpdf` at the [Kalman likelihood](../../../src/dlmmc/_stan_models.py#L179), which uses `sqrt(C_y[t])`. Targeted job `34878310` reproduced the warning for cell 58 with the same model, seed, regressors, uncertainty, and 4 chains x (500 warmup + 500 draws), while retaining each chain's CmdStan output. All four chains emitted the exception at iteration 1 of warmup while rejecting a Metropolis proposal (2, 2, 2, and 1 messages by chain), then completed successfully. Each CSV contains 500 finite post-warmup draws; chain 2 had one divergent transition, matching the original cell's count. This shows that the warning in this reproduction is a rejected warmup proposal, not a sampling-process failure. It does not identify why `sqrt(C_y[t])` became NaN or establish that such proposals have no inference impact; the divergence is a separate diagnostic that still warrants attention. Raw output is under `<WORK_ROOT>/warning-diagnostic/`.
 
 ## Conclusions
 
@@ -266,7 +277,7 @@ These are encouraging diagnostics, but zero divergences in one longer refit does
 - Use one whole node as 20 ranks × 2 CPUs with `--parallel-chains` equal to the CPUs per task. 10 × 4 is practically tied; 40 × 1 is about 8% slower.
 - Peak memory was 6.19 GiB in the latest full-grid run. Its compacted float32 output is 3.01 GB; the writer now uses cell-aligned chunks to avoid the unused-space growth found in that run.
 - Run time is set by the busiest worker, which `--dry-run` reports. dlmmc deals the cells to fit round-robin to the workers; the earlier layout tests used `flat_index % (nranks - 1)`, which gives the same or nearly the same counts.
-- Grids that need more than one job's wall time can be split across jobs with `--resume` (see HERA.md).
+- Grids that need more than one job's wall time can be split across jobs with `--resume` (see [Splitting a long grid across jobs](README.md#splitting-a-long-grid-across-jobs)).
 
 ## Open items
 
@@ -277,8 +288,8 @@ These are encouraging diagnostics, but zero divergences in one longer refit does
 5. ~~Validate the corrected writer in a real MPI refit of high-R-hat IDs 26, 90, 132, and 281.~~ Done: job `34877319`; max R-hat 1.0014, no divergences, unchanged draws, and a 62.6% smaller file.
 6. ~~Re-fit the five divergent cells (IDs 58, 92, 112, 141, 146) with more warmup and draws.~~ Done: job `34877828`; all have zero divergences and worst R-hat at most 1.0031. This does not establish that the posterior has no problematic regions.
 7. ~~Investigate when the recurring non-fatal NaN likelihood-scale warnings occur.~~ Done: job `34878310` reproduced them as rejected warmup proposals for cell 58 and preserved raw chain output. Their cause and possible inference impact remain unresolved.
-8. Decide how to use the successful higher-draw refits alongside the original grid. They are separate outputs: different iteration counts cannot be resumed into the 500+500 file because resume requires matching settings.
+8. ~~Decide how to use the successful higher-draw refits alongside the original grid.~~ Decided: keep the 500+500 grid unchanged and treat the nine refitted cells as flagged (see [Flagged cells in the 500+500 full grid](#flagged-cells-in-the-500500-full-grid)), since these runs were a demonstration rather than a scientific product.
 
 ## Decision Gate
 
-Use CmdStanPy on HERA as the scientific and performance reference. Do not recommend a new backend based on these tests: they evaluate the existing CmdStanPy/MPI path and its resource configuration. Keep site-specific recommendations in [HERA.md](../../HERA.md); update host-neutral [MPI-README.md](../../MPI-README.md) only for generally reusable guidance.
+Use CmdStanPy on HERA as the scientific and performance reference. Do not recommend a new backend based on these tests: they evaluate the existing CmdStanPy/MPI path and its resource configuration. Keep site-specific recommendations in the [HERA README](README.md); update host-neutral [MPI-README.md](../../../MPI-README.md) only for generally reusable guidance.

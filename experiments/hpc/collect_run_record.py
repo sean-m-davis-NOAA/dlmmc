@@ -26,7 +26,6 @@ import numpy as np
 import xarray as xr
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_WORK_ROOT = Path("/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work")
 OUTPUT_NAMES = ("hera-mpi-perf.nc", "hera-mpi-smoke.nc")
 MODEL_NAME = "vanilla_ar1"
 
@@ -228,10 +227,17 @@ def _append(path: Path, fields: list[str], rows: list[dict]) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("job_ids", nargs="+")
-    parser.add_argument("--work-root", type=Path, default=Path(os.environ.get("DLMMC_WORK_ROOT", DEFAULT_WORK_ROOT)))
+    parser.add_argument(
+        "--work-root",
+        type=Path,
+        default=os.environ.get("DLMMC_WORK_ROOT"),
+        help="Directory containing runs/<job>/ (default: $DLMMC_WORK_ROOT)",
+    )
     parser.add_argument("--configuration", help="Label for a single job; defaults to the Slurm job name")
     parser.add_argument("--output", type=Path, required=True, help="Run record CSV to append to")
     args = parser.parse_args(argv)
+    if args.work_root is None:
+        parser.error("pass --work-root or set DLMMC_WORK_ROOT")
     if args.configuration and len(args.job_ids) > 1:
         parser.error("--configuration applies to one job at a time")
 
