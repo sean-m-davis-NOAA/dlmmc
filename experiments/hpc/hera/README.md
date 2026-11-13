@@ -91,7 +91,8 @@ HERA allocates whole 40-CPU nodes, so fill the node. The recommended layout is:
 With 4 chains, this ran about 116 cells/hour. A layout of 10 ranks × 4 CPUs with
 `--parallel-chains 4` was practically as fast. Always set `--parallel-chains` to
 the CPUs per task: with 2 CPUs but 1 parallel chain, the second CPU sits idle and
-each cell takes about 70% longer.
+each cell takes about 70% longer. To finish sooner, use the same layout on more
+nodes (see [Running on multiple nodes](#running-on-multiple-nodes)).
 
 Workers fit cells one after another, so the run time depends on the busiest
 worker. Preview the plan with `--dry-run` (`-n`). It is safe on a login node
@@ -179,6 +180,51 @@ are retried and count toward `MAX_CELLS` in every job, so cells that always fail
 export OUTPUT_FILE=/path/on/work/dlmmc-grid.nc RESUME=1 MAX_CELLS=114
 sbatch --time=01:30:00 my-dlmmc-grid.sbatch
 ```
+
+### Running on multiple nodes
+
+To finish a grid sooner, spread the same per-node layout over more nodes. No
+script changes are needed: rank 0 still writes the single output file, and the
+other ranks on every node fit cells and send their results to it over MPI. The
+template already keeps the data, output, `TMPDIR`, and CmdStan cache on Work
+storage, which every node can see, and `srun` launches as many ranks as the job
+was given. Override the node and task counts when you submit; keep 2 CPUs per
+task and `PARALLEL_CHAINS=2`:
+
+```bash
+CELL_INDICES="$CELL_INDICES" sbatch --nodes=2 --ntasks=40 --ntasks-per-node=20 \
+    --time=02:00:00 my-dlmmc-grid.sbatch
+```
+
+Check the plan with the new rank count first:
+
+```bash
+python dlm_lat_alt_mpi_run.py -n --ranks 40 --chains 4 --samples 500 \
+    --seconds-per-cell 570 --time-limit 2:00:00 --cell-indices $CELL_INDICES
+```
+
+```text
+Cells to fit: 312 of 324 (12 skipped: no finite data or not selected)
+Ranks: 40 (39 fitting workers; rank 0 writes)
+Cells per worker: 8-8
+Uncompressed output size: 1.05 GB (compression usually makes the file smaller)
+Estimated fitting time: 1:16:00 (busiest worker), 1:35:00 with safety margin
+Time limit 2:00:00: OK.
+```
+
+Things to know:
+
+- **Faster, not cheaper.** Each node is billed whole, so two nodes for about
+  1¼ hours cost about the same node-hours as one node for about 2½ hours.
+- **Load balance.** Cells are assigned up front, so the run ends when the busiest
+  worker does. The 312-cell example divides evenly over 39 workers (8 each);
+  check `Cells per worker` in the dry run for your grid and node count. When
+  splitting across jobs with `MAX_CELLS`, use a multiple of the fitting workers
+  (for example 39 × 3 = 117 on two nodes).
+- **Testing so far.** A 9-rank, 2-node benchmark (job `34659299`) completed all
+  16 of its cells; see [TESTING.md](TESTING.md#initial-measurements-2026-11-05).
+  The 20-ranks-per-node layout has been run at full-grid scale only on one
+  node, so check the first multi-node job's log and output before relying on it.
 
 ## 5. Check the results
 
