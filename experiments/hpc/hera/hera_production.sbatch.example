@@ -1,0 +1,80 @@
+#!/bin/bash
+# Production dlmmc grid fit on one HERA node (20 MPI ranks x 2 CPUs, 2 parallel chains).
+# See experiments/hpc/hera/README.md. Replace every YOUR_* value, then submit from the repository root:
+#   sbatch experiments/hpc/hera/hera_production.sbatch.example
+# Pick --time with a dry run first (no MPI, safe on a login node):
+#   python dlm_lat_alt_mpi_run.py -n --ranks 20 --chains 4 --samples 500 \
+#       --seconds-per-cell 570 --time-limit 4:00:00
+# To split a long grid across jobs, give every job the same OUTPUT_FILE and RESUME=1,
+# and chain them with --dependency=afterany (see the README).
+# For more nodes, override at submit time, e.g. --nodes=2 --ntasks=40 --ntasks-per-node=20
+# (see "Running on multiple nodes" in the README).
+#SBATCH --job-name=dlmmc-grid
+#SBATCH --account=YOUR_ACCOUNT
+#SBATCH --partition=hera
+#SBATCH --qos=batch
+#SBATCH --nodes=1
+#SBATCH --ntasks=20
+#SBATCH --cpus-per-task=2
+#SBATCH --time=04:00:00
+#SBATCH --output=dlmmc-grid-%j.out
+#SBATCH --error=dlmmc-grid-%j.err
+set -euo pipefail
+
+# --- Edit these paths -------------------------------------------------------
+WORK_ROOT="YOUR_WORK_DIRECTORY"                    # e.g. /scratch*/<portfolio>/<project>/$USER/dlmmc-work
+CONDA_BASE="YOUR_MINIFORGE"                         # e.g. $HOME/miniforge3
+CONDA_ENV="${CONDA_BASE}/envs/dlmmc-hera"
+INTEL_MODULE="intel/2024.2.1"                       # must match the modules used to build mpi4py
+IMPI_MODULE="impi/2024.2.1"
+
+# --- Fit settings (environment variables override) -------------------------
+CHAINS="${CHAINS:-4}"
+PARALLEL_CHAINS="${PARALLEL_CHAINS:-2}"
+WARMUP="${WARMUP:-500}"
+SAMPLES="${SAMPLES:-500}"
+SEED="${SEED:-20261104}"
+SECONDS_PER_CELL="${SECONDS_PER_CELL:-570}"         # measured on HERA for the settings above
+# Optional, set at most one: CELL_INDICES (space-separated flat cell IDs) or
+# MAX_CELLS (fit the first N cells not yet complete). Neither: every cell with finite data.
+read -r -a CELL_ARGS <<< "${CELL_INDICES:+--cell-indices ${CELL_INDICES}} ${MAX_CELLS:+--max-cells ${MAX_CELLS}}"
+RESUME="${RESUME:-0}"                               # 1: continue OUTPUT_FILE, fitting only unfinished cells
+# ---------------------------------------------------------------------------
+
+source "$(dirname "${LMOD_CMD}")/../init/bash"
+module load "${INTEL_MODULE}" "${IMPI_MODULE}"
+source "${CONDA_BASE}/etc/profile.d/conda.sh"
+set +u  # conda/CmdStan activation hooks reference unset variables
+conda activate "${CONDA_ENV}"
+set -u
+export PYTHONUNBUFFERED=1
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
+
+RUN_DIR="${WORK_ROOT}/runs/${SLURM_JOB_ID}"
+CACHE_DIR="${WORK_ROOT}/cmdstan-cache"
+export TMPDIR="${WORK_ROOT}/tmp/${SLURM_JOB_ID}"
+mkdir -p "${RUN_DIR}" "${CACHE_DIR}" "${TMPDIR}"
+if [[ "${RESUME}" == 1 && -z "${OUTPUT_FILE:-}" ]]; then
+    echo "RESUME=1 needs OUTPUT_FILE set to the same path for every job." >&2
+    exit 1
+fi
+OUTPUT_FILE="${OUTPUT_FILE:-${RUN_DIR}/dlmmc-grid.nc}"
+mkdir -p "$(dirname "${OUTPUT_FILE}")"
+
+FIT_ARGS=(--output "${OUTPUT_FILE}" --chains "${CHAINS}" --parallel-chains "${PARALLEL_CHAINS}"
+    --warmup "${WARMUP}" --samples "${SAMPLES}" --seed "${SEED}" "${CELL_ARGS[@]}")
+if [[ "${RESUME}" == 1 ]]; then FIT_ARGS+=(--resume); fi
+
+# Record the plan and check it against this job's time limit (no MPI).
+TIME_LIMIT="$(squeue -h -j "${SLURM_JOB_ID}" -o %l)"
+python dlm_lat_alt_mpi_run.py "${FIT_ARGS[@]}" --dry-run \
+    --seconds-per-cell "${SECONDS_PER_CELL}" --time-limit "${TIME_LIMIT}" \
+    || echo "WARNING: dry-run preview failed; continuing with the fit." >&2
+
+srun --mpi=pmi2 --ntasks="${SLURM_NTASKS}" --cpus-per-task="${SLURM_CPUS_PER_TASK}" \
+    python -u dlm_lat_alt_mpi_run.py "${FIT_ARGS[@]}" \
+    --cache-dir "${CACHE_DIR}" --no-progress
+
+python experiments/hpc/summarize_grid_output.py "${OUTPUT_FILE}"
+rm -rf "${TMPDIR}"
+echo "output=${OUTPUT_FILE}"

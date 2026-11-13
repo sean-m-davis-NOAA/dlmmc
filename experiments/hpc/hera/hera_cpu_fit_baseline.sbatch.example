@@ -1,0 +1,82 @@
+#!/bin/bash
+#SBATCH --job-name=dlmmc-hera-fit
+#SBATCH --account=chimera
+#SBATCH --partition=hera
+#SBATCH --qos=batch
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=02:00:00
+#SBATCH --output=/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work/dlmmc-hera-fit-%j.out
+#SBATCH --error=/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work/dlmmc-hera-fit-%j.err
+
+set -euo pipefail
+
+REPO_ROOT="${SLURM_SUBMIT_DIR}"
+WORK_ROOT="/scratch3/BMC/chimera/Sean.M.Davis/dlmmc-work"
+CONDA_BASE="/home/Sean.M.Davis/miniforge3"
+CONDA_ENV="${CONDA_BASE}/envs/dlmmc-hera"
+INTEL_MODULE_VERSION="2024.2.1"
+IMPI_MODULE_VERSION="2024.2.1"
+
+# Flat cell ID 0 maps to pressure index 0, latitude index 0.
+PRESSURE_INDEX=0
+LATITUDE_INDEX=0
+CHAINS=4
+PARALLEL_CHAINS=1
+WARMUP=500
+SAMPLES=500
+SEED=20261104
+
+if (( PARALLEL_CHAINS < 1 || PARALLEL_CHAINS > CHAINS || PARALLEL_CHAINS > SLURM_CPUS_PER_TASK )); then
+    echo "PARALLEL_CHAINS must not exceed CHAINS or the CPUs allocated per task." >&2
+    exit 1
+fi
+
+: "${LMOD_CMD:?Initialize HERA Lmod before loading modules}"
+source "$(dirname "${LMOD_CMD}")/../init/bash"
+module load "intel/${INTEL_MODULE_VERSION}" "impi/${IMPI_MODULE_VERSION}"
+module list 2>&1
+
+source "${CONDA_BASE}/etc/profile.d/conda.sh"
+# Conda activation hooks may reference unset variables.
+set +u
+conda activate "${CONDA_ENV}"
+set -u
+export PYTHONUNBUFFERED=1
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
+RUN_DIR="${WORK_ROOT}/runs/${SLURM_JOB_ID}"
+CACHE_DIR="${WORK_ROOT}/cmdstan-cache"
+export TMPDIR="${WORK_ROOT}/tmp/${SLURM_JOB_ID}"
+mkdir -p "${RUN_DIR}" "${CACHE_DIR}" "${TMPDIR}"
+cd "${REPO_ROOT}"
+
+{
+    echo "job_id=${SLURM_JOB_ID}"
+    echo "git_commit=$(git rev-parse HEAD)"
+    echo "cell_id=0"
+    echo "pressure_index=${PRESSURE_INDEX}"
+    echo "latitude_index=${LATITUDE_INDEX}"
+    echo "model=vanilla_ar1"
+    echo "chains=${CHAINS}"
+    echo "parallel_chains=${PARALLEL_CHAINS}"
+    echo "warmup=${WARMUP}"
+    echo "samples=${SAMPLES}"
+    echo "seed=${SEED}"
+    echo "tmpdir=${TMPDIR}"
+    echo "cache_dir=${CACHE_DIR}"
+    module list 2>&1
+    python -c 'import cmdstanpy, mpi4py, sys; mpi4py.rc.initialize=False; from mpi4py import MPI; print("python", sys.version); print("cmdstanpy", cmdstanpy.__version__); print("cmdstan_path", cmdstanpy.cmdstan_path()); print("cmdstan_version", cmdstanpy.cmdstan_version()); print("mpi4py", mpi4py.__version__); print("mpi_library", MPI.Get_library_version())'
+} > "${RUN_DIR}/run-metadata.txt"
+
+python -u dlm_benchmark.py \
+    --pressure "${PRESSURE_INDEX}" \
+    --latitude "${LATITUDE_INDEX}" \
+    --chains "${CHAINS}" \
+    --parallel-chains "${PARALLEL_CHAINS}" \
+    --warmup "${WARMUP}" \
+    --samples "${SAMPLES}" \
+    --seed "${SEED}" \
+    --cache-dir "${CACHE_DIR}" \
+    --output-dir "${RUN_DIR}"
+echo "run_directory=${RUN_DIR}"

@@ -45,3 +45,26 @@ def test_select_cells_rejects_duplicate_or_out_of_range_indices(cell_indices, me
     with pytest.raises(ValueError, match=message):
         _select_cells(data, cell_indices)
 
+
+@pytest.mark.parametrize(("extra_args", "show_progress"), [([], True), (["--no-progress"], False)])
+def test_main_forwards_progress_setting(monkeypatch, tmp_path, extra_args, show_progress):
+    import sys
+    from pathlib import Path
+
+    import dlm_lat_alt_mpi_run
+
+    captured = {}
+
+    def fake_fit_grid_mpi(data, **kwargs):
+        captured.update(kwargs)
+        return None
+
+    monkeypatch.chdir(Path(__file__).resolve().parents[1])
+    monkeypatch.setattr(dlm_lat_alt_mpi_run.dlmmc, "fit_grid_mpi", fake_fit_grid_mpi)
+    monkeypatch.setattr(
+        sys, "argv", ["dlm_lat_alt_mpi_run.py", "--output", str(tmp_path / "out.nc"), "--cell-indices", "0", *extra_args]
+    )
+
+    dlm_lat_alt_mpi_run.main()
+
+    assert captured["show_progress"] is show_progress

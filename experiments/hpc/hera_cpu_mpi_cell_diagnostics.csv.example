@@ -1,0 +1,1 @@
+run_id,flat_cell_id,pressure_index,latitude_index,fit_status,divergences,max_rhat,min_ess_bulk,min_ess_tail,diagnostic_source,notes

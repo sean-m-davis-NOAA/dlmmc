@@ -1,5 +1,8 @@
 ## Running the grid example with MPI
 
+For site-specific HPC recipes, Slurm templates, and test records (currently
+NOAA RDHPCS HERA), see [experiments/hpc/README.md](experiments/hpc/README.md).
+
 `dlm_lat_alt_mpi_run.py` fits one DLM for each pressure/latitude cell in the example ozone dataset through `dlmmc.fit_grid_mpi()`. The package uses xarray for inputs and writes a NetCDF result. Install the optional MPI dependencies with `python -m pip install 'dlmmc[mpi]'` (or `python -m pip install -e '.[mpi]'` from a source checkout). You also need a working MPI implementation compatible with `mpi4py`.
 
 The package contains the Stan sources and compiles the selected model on rank 0 before workers start. To compile all packaged models before launching, run `python compile_stan_models.py` from the repository root.
@@ -21,6 +24,8 @@ The script calls `dlmmc.fit_grid_mpi()`. With multiple ranks, rank 0 creates and
 The output is created as a new file; by default, an existing output path is not overwritten. Use `--overwrite` to replace it, or `--resume` to continue it (see [Splitting a run across jobs](#splitting-a-run-across-jobs---resume)). The result is readable with xarray. `fit_status` is 1 for completed fits, 0 for skipped (or not yet fitted) cells, and -1 for cells where fitting raised an error.
 
 The defaults are one chain, one warmup iteration, and two sampling draws per cell. They are only a pipeline smoke test and do not produce converged posterior estimates. For longer runs, set the `--chains`, `--warmup`, and `--samples` options. Use `--cell-indices` to fit only some cells (row-major flat IDs), or `--max-cells N` to fit only the first N cells not yet complete. Choose `--output` to set a different output path. Existing output is not overwritten unless `--overwrite` is specified. Short smoke-test chains can emit Stan warnings; check `fit_status` and the output file rather than treating convergence warnings as a pipeline failure.
+
+Use `--parallel-chains` to limit concurrent chains per cell and allocate at least that many CPUs per fitting worker. `--cell-indices` selects flat row-major `(pressure, latitude)` indices; unselected cells remain in the output grid with skipped status `0`.
 
 ### Previewing a run (`--dry-run`)
 
@@ -218,6 +223,11 @@ derivative, not a separate term in the observation fit. Pass
 means. See [Output metadata and sampler diagnostics](README.md#output-metadata-and-sampler-diagnostics)
 for how to interpret divergences.
 
+The HERA Slurm templates invoke this runner, so they use the same configuration.
+The R-hat/ESS collector can inspect only retained non-time-varying parameters;
+omitting them narrows diagnostic coverage, and omitting all of them prevents
+that collector from computing diagnostics.
+
 ### Checking output
 
 Verify that the output opens and inspect the grid dimensions and fit-status counts:
@@ -227,6 +237,17 @@ python -c "import numpy as np, xarray as xr; ds=xr.open_dataset('results/BASIC_V
 ```
 
 On multi-node HPC systems, pass `--cache-dir` pointing to a shared filesystem so the worker nodes can use the executable compiled by rank 0. Launch within a scheduler allocation using the site's MPI launcher and ensure `mpi4py` is built against that MPI implementation. Do not mix a site-provided MPI library with a different Conda MPI implementation. For larger production runs, adjust the sampling settings and number of ranks for the available resources.
+
+## HERA CPU/MPI evaluation
+
+To run grid fits on NOAA RDHPCS HERA, follow
+[experiments/hpc/hera/README.md](experiments/hpc/hera/README.md): environment
+setup with Intel MPI, the recommended 20 ranks × 2 CPUs layout, wall-time
+planning with `--dry-run`, and a production Slurm template. The validation and
+benchmark record behind those recommendations is in
+[experiments/hpc/hera/TESTING.md](experiments/hpc/hera/TESTING.md), and
+[experiments/hpc/README.md](experiments/hpc/README.md) lists the scripts and
+templates.
 
 ### Temporary storage
 

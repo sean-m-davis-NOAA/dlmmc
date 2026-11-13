@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 from pathlib import Path
 from typing import Literal
@@ -86,6 +87,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=RESULT)
     parser.add_argument('--chains', type=int, default=1)
+    parser.add_argument(
+        '--parallel-chains',
+        type=int,
+        help='Maximum chains sampled in parallel for each cell.',
+    )
     parser.add_argument('--warmup', type=int, default=1)
     parser.add_argument('--samples', type=int, default=2)
     parser.add_argument('--seed', type=int, default=1234)
@@ -105,6 +111,11 @@ def main() -> None:
         'With --resume, repeated runs continue where the previous one stopped.',
     )
     parser.add_argument('--cache-dir', type=Path, help='Shared CmdStan cache directory for multi-node runs.')
+    parser.add_argument(
+        '--no-progress',
+        action='store_true',
+        help='Disable CmdStanPy progress bars (reduces Python overhead per chain).',
+    )
     restart = parser.add_mutually_exclusive_group()
     restart.add_argument('--overwrite', action='store_true', help='Replace an existing output file.')
     restart.add_argument(
@@ -135,6 +146,9 @@ def main() -> None:
         parser.error('--max-cells must be at least 1.')
     if args.dry_run and args.ranks is None:
         parser.error('--dry-run requires --ranks (or run inside a Slurm job that sets SLURM_NTASKS).')
+
+    logging.basicConfig(format='%(asctime)s %(name)s %(message)s')
+    logging.getLogger('dlmmc.mpi').setLevel(logging.INFO)
 
     with xr.open_dataset(DATASET) as source:
         data = source['o3']
@@ -176,10 +190,12 @@ def main() -> None:
             grid_dims=('pressure', 'latitude'),
             output_variables=OUTPUT_VARIABLES,
             chains=args.chains,
+            parallel_chains=args.parallel_chains,
             warmup=args.warmup,
             samples=args.samples,
             seed=args.seed,
             cache_dir=args.cache_dir,
+            show_progress=not args.no_progress,
             overwrite=args.overwrite,
             resume=args.resume,
             max_cells=args.max_cells,

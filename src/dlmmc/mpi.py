@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import os
+import time as _time
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from math import prod
@@ -24,6 +26,7 @@ from .api import (
     fit,
 )
 
+_LOGGER = logging.getLogger(__name__)
 
 def _regressor_count(regressors: Any) -> int:
     if regressors is None:
@@ -699,6 +702,7 @@ def fit_grid_mpi(
         cell_regressors = regressors
         if isinstance(regressors, (xr.DataArray, xr.Dataset)):
             cell_regressors = regressors.isel({dim: value for dim, value in indexers.items() if dim in regressors.dims})
+        started = _time.perf_counter()
         try:
             posterior = fit(
                 series,
@@ -715,9 +719,14 @@ def fit_grid_mpi(
                 payload[name] = posterior[source].mean(("chain", "draw")).to_numpy().astype("f8")
             if "divergent_transitions" in posterior.attrs:
                 payload["divergent_transitions"] = np.int32(posterior.attrs["divergent_transitions"])
-            return cell_index, payload, None
+            result = cell_index, payload, None
         except Exception as exc:
-            return cell_index, None, str(exc)
+            result = cell_index, None, str(exc)
+        _LOGGER.info(
+            "cell flat_index=%d rank=%d status=%s fit_seconds=%.1f",
+            flat_index, rank, "failed" if result[2] else "ok", _time.perf_counter() - started,
+        )
+        return result
 
     if rank == 0:
         if process_count == 1:
