@@ -1,0 +1,20 @@
+{
+  "status": "ACTUALLY_INSPECTED_ELIGIBLE",
+  "recorded_at": 1794562357.4373918,
+  "plots": {
+    "reports/06-selected-components-cell0.png": "56453f651bbf37b74fed3608d6eee500be61554ad39c7c45069ad53f8f3b8a02",
+    "reports/06-selected-components-cell1.png": "ff85f785663a579a46f6f5752ea4b90084bfc64b3eb14210143cf693118e1025",
+    "reports/06-selected-components-cell2.png": "73484eba73e62b91a911df50974e62405012c40f9bfc78cb4938eb08afbf9b65",
+    "reports/06-selected-components-cell3.png": "5460677e7efc0ce2408e9d501fe100da1fefe24f5cf0d7d75e82dc9995dd0546",
+    "reports/06-selected-lags.png": "d4cb07d9bce449f29fc0ed496e447c7d520cca438f8c83c4c0dfcae614fbf38c",
+    "reports/06-selected-fields.png": "263df94aa4d992a6f2131d3a24d41add2ba30d5ffa82447e2401c6bbbd4f299f",
+    "reports/06-selected-stage05-illustration.png": "dddaa15df838eb96e6eedb14647b0e09bdee5e86ac6e2c84522e52bc48c3abab"
+  },
+  "assessment": "Actually inspected all7selected scientific figures: four trend/slope/seasonal/AR plots, full-supportlagprior/posteriorhistograms, fieldinterval/correlationfigure and stage05coupled-overlay. Axes/pressure/latitude/ppmv/month labels are sensible, uncertaintybands ordered, endpointwidening visible. Lagmedians1.33\u20131.79months withbroadtails; p10lat05smalllonglagfeature retained and visitedbyallruns (3.81\u20134.07percentabove4months,7724\u20138179walkerthresholdcrossings/run; crossings not independent samples). Crossfieldposteriorcorrelationssmall, underlyingneighbor0.5not assertedposttruncation. Trendmediansremainvisuallyclose tostage05; thisis anintendedmodelchange, notanequalitygateorcausalclaim. Allfouroutputscalar,lagproductandsampled-signchecks pass; noadditionalstate draws orCDFsupplement needed.",
+  "provenance": {
+    "reports/06-selected-science.json": "c93f4a12af0d68d483123f3de37ff0e2bd49a868da10a894df5bb91f56dbe948",
+    "experiments/stage06-selected/output-diagnostics.json": "58745c77a40f1cfe8a5db2ba00cac62a9528d4dd1785c2a8e807d3333efc69ce",
+    "experiments/stage06-selected/lag-secondary-feature-review.json": "46b8a157fb251fd824a43c5d025878197c8226322e35e6cee32abde69593a03d",
+    "experiments/stage06-selected/actual-review.json": "859d520e1f8ee76fef9c722cae30643daa3b0f464061b1437c2bdffe07483655"
+  }
+}

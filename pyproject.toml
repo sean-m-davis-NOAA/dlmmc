@@ -4,12 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dlmmc"
-version = "2.1.2"
-description = "Dynamical linear models for time-series analysis using CmdStanPy"
+version = "2.2.0rc2+local"
+description = "Dynamical linear models with affine tensor sampling and optional CmdStan references"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "cmdstanpy>=1.2",
     "numpy>=1.24",
     "pandas>=2.0",
     "platformdirs>=4",
@@ -17,6 +16,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+stan = ["cmdstanpy>=1.2"]
+tensor = ["torch>=2.5", "scipy>=1.14", "affine==1.0.0+dlmmc1"]
+cpu = ["torch>=2.5", "scipy>=1.14", "numba>=0.61", "affine==1.0.0+dlmmc1"]
+notebooks = ["nbformat>=5", "nbclient>=0.10", "ipykernel>=6", "matplotlib>=3.8"]
 diagnostics = ["arviz>=1.3,<2"]
 mpi = ["mpi4py>=3.1", "netCDF4>=1.6"]
 test = ["pytest>=8"]
@@ -27,3 +30,7 @@ include = ["dlmmc*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["stan: optional bounded integration with a locally installed CmdStan toolchain"]
+
+[tool.setuptools.package-data]
+dlmmc = ["_affine_provenance.json"]

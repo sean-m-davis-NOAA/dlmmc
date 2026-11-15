@@ -240,8 +240,9 @@ def test_kalman_filter_arrays_are_not_transformed_parameters(source_name):
     assert '\n    array[N+1] vector[nx] x_hat;' not in stan_source
 
 
+@pytest.mark.stan
 def test_fit_csv_omits_local_kalman_scratch_arrays(tmp_path):
-    from cmdstanpy import cmdstan_path
+    cmdstan_path = pytest.importorskip('cmdstanpy', reason='Optional Stan integration test').cmdstan_path
 
     try:
         cmdstan_path()
@@ -263,6 +264,7 @@ def test_fit_csv_omits_local_kalman_scratch_arrays(tmp_path):
         seed=17,
         show_progress=False,
         adapt_engaged=False,
+        cache_dir=tmp_path / 'compiled',
         output_dir=tmp_path,
     )
 

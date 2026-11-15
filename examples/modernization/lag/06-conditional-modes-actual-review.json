@@ -1,0 +1,146 @@
+{
+  "plots": {
+    "experiments/stage06-conditional-modes/trace-24000.png": "516c75a1599c61d4d9f866bdc4b03e38ad71c0ee8850e86eaa52a776fb6474a7"
+  },
+  "records": [
+    [
+      {
+        "run": 0,
+        "mean": 2.06130965291782,
+        "first_half_mean": 2.041000052411391,
+        "second_half_mean": 2.0816192534242486,
+        "mode_switches": 11069,
+        "tail_probability_gt2": 0.42887890625
+      },
+      {
+        "run": 1,
+        "mean": 2.064307260328873,
+        "first_half_mean": 2.0329798107781976,
+        "second_half_mean": 2.095634709879548,
+        "mode_switches": 11086,
+        "tail_probability_gt2": 0.429677734375
+      },
+      {
+        "run": 2,
+        "mean": 2.068443411711654,
+        "first_half_mean": 2.065170405606033,
+        "second_half_mean": 2.0717164178172744,
+        "mode_switches": 11049,
+        "tail_probability_gt2": 0.431396484375
+      },
+      {
+        "run": 3,
+        "mean": 2.0553710461769277,
+        "first_half_mean": 2.0593372835563564,
+        "second_half_mean": 2.0514048087974994,
+        "mode_switches": 10955,
+        "tail_probability_gt2": 0.42857747395833334
+      }
+    ],
+    [
+      {
+        "run": 0,
+        "mean": 2.0489319725210646,
+        "first_half_mean": 2.028751682487596,
+        "second_half_mean": 2.0691122625545333,
+        "mode_switches": 19507,
+        "tail_probability_gt2": 0.428794921875
+      },
+      {
+        "run": 1,
+        "mean": 2.065778827286791,
+        "first_half_mean": 2.055157114933012,
+        "second_half_mean": 2.0764005396405696,
+        "mode_switches": 19593,
+        "tail_probability_gt2": 0.4387916666666667
+      },
+      {
+        "run": 2,
+        "mean": 2.0702761088403383,
+        "first_half_mean": 2.068928647827724,
+        "second_half_mean": 2.0716235698529526,
+        "mode_switches": 19203,
+        "tail_probability_gt2": 0.43575911458333333
+      },
+      {
+        "run": 3,
+        "mean": 2.068627754877006,
+        "first_half_mean": 2.0716492326923306,
+        "second_half_mean": 2.065606277061681,
+        "mode_switches": 19647,
+        "tail_probability_gt2": 0.43689192708333335
+      }
+    ],
+    [
+      {
+        "run": 0,
+        "mean": 2.0222041833972266,
+        "first_half_mean": 2.015110946796324,
+        "second_half_mean": 2.0292974199981297,
+        "mode_switches": 43884,
+        "tail_probability_gt2": 0.45337434895833334
+      },
+      {
+        "run": 1,
+        "mean": 2.019540061154101,
+        "first_half_mean": 2.0099559601071846,
+        "second_half_mean": 2.029124162201017,
+        "mode_switches": 43566,
+        "tail_probability_gt2": 0.4507408854166667
+      },
+      {
+        "run": 2,
+        "mean": 2.035919973146496,
+        "first_half_mean": 2.0423018579933663,
+        "second_half_mean": 2.0295380882996255,
+        "mode_switches": 43547,
+        "tail_probability_gt2": 0.457736328125
+      },
+      {
+        "run": 3,
+        "mean": 2.041253827760737,
+        "first_half_mean": 2.046598050594134,
+        "second_half_mean": 2.0359096049273395,
+        "mode_switches": 43599,
+        "tail_probability_gt2": 0.45897005208333336
+      }
+    ],
+    [
+      {
+        "run": 0,
+        "mean": 2.065669111520869,
+        "first_half_mean": 2.05563430211962,
+        "second_half_mean": 2.0757039209221184,
+        "mode_switches": 20234,
+        "tail_probability_gt2": 0.41319466145833333
+      },
+      {
+        "run": 1,
+        "mean": 2.082252575533838,
+        "first_half_mean": 2.0887435892345385,
+        "second_half_mean": 2.0757615618331373,
+        "mode_switches": 19565,
+        "tail_probability_gt2": 0.4207734375
+      },
+      {
+        "run": 2,
+        "mean": 2.064070870320288,
+        "first_half_mean": 2.0700940106884396,
+        "second_half_mean": 2.0580477299521367,
+        "mode_switches": 20119,
+        "tail_probability_gt2": 0.41373177083333335
+      },
+      {
+        "run": 3,
+        "mean": 2.1001991988294635,
+        "first_half_mean": 2.1074270578466807,
+        "second_half_mean": 2.0929713398122463,
+        "mode_switches": 19599,
+        "tail_probability_gt2": 0.4259095052083333
+      }
+    ]
+  ],
+  "status": "ACTUALLY_INSPECTED_ELIGIBLE",
+  "assessment": "All four independently initialized ensembles repeatedly traverse both primary aliases and the small third peak; weak cell remains broad. Means and occupancy overlap without persistent separation. Histograms agree with independent joint quadrature. Both half/full parameter windows and selected joint summaries pass;26MC-aware metrics pass, no point flags.",
+  "elapsed_since_original_conservative_start": 624.9067635536194
+}

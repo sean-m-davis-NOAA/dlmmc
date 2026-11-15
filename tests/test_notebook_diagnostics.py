@@ -14,44 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 SCALAR_PARAMETERS = ['sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1']
 
 
-def _diagnostic_source(notebook):
-    path = ROOT / notebook
-    if not path.is_file():
-        pytest.skip('Notebook diagnostic tests require the repository notebook sources.')
-    cells = json.loads(path.read_text())['cells']
-    sources = [
-        ''.join(cell['source'])
-        for cell in cells
-        if cell['cell_type'] == 'code' and 'az.summary(' in ''.join(cell['source'])
-    ]
-    assert len(sources) == 1
-    return sources[0]
-
-
-def _validation_diagnostic_code():
-    source = ast.parse(_diagnostic_source('dlm_validation_tests.ipynb'))
-    function = next(
-        node for node in source.body
-        if isinstance(node, ast.FunctionDef) and node.name == 'run_parameter_recovery'
-    )
-    start = next(
-        index for index, node in enumerate(function.body)
-        if isinstance(node, ast.Assign)
-        and any(isinstance(target, ast.Name) and target.id == 'diagnostic_parameters' for target in node.targets)
-    )
-    end = next(
-        index for index, node in enumerate(function.body[start:], start=start)
-        if any(
-            isinstance(child, ast.Call)
-            and isinstance(child.func, ast.Attribute)
-            and isinstance(child.func.value, ast.Name)
-            and child.func.value.id == 'az'
-            and child.func.attr == 'summary'
-            for child in ast.walk(node)
-        )
-    )
-    module = ast.Module(body=function.body[start:end + 1], type_ignores=[])
-    return compile(module, 'dlm_validation_tests.ipynb diagnostics', 'exec')
+# Notebook model equations and diagnostics now use shared public APIs. Preserve
+# the original chain/draw ordering and labeled-regressor fixtures against the
+# shared Stan compatibility helper instead of extracting removed notebook cells.
+from dlmmc.stan_diagnostics import summarize_stan
 
 
 @pytest.fixture(params=[False, True], ids=['chain-first', 'draw-first'])
@@ -104,7 +70,7 @@ def test_tutorial_diagnostic_cell(posterior_draws):
     displayed = []
     namespace = {'az': az, 'posterior': posterior_draws, 'display': displayed.append}
 
-    exec(_diagnostic_source('dlm_tutorial.ipynb'), namespace)
+    displayed.append(summarize_stan(posterior_draws, SCALAR_PARAMETERS))
 
     assert len(displayed) == 1
     _assert_summary(displayed[0], posterior_draws, SCALAR_PARAMETERS)
@@ -133,7 +99,7 @@ def test_validation_diagnostic_code(posterior_draws, parameters):
         'display': displayed.append,
     }
 
-    exec(_validation_diagnostic_code(), namespace)
+    displayed.append(summarize_stan(posterior, parameters))
 
     assert len(displayed) == 1
     _assert_summary(displayed[0], posterior, parameters)
@@ -150,3 +116,8 @@ def test_diagnostics_extra_accepts_modern_arviz():
     assert az.__version__ in requirement.specifier
     assert '0.23.4' not in requirement.specifier
     assert project['requires-python'] == '>=3.10'
+
+
+def test_stan_summary_rejects_dependent_walker_axis(posterior_draws):
+    with pytest.raises(ValueError, match='walkers are not chains'):
+        summarize_stan(posterior_draws.rename(chain='walker'), SCALAR_PARAMETERS)

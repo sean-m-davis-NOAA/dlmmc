@@ -1,0 +1,17 @@
+{
+  "scope": "Four-cell48-month two-field joint target;10000fixedproposals;CPUarithmetic only",
+  "status_float64": "PASS",
+  "status_float32": "FAIL_SCOPED_NUMERICAL",
+  "maximum_joint_delta_error_float64": 2.660556219780119e-10,
+  "maximum_joint_delta_error_float32": 0.15207657331507107,
+  "maximum_acceptance_error_float32": 0.017443784680065577,
+  "maximum_interpolation_error_float32": 3.450437041196963e-06,
+  "maximum_lag_prior_error_float32": 5.6554811074249756e-06,
+  "unchanged_log_delta_gate": 0.01,
+  "unchanged_acceptance_gate": 0.01,
+  "fixture_sha256": "0cbbc116dd1b39adc56623981369eda2175bc7c3d594a113ad24df0bd0ee7f94",
+  "worst_float32_index": 3938,
+  "seed": 2026113108,
+  "policy": "Samevariances/masks/priors/lagbounds/fixedcoverage;onlyexplicitroundingchanges. Retainallfailedfixtures; noGPUorfullinferencequalification fromthischeck.",
+  "script_sha256": "6bd9a6f08ef7cf55e4bf30ac3f09e6200b3e10c739bace5ae69b7d4558c56cc0"
+}

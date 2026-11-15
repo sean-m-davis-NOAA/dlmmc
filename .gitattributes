@@ -1,0 +1,7 @@
+# Preserve checksummed scientific bundles and regression fixtures byte for byte.
+examples/modernization/** -text
+tests/fixtures/** -text
+# CSV records use standard CRLF; preserve original evidence checksums.
+examples/modernization/current/*.csv whitespace=cr-at-eol
+# Unified diff context lines contain a required leading space; keep patch exact.
+vendor/affine-modernization.patch -text -whitespace

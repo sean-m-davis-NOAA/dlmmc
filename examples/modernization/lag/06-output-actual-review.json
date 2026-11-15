@@ -1,0 +1,12 @@
+{
+  "status": "ACTUALLY_INSPECTED_ELIGIBLE",
+  "reviewed_at": 1794556297.026591,
+  "plots": {
+    "reports/06-scientific-cell0.png": "bed4e81e537eaf62aa67351106860a7856979840e79fc002fe56735a84b38035",
+    "reports/06-scientific-cell1.png": "93f681aedb966f693d7ac31a2e926b42dbda6a7480239ad6e8442949f66a3948",
+    "reports/06-scientific-cell2.png": "0f4ad9ae11c70c56aa5737555e95b2209ad8274ed8b89bc1f23ec004c665c77b",
+    "reports/06-scientific-cell3.png": "3db69f43dc83e2b6767271da1a9e0c9ce8a4a0f7ce5e122e6aa08e521ac91021"
+  },
+  "assessment": "All four actual joint scientific comparison figures inspected. Trend medians and90%bands overlap; lag histograms agree, with the zero-coefficient cell visibly broad and informative cells localized. All203metrics percell pass, no pointflags. AnalyticGaussian sign probabilities retain originalzero-event failures and have independentMCdiagnostics. The seasonalmean failure was conditionalstateRNG noise: conditionalmean change<0.001SD, residualchange\u22120.0846SD. Additive4000states/run preserves original2048 and resolves allscalar/lag gates; no newMCMC.",
+  "scope": "Synthetic joint reference only; conditional multimodal recovery, precision and realpilot still pending"
+}

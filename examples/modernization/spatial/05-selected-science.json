@@ -1,0 +1,82 @@
+{
+  "status": "SCIENCE_PLOTS_REVIEW_PENDING",
+  "panel_ids": [
+    "p10-lat04",
+    "p10-lat05",
+    "p11-lat04",
+    "p11-lat05"
+  ],
+  "minimum_output_ess": [
+    16913.211342210998,
+    16427.246321133603,
+    17000.04250207583,
+    19032.699248613604
+  ],
+  "sigma_quantiles": [
+    [
+      4.368109978322102e-06,
+      5.863704339675803e-06,
+      4.841358026396411e-06,
+      4.742373862518227e-06
+    ],
+    [
+      4.536687012142009e-05,
+      5.759504702215831e-05,
+      4.651781601023086e-05,
+      4.828779378556143e-05
+    ],
+    [
+      0.00014251053335054736,
+      0.00016152994452085304,
+      0.00013833898754404307,
+      0.00014630512718625407
+    ]
+  ],
+  "sigma_correlation": [
+    [
+      0.9999999999999999,
+      0.17655634206024523,
+      0.1473913578444148,
+      -0.02380241322726418
+    ],
+    [
+      0.1765563420602452,
+      0.9999999999999999,
+      -0.027951830427051853,
+      0.17621881744551054
+    ],
+    [
+      0.1473913578444148,
+      -0.027951830427051853,
+      1.0,
+      0.15420317104266706
+    ],
+    [
+      -0.023802413227264178,
+      0.17621881744551052,
+      0.1542031710426671,
+      1.0
+    ]
+  ],
+  "plots": {
+    "reports/05-selected-components-cell0.png": "a8afffde4290bed9ababc0412135accd43143256717a00febb5831f2baa419f3",
+    "reports/05-selected-components-cell1.png": "12540b9a0f2bb8dd20f2664cc50e0fe9ee29d2cc83e6a94fbd6726edb9f94a53",
+    "reports/05-selected-components-cell2.png": "f3d73c749b4f53051f407aa7a559e8d53b80211a46d6ec497c55aa71c95f25af",
+    "reports/05-selected-components-cell3.png": "b73b6cb63d54ee4f1d83279db7772a73fe079c56c6868913e4fae5742d330162",
+    "reports/05-selected-independent-illustration.png": "5aa4b22f9c7686c4581049067e2625547e5687623b1942d5ad1c61d5d2b85483",
+    "reports/05-selected-field.png": "1c6312a1afc8a378f4733fa72be4839aee525f9eadb6f47d39ec29ceca489190"
+  },
+  "independent_illustration": "Qualified cached p10-lat04 fit only; same observations/predictors, intentionally different prior. No independent reference equality asserted at nonzero coupling.",
+  "provenance": {
+    "experiments/stage05_selected_science.py": "6a1a94836cbc0af7a955d750602bd70033d566c92ab31311d5b556ae4fc60964",
+    "experiments/stage05-selected/config.json": "2c3d69b116873b38978e9cfb4bb4524a3f1751fa44effa959908beca8a935f92",
+    "experiments/stage05-selected/parameter-certificate.json": "a660fc9e9a6b4b62de39a376727d997b12e7be1017e5598cf11dd55077d8b47c",
+    "experiments/stage05-selected/output-extension-v1/output-diagnostics.json": "957b040f8de182505ddacd68fce1017aa01ae3ec9098d8a1565795c687555590",
+    "experiments/stage05-selected/output-extension-v1/combined/config.json": "693e51d8aab1a00fcaa2fc88680265630316daa4c2ed9de7dfeb031f7037bf8f",
+    "experiments/stage05-selected/output-extension-v1/combined/index.json": "212c0b5fccbac94cd83abe716df6b76baea307cfab6e16f253b67613216298c3",
+    "experiments/stage05-selected/scientific-output-selection.json": "9c6b160c5bc006e879ccd7be0c6f55c69faac93468b3ce00a340078d8e622e52",
+    "experiments/stage05-selected/scientific-summary.npz": "a2a6cd643d7099e3ca24f11f411377b69d81b535d9f3daa19b4c1701b8a96f4a",
+    "checkouts/dlmmc/examples/modernization/provenance.json": "2753a5d541c9ffbad20ffc6c17505fb8083bed6c1228be4e9fbb99fddb167f74",
+    "checkouts/dlmmc/examples/modernization/scientific_plot_subset.npz": "37487c6f095ecebb898eaff41f4a2405a863a2dcef663fd2a53b16f7382a8929"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "kind": "cached_scientific_evidence_not_new_smoke_results",
+  "source": "modernization harness reports, November 2026",
+  "files": {
+    "17-per-panel-numerics.csv": "72eb2dae5bbc1e257a6564d67b5ae8ceeafdd78d85b4286df1352e607a699bb8",
+    "17-numerical-summary.json": "3c3f589add0dd71e02cd3723f7ea818adb2536abaa15877449fa5d981ebafddd",
+    "17-numba-threads.json": "67644537bf4544951ed229474c2fb4160d6882b3d8177243fab3c5a39fad0e34",
+    "18-per-panel-results.csv": "c4a0689fb30cdb630a6f51f8a42ced4e3322ea1521974042dfbf194568733ff4",
+    "18-joint-validation-results.json": "a7f206f641b334030959587d69e762b52d5b779faff86f59702f3b8bc3a66e64",
+    "18-joint-callbacks.json": "55aed57e82ef8643272ebf35077c7adf78c8429f3d0a44482649217106089436",
+    "18-field-comparison.json": "1fa4a328e04c7bc2cf7786a58f66b0e539dd16cb347b5f0b8bbafe3eb2aba035",
+    "16-gpu-comparison-results.json": "cf2ae873944e2529927dd10b0fd3f88541dd7704745175c7a8f5badac17a32f6"
+  }
+}

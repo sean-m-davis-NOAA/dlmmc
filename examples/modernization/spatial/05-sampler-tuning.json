@@ -1,0 +1,36 @@
+{
+  "status": "INCONCLUSIVE",
+  "target_ess": 1000,
+  "candidates": [
+    {
+      "half_walkers": 64,
+      "status": "INITIAL_WINDOW_REVIEW_REQUIRED",
+      "iterations": [
+        600,
+        600,
+        600,
+        600
+      ],
+      "minimum_ess": 2537.857259636727
+    },
+    {
+      "half_walkers": 128,
+      "status": "INCONCLUSIVE",
+      "iterations": [
+        400,
+        384,
+        350,
+        300
+      ],
+      "minimum_ess": null
+    }
+  ],
+  "winner": null,
+  "confirmation": "NOT_RUN_NO_TWO_ELIGIBLE_WINDOWS",
+  "original_report": "experiments/stage05-pilot/report.json",
+  "continuation_report": "experiments/stage05-pilot-continuation/report.json",
+  "recommended_baseline_half_walkers": 64,
+  "reason": "Retain qualified synthetic baseline; no new empirical optimum. Retune bounded selectedscope afterexplicitselection; matchingpilot evidence maybereused.",
+  "compilation_excluded": true,
+  "original_overrun_retained": true
+}

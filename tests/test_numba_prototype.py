@@ -1,0 +1,35 @@
+import numpy as np
+import pytest
+import torch
+import numba
+from dlmmc.api import _MODEL_SPECS
+from dlmmc.numba_prototype import target_numba
+from dlmmc.tensor_target import target
+from dlmmc.transforms import parameter_names
+
+numba.set_num_threads(2)
+
+@pytest.mark.parametrize('model',list(_MODEL_SPECS))
+@pytest.mark.parametrize('algorithm',['dense','structured'])
+def test_compiled_callback_density_and_five_cell_isolation(model,algorithm):
+    rng=np.random.default_rng(20261115);n=12;k=0 if model=='noregs_ar1' else 2
+    names=parameter_names(model,k)
+    u=np.array([np.log(1e-4) if name.startswith('sigma_trend') or name.startswith('sigma_reg') else np.log(.01) if name=='sigma_seas' else np.log(.1) if name=='sigma_AR' else 0. for name in names])
+    u=np.broadcast_to(u,(4,5,len(names))).copy();u+=rng.normal(size=u.shape)*.03
+    y=rng.normal(size=(5,n));v=np.full_like(y,.1);mask=rng.random(y.shape)>.2;X=rng.normal(size=(5,n,k))
+    mask[0]=False;y[~mask]=np.nan;v[~mask]=np.inf
+    args=[torch.from_numpy(x) for x in [u,y,v,mask,X]]
+    expected=target(*args,model);actual=target_numba(*args,model,algorithm=algorithm)
+    torch.testing.assert_close(actual,expected,rtol=0,atol=1e-8)
+    for indices in [[0],[4,2,0,3,1],[0,1],[2,3,4]]:
+        subset=[args[0][:,indices],*[a[indices] for a in args[1:]]]
+        torch.testing.assert_close(target_numba(*subset,model,algorithm=algorithm),actual[:,indices],rtol=0,atol=1e-8)
+    args[1][0]=10.;args[2][0]=20.;args[3][0]=True
+    changed=target_numba(*args,model,algorithm=algorithm)
+    torch.testing.assert_close(changed[:,1:],actual[:,1:],rtol=0,atol=0)
+
+
+def test_rejects_implicit_float32_candidate():
+    x=torch.zeros(2,dtype=torch.float32)
+    with pytest.raises(ValueError,match='explicit CPU float64'):
+        target_numba(x,x,x,x>0,x[:,None],'noregs_ar1')

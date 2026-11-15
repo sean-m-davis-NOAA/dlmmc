@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/Cosmo-Pop/affine.git",
+  "base_commit": "5fdd3843b099a2386f75d97b6c059f64560afdf9",
+  "local_version": "1.0.0+dlmmc1",
+  "patch_sha256": "12d6f6c50c9abbd68069c20a0ebe3d316f490ff7018f6f9cbcdbbe99e6b2f0f1",
+  "patch_scope": "Add checkpoint stream adapter and tests; local version label. Original backend algorithms unchanged.",
+  "source_files": {
+    "affine/__init__.py": "75cc5f5a248a4ee7eadd2e21a45549c923ed987ec1c5a6449af7d01fbb1566f2",
+    "affine/jax.py": "43cba0ae3132cbbb7ce06eb4da4b2e66c36890f65b894a83e0d9667ee9ac373a",
+    "affine/tensorflow.py": "7949ba06c0a92219f9455cd47048fa633458a08b67736257aa7408e87ad10589",
+    "affine/torch.py": "65aa2b00e47581dd74eab92a730a85a4f172c90886755fd022b95a8290ebb53c",
+    "affine/torch_stream.py": "a003c927f39178c34035206d914fd3881d8deaa1d91d98d3ab984ee01e14dcea",
+    "pyproject.toml": "a58dc7fa9b4058cdb15ba494d35f7ea2f0783dd65901a0369713c1bda11ebef2",
+    "LICENSE": "544cf6129a467362ec7fd9273ac73868d5f2fd4b4c9c7d78303a61c747168f02"
+  }
+}

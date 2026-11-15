@@ -1,0 +1,884 @@
+{
+  "04-kernel-cuda32-1cells.json": {
+    "sha256": "367d2af0a602d08333252ea180223cfc28b3855f5e00dfed92a9ee4019203b82",
+    "data": {
+      "backend": "torch",
+      "device": "cuda",
+      "dtype": "float32",
+      "cells": 1,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "Experimental; historical float32 failure retained",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "aa6c34790b5e7220f114f1bada8987009c8f7b31408481523e908491d090dba4",
+      "status": "UNAVAILABLE"
+    }
+  },
+  "04-kernel-cuda64-1cells.json": {
+    "sha256": "eba071c2c008403cacfb4ff5fefe0fa3c024b5b3c6be8436abdfd9dd9e6112fa",
+    "data": {
+      "backend": "torch",
+      "device": "cuda",
+      "dtype": "float64",
+      "cells": 1,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "CPU64 numerical production scope; external devices require their own qualification",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "aa6c34790b5e7220f114f1bada8987009c8f7b31408481523e908491d090dba4",
+      "status": "UNAVAILABLE"
+    }
+  },
+  "04-kernel-mps32-1cells-native.json": {
+    "sha256": "211fc52fab5ff8826439b6fcd6e1813a938a9a23cf8efcc8373fccc4fb6f1153",
+    "data": {
+      "execution_context": "native",
+      "backend": "torch",
+      "device": "mps",
+      "dtype": "float32",
+      "cells": 1,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [
+        {
+          "seconds": 0.05873237503692508,
+          "panel_densities_per_second": 1089.6886080251847,
+          "same_panels_sequential_scalar_seconds": 0.057968667009845376,
+          "batching_speedup": 0.9869968134849041
+        },
+        {
+          "seconds": 0.05823041684925556,
+          "panel_densities_per_second": 1099.0819482828106,
+          "same_panels_sequential_scalar_seconds": 0.05808954196982086,
+          "batching_speedup": 0.9975807337976063
+        },
+        {
+          "seconds": 0.05819420795887709,
+          "panel_densities_per_second": 1099.7658056490015,
+          "same_panels_sequential_scalar_seconds": 0.057381875114515424,
+          "batching_speedup": 0.9860410017963351
+        },
+        {
+          "seconds": 0.05856074998155236,
+          "panel_densities_per_second": 1092.8821782535417,
+          "same_panels_sequential_scalar_seconds": 0.0578690841794014,
+          "batching_speedup": 0.9881889183050276
+        },
+        {
+          "seconds": 0.05827150004915893,
+          "panel_densities_per_second": 1098.3070617026917,
+          "same_panels_sequential_scalar_seconds": 0.05774587509222329,
+          "batching_speedup": 0.9909797249686001
+        }
+      ],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "Experimental; historical float32 failure retained",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "cc17bb0c980d78f7e60cb6683f83a6c8895b21a167233d5cfb2dbb66162ebef2",
+      "ordinary_preparation_transfer_seconds": 0.31564891687594354,
+      "prepared_checksum": "223589c4f50965a9b55f44e44c11fb6af12ddc9a60823f5afbe7d12606cb75b4",
+      "panel_ids": [
+        "p05-lat01"
+      ],
+      "tensor_device": "mps:0",
+      "fallback_enabled": false,
+      "compilation_and_disposable_warmup_seconds": 0.25666979188099504,
+      "scalar_exact_shape_preparation_compilation_warmup_seconds": 0.06397862499579787,
+      "maximum_scalar_batch_density_difference": 0.0,
+      "scalar_batch_fixed_parameter_pass": true,
+      "status": "MEASURED_KERNEL_ONLY",
+      "median_seconds": 0.05827150004915893,
+      "median_batching_speedup": 0.9881889183050276,
+      "peak_process_rss_bytes": 523845632,
+      "gpu_peak_memory_status": "NOT_MEASURED",
+      "actual_wall_seconds": 1.2556768748909235
+    }
+  },
+  "04-kernel-mps32-1cells.json": {
+    "sha256": "5d8d0cbd364a8c305a598f6132617e309c1d63e5b342ba50ba304cb532eceaaf",
+    "data": {
+      "backend": "torch",
+      "device": "mps",
+      "dtype": "float32",
+      "cells": 1,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "Experimental; historical float32 failure retained",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "aa6c34790b5e7220f114f1bada8987009c8f7b31408481523e908491d090dba4",
+      "status": "UNAVAILABLE"
+    }
+  },
+  "04-kernel-mps32-5cells-native.json": {
+    "sha256": "b20fa35ac45295b9e271c6a2d797c75a4a6251eb0fe4ab4f29b13b2e457aee98",
+    "data": {
+      "execution_context": "native",
+      "backend": "torch",
+      "device": "mps",
+      "dtype": "float32",
+      "cells": 5,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [
+        {
+          "seconds": 0.06054808315820992,
+          "panel_densities_per_second": 5285.055831806462,
+          "same_panels_sequential_scalar_seconds": 0.2951310828793794,
+          "batching_speedup": 4.874325783496939
+        },
+        {
+          "seconds": 0.060304125072434545,
+          "panel_densities_per_second": 5306.43632779069,
+          "same_panels_sequential_scalar_seconds": 0.29615650000050664,
+          "batching_speedup": 4.911048782231349
+        },
+        {
+          "seconds": 0.06009737495332956,
+          "panel_densities_per_second": 5324.691806397629,
+          "same_panels_sequential_scalar_seconds": 0.29266341705806553,
+          "batching_speedup": 4.869820308879417
+        },
+        {
+          "seconds": 0.06062387488782406,
+          "panel_densities_per_second": 5278.448475821035,
+          "same_panels_sequential_scalar_seconds": 0.2909920420497656,
+          "batching_speedup": 4.799957815105111
+        },
+        {
+          "seconds": 0.060606832848861814,
+          "panel_densities_per_second": 5279.932723064402,
+          "same_panels_sequential_scalar_seconds": 0.29136033402755857,
+          "batching_speedup": 4.807384255734628
+        }
+      ],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "Experimental; historical float32 failure retained",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "cc17bb0c980d78f7e60cb6683f83a6c8895b21a167233d5cfb2dbb66162ebef2",
+      "ordinary_preparation_transfer_seconds": 0.23943908396176994,
+      "prepared_checksum": "1f0251dc07c9c636d9c80d5925674ede0c562da9fd7e3967cafa3514869d295e",
+      "panel_ids": [
+        "p05-lat01",
+        "p10-lat04",
+        "p16-lat07",
+        "p22-lat10",
+        "p00-lat00"
+      ],
+      "tensor_device": "mps:0",
+      "fallback_enabled": false,
+      "compilation_and_disposable_warmup_seconds": 0.08703062497079372,
+      "scalar_exact_shape_preparation_compilation_warmup_seconds": 0.32515687495470047,
+      "maximum_scalar_batch_density_difference": 0.0,
+      "scalar_batch_fixed_parameter_pass": true,
+      "status": "MEASURED_KERNEL_ONLY",
+      "median_seconds": 0.06054808315820992,
+      "median_batching_speedup": 4.869820308879417,
+      "peak_process_rss_bytes": 523632640,
+      "gpu_peak_memory_status": "NOT_MEASURED",
+      "actual_wall_seconds": 2.4557699160650373
+    }
+  },
+  "04-kernel-mps32-5cells.json": {
+    "sha256": "09e352dc252b8af77f436cf806a1e7fa460503aefaa9d0248cab30ced67cff80",
+    "data": {
+      "backend": "torch",
+      "device": "mps",
+      "dtype": "float32",
+      "cells": 5,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "Experimental; historical float32 failure retained",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "aa6c34790b5e7220f114f1bada8987009c8f7b31408481523e908491d090dba4",
+      "status": "UNAVAILABLE"
+    }
+  },
+  "04-kernel-numba64-1cells.json": {
+    "sha256": "35876a050e47ff1bf21f987369ed80c28297f1a995bf361314d4b9676fe210d1",
+    "data": {
+      "backend": "numba",
+      "device": "cpu",
+      "dtype": "float64",
+      "cells": 1,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [
+        {
+          "seconds": 0.0054160000290721655,
+          "panel_densities_per_second": 11816.838932137907,
+          "same_panels_sequential_scalar_seconds": 0.005412250058725476,
+          "batching_speedup": 0.9993076125689513
+        },
+        {
+          "seconds": 0.00549175008200109,
+          "panel_densities_per_second": 11653.84422895654,
+          "same_panels_sequential_scalar_seconds": 0.005451834062114358,
+          "batching_speedup": 0.9927316394062514
+        },
+        {
+          "seconds": 0.005431666038930416,
+          "panel_densities_per_second": 11782.756808185992,
+          "same_panels_sequential_scalar_seconds": 0.005489167058840394,
+          "batching_speedup": 1.0105862583409677
+        },
+        {
+          "seconds": 0.005418333923444152,
+          "panel_densities_per_second": 11811.748944280374,
+          "same_panels_sequential_scalar_seconds": 0.005470333155244589,
+          "batching_speedup": 1.0095969042394095
+        },
+        {
+          "seconds": 0.005343625089153647,
+          "panel_densities_per_second": 11976.888148441692,
+          "same_panels_sequential_scalar_seconds": 0.005430875113233924,
+          "batching_speedup": 1.0163278715524737
+        }
+      ],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "CPU64 numerical production scope; external devices require their own qualification",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "aa6c34790b5e7220f114f1bada8987009c8f7b31408481523e908491d090dba4",
+      "ordinary_preparation_transfer_seconds": 0.19080816605128348,
+      "prepared_checksum": "c016d3033ff309b5fc886940eeedb5df6c5a42a4991fb46e01f37e601df23de8",
+      "panel_ids": [
+        "p05-lat01"
+      ],
+      "tensor_device": "cpu",
+      "fallback_enabled": null,
+      "compilation": {
+        "compilation_or_cache_load_seconds": 0.0956080830655992,
+        "signature": "(Array(float64, 2, 'C', False, aligned=True), Array(float64, 2, 'C', False, aligned=True), Array(bool, 2, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True))",
+        "parameter_shape": [
+          64,
+          1,
+          4
+        ],
+        "data_shape": [
+          1,
+          396
+        ],
+        "state_dimension": 12,
+        "fastmath": false
+      },
+      "compilation_and_disposable_warmup_seconds": 0.10198633396066725,
+      "scalar_exact_shape_preparation_compilation_warmup_seconds": 0.009515749989077449,
+      "maximum_scalar_batch_density_difference": 0.0,
+      "scalar_batch_fixed_parameter_pass": true,
+      "status": "MEASURED_KERNEL_ONLY",
+      "median_seconds": 0.005418333923444152,
+      "median_batching_speedup": 1.0095969042394095,
+      "peak_process_rss_bytes": 401211392,
+      "gpu_peak_memory_status": "NOT_APPLICABLE",
+      "actual_wall_seconds": 0.37910662521608174
+    }
+  },
+  "04-kernel-numba64-5cells.json": {
+    "sha256": "55ee9a744aeb4a04a580af43c850c89b415c27a66030e57744ac01ad6bf34cb8",
+    "data": {
+      "backend": "numba",
+      "device": "cpu",
+      "dtype": "float64",
+      "cells": 5,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [
+        {
+          "seconds": 0.02615133300423622,
+          "panel_densities_per_second": 12236.469932456735,
+          "same_panels_sequential_scalar_seconds": 0.02705091703683138,
+          "batching_speedup": 1.0343991655205276
+        },
+        {
+          "seconds": 0.02595358295366168,
+          "panel_densities_per_second": 12329.704171148076,
+          "same_panels_sequential_scalar_seconds": 0.027105000102892518,
+          "batching_speedup": 1.044364477586259
+        },
+        {
+          "seconds": 0.026181374909356236,
+          "panel_densities_per_second": 12222.429154614185,
+          "same_panels_sequential_scalar_seconds": 0.026915874797850847,
+          "batching_speedup": 1.0280542901599918
+        },
+        {
+          "seconds": 0.025993957882747054,
+          "panel_densities_per_second": 12310.553146367653,
+          "same_panels_sequential_scalar_seconds": 0.026952542131766677,
+          "batching_speedup": 1.0368771948213344
+        },
+        {
+          "seconds": 0.02587516698986292,
+          "panel_densities_per_second": 12367.069944915369,
+          "same_panels_sequential_scalar_seconds": 0.02690674993209541,
+          "batching_speedup": 1.0398676825017836
+        }
+      ],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "CPU64 numerical production scope; external devices require their own qualification",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "aa6c34790b5e7220f114f1bada8987009c8f7b31408481523e908491d090dba4",
+      "ordinary_preparation_transfer_seconds": 0.12719920906238258,
+      "prepared_checksum": "0ce2612dae4884fe5db42d7502bdd101c679076f46f799a793547247781e3fb4",
+      "panel_ids": [
+        "p05-lat01",
+        "p10-lat04",
+        "p16-lat07",
+        "p22-lat10",
+        "p00-lat00"
+      ],
+      "tensor_device": "cpu",
+      "fallback_enabled": null,
+      "compilation": {
+        "compilation_or_cache_load_seconds": 0.08522304194048047,
+        "signature": "(Array(float64, 2, 'C', False, aligned=True), Array(float64, 2, 'C', False, aligned=True), Array(bool, 2, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True))",
+        "parameter_shape": [
+          64,
+          5,
+          4
+        ],
+        "data_shape": [
+          5,
+          396
+        ],
+        "state_dimension": 12,
+        "fastmath": false
+      },
+      "compilation_and_disposable_warmup_seconds": 0.11330999992787838,
+      "scalar_exact_shape_preparation_compilation_warmup_seconds": 0.04599974979646504,
+      "maximum_scalar_batch_density_difference": 0.0,
+      "scalar_batch_fixed_parameter_pass": true,
+      "status": "MEASURED_KERNEL_ONLY",
+      "median_seconds": 0.025993957882747054,
+      "median_batching_speedup": 1.0368771948213344,
+      "peak_process_rss_bytes": 414089216,
+      "gpu_peak_memory_status": "NOT_APPLICABLE",
+      "actual_wall_seconds": 0.5775956250727177
+    }
+  },
+  "04-kernel-torch32-1cells.json": {
+    "sha256": "fb78b003e1940dd81644a2fd237065109f7a46b6ad238efff2d6b64faccb6720",
+    "data": {
+      "backend": "torch",
+      "device": "cpu",
+      "dtype": "float32",
+      "cells": 1,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [
+        {
+          "seconds": 0.04117608396336436,
+          "panel_densities_per_second": 1554.3003083280767,
+          "same_panels_sequential_scalar_seconds": 0.04169416707009077,
+          "batching_speedup": 1.0125821364456942
+        },
+        {
+          "seconds": 0.04134529200382531,
+          "panel_densities_per_second": 1547.9392428545107,
+          "same_panels_sequential_scalar_seconds": 0.04125662497244775,
+          "batching_speedup": 0.9978554503528636
+        },
+        {
+          "seconds": 0.04165166593156755,
+          "panel_densities_per_second": 1536.5531862555054,
+          "same_panels_sequential_scalar_seconds": 0.041522332932800055,
+          "batching_speedup": 0.9968948901352472
+        },
+        {
+          "seconds": 0.041081791976466775,
+          "panel_densities_per_second": 1557.8677784226563,
+          "same_panels_sequential_scalar_seconds": 0.04165316605940461,
+          "batching_speedup": 1.0139082073942913
+        },
+        {
+          "seconds": 0.04121945891529322,
+          "panel_densities_per_second": 1552.664728848606,
+          "same_panels_sequential_scalar_seconds": 0.04160425020381808,
+          "batching_speedup": 1.0093351853384496
+        }
+      ],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "Experimental; historical float32 failure retained",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "aa6c34790b5e7220f114f1bada8987009c8f7b31408481523e908491d090dba4",
+      "ordinary_preparation_transfer_seconds": 0.13162612495943904,
+      "prepared_checksum": "1c3ef4267a5ea9862fe2a90d036e636bd61999e3f644d6e65e17eb36b246a56a",
+      "panel_ids": [
+        "p05-lat01"
+      ],
+      "tensor_device": "cpu",
+      "fallback_enabled": null,
+      "compilation_and_disposable_warmup_seconds": 0.041655374923720956,
+      "scalar_exact_shape_preparation_compilation_warmup_seconds": 0.04457312496379018,
+      "maximum_scalar_batch_density_difference": 0.0,
+      "scalar_batch_fixed_parameter_pass": true,
+      "status": "MEASURED_KERNEL_ONLY",
+      "median_seconds": 0.04121945891529322,
+      "median_batching_speedup": 1.0093351853384496,
+      "peak_process_rss_bytes": 366624768,
+      "gpu_peak_memory_status": "NOT_APPLICABLE",
+      "actual_wall_seconds": 0.653796040918678
+    }
+  },
+  "04-kernel-torch32-5cells.json": {
+    "sha256": "fa72600519c662554f6578040cbf1ae51e714d8ddd831da694b982a4bfe921f5",
+    "data": {
+      "backend": "torch",
+      "device": "cpu",
+      "dtype": "float32",
+      "cells": 5,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [
+        {
+          "seconds": 0.1468679578974843,
+          "panel_densities_per_second": 2178.827870837314,
+          "same_panels_sequential_scalar_seconds": 0.2068643330130726,
+          "batching_speedup": 1.408505544534544
+        },
+        {
+          "seconds": 0.14721529092639685,
+          "panel_densities_per_second": 2173.6872439425483,
+          "same_panels_sequential_scalar_seconds": 0.20689512509852648,
+          "batching_speedup": 1.4053915445642648
+        },
+        {
+          "seconds": 0.14807524997740984,
+          "panel_densities_per_second": 2161.0633785782484,
+          "same_panels_sequential_scalar_seconds": 0.20832725008949637,
+          "batching_speedup": 1.4069012216510086
+        },
+        {
+          "seconds": 0.14863487519323826,
+          "panel_densities_per_second": 2152.9267581647455,
+          "same_panels_sequential_scalar_seconds": 0.20901629119180143,
+          "batching_speedup": 1.4062398943724486
+        },
+        {
+          "seconds": 0.14877366600558162,
+          "panel_densities_per_second": 2150.918294827758,
+          "same_panels_sequential_scalar_seconds": 0.21003079088404775,
+          "batching_speedup": 1.4117470955926295
+        }
+      ],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "Experimental; historical float32 failure retained",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "aa6c34790b5e7220f114f1bada8987009c8f7b31408481523e908491d090dba4",
+      "ordinary_preparation_transfer_seconds": 0.1240146670024842,
+      "prepared_checksum": "de24286020d98451d43c1dc07c74e34dfffa09b7f77e4908543585087002cfeb",
+      "panel_ids": [
+        "p05-lat01",
+        "p10-lat04",
+        "p16-lat07",
+        "p22-lat10",
+        "p00-lat00"
+      ],
+      "tensor_device": "cpu",
+      "fallback_enabled": null,
+      "compilation_and_disposable_warmup_seconds": 0.14901662501506507,
+      "scalar_exact_shape_preparation_compilation_warmup_seconds": 0.22314229188486934,
+      "maximum_scalar_batch_density_difference": 0.0,
+      "scalar_batch_fixed_parameter_pass": true,
+      "status": "MEASURED_KERNEL_ONLY",
+      "median_seconds": 0.14807524997740984,
+      "median_batching_speedup": 1.4069012216510086,
+      "peak_process_rss_bytes": 366739456,
+      "gpu_peak_memory_status": "NOT_APPLICABLE",
+      "actual_wall_seconds": 2.298388582887128
+    }
+  },
+  "04-kernel-torch64-1cells.json": {
+    "sha256": "c6dfa652599ec4a81e52511662b2015b47f2bf0d6006aab48cf8b604f781dee8",
+    "data": {
+      "backend": "torch",
+      "device": "cpu",
+      "dtype": "float64",
+      "cells": 1,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [
+        {
+          "seconds": 0.052483499981462955,
+          "panel_densities_per_second": 1219.430869179926,
+          "same_panels_sequential_scalar_seconds": 0.05225179111585021,
+          "batching_speedup": 0.995585110259518
+        },
+        {
+          "seconds": 0.05209204205311835,
+          "panel_densities_per_second": 1228.5945698719026,
+          "same_panels_sequential_scalar_seconds": 0.05216133291833103,
+          "batching_speedup": 1.0013301621990942
+        },
+        {
+          "seconds": 0.051802000030875206,
+          "panel_densities_per_second": 1235.473533104021,
+          "same_panels_sequential_scalar_seconds": 0.052509750006720424,
+          "batching_speedup": 1.013662599425184
+        },
+        {
+          "seconds": 0.05173870804719627,
+          "panel_densities_per_second": 1236.9848884053874,
+          "same_panels_sequential_scalar_seconds": 0.05190550000406802,
+          "batching_speedup": 1.0032237364087175
+        },
+        {
+          "seconds": 0.052171625196933746,
+          "panel_densities_per_second": 1226.7204588397879,
+          "same_panels_sequential_scalar_seconds": 0.05201683286577463,
+          "batching_speedup": 0.9970330168827439
+        }
+      ],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "CPU64 numerical production scope; external devices require their own qualification",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "aa6c34790b5e7220f114f1bada8987009c8f7b31408481523e908491d090dba4",
+      "ordinary_preparation_transfer_seconds": 0.1244174160528928,
+      "prepared_checksum": "c016d3033ff309b5fc886940eeedb5df6c5a42a4991fb46e01f37e601df23de8",
+      "panel_ids": [
+        "p05-lat01"
+      ],
+      "tensor_device": "cpu",
+      "fallback_enabled": null,
+      "compilation_and_disposable_warmup_seconds": 0.058099084068089724,
+      "scalar_exact_shape_preparation_compilation_warmup_seconds": 0.055790833197534084,
+      "maximum_scalar_batch_density_difference": 0.0,
+      "scalar_batch_fixed_parameter_pass": true,
+      "status": "MEASURED_KERNEL_ONLY",
+      "median_seconds": 0.05209204205311835,
+      "median_batching_speedup": 1.0013301621990942,
+      "peak_process_rss_bytes": 366641152,
+      "gpu_peak_memory_status": "NOT_APPLICABLE",
+      "actual_wall_seconds": 0.7803470420185477
+    }
+  },
+  "04-kernel-torch64-5cells.json": {
+    "sha256": "512d1b2b3e64c30bdd5cd5a9ff0b77f6489c3d7e29c59915f5527399cfba71b2",
+    "data": {
+      "backend": "torch",
+      "device": "cpu",
+      "dtype": "float64",
+      "cells": 5,
+      "model": "vanilla_ar1",
+      "half_walkers": 64,
+      "trials": [
+        {
+          "seconds": 0.1823602500371635,
+          "panel_densities_per_second": 1754.7683770711362,
+          "same_panels_sequential_scalar_seconds": 0.2644154590088874,
+          "batching_speedup": 1.4499621433673278
+        },
+        {
+          "seconds": 0.18248133291490376,
+          "panel_densities_per_second": 1753.604025619569,
+          "same_panels_sequential_scalar_seconds": 0.2653394169174135,
+          "batching_speedup": 1.454063342693517
+        },
+        {
+          "seconds": 0.1827838330063969,
+          "panel_densities_per_second": 1750.7018795737856,
+          "same_panels_sequential_scalar_seconds": 0.2651480841450393,
+          "batching_speedup": 1.4506101539940894
+        },
+        {
+          "seconds": 0.18282558280043304,
+          "panel_densities_per_second": 1750.3020917444715,
+          "same_panels_sequential_scalar_seconds": 0.26550520793534815,
+          "batching_speedup": 1.4522322525571585
+        },
+        {
+          "seconds": 0.18282937491312623,
+          "panel_densities_per_second": 1750.2657882632493,
+          "same_panels_sequential_scalar_seconds": 0.2684427078347653,
+          "batching_speedup": 1.468269023849802
+        }
+      ],
+      "scope": "Fixed-parameter kernel timing only; no MCMC/inference qualification",
+      "precision_scope": "CPU64 numerical production scope; external devices require their own qualification",
+      "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+      "versions": {
+        "torch": "2.15.0",
+        "numba": "0.68.1"
+      },
+      "threads": {
+        "torch": 1,
+        "numba": 2
+      },
+      "script_sha256": "aa6c34790b5e7220f114f1bada8987009c8f7b31408481523e908491d090dba4",
+      "ordinary_preparation_transfer_seconds": 0.1237861670088023,
+      "prepared_checksum": "0ce2612dae4884fe5db42d7502bdd101c679076f46f799a793547247781e3fb4",
+      "panel_ids": [
+        "p05-lat01",
+        "p10-lat04",
+        "p16-lat07",
+        "p22-lat10",
+        "p00-lat00"
+      ],
+      "tensor_device": "cpu",
+      "fallback_enabled": null,
+      "compilation_and_disposable_warmup_seconds": 0.18537895800545812,
+      "scalar_exact_shape_preparation_compilation_warmup_seconds": 0.28356833406724036,
+      "maximum_scalar_batch_density_difference": 0.0,
+      "scalar_batch_fixed_parameter_pass": true,
+      "status": "MEASURED_KERNEL_ONLY",
+      "median_seconds": 0.1827838330063969,
+      "median_batching_speedup": 1.4522322525571585,
+      "peak_process_rss_bytes": 368852992,
+      "gpu_peak_memory_status": "NOT_APPLICABLE",
+      "actual_wall_seconds": 2.8561104158870876
+    }
+  },
+  "04-sampler-tuning.json": {
+    "sha256": "21f201f520702751cc0c46ac2e8c46c60a2d24887b1db26bbd472fafcc1f1d74",
+    "data": [
+      {
+        "cells": 1,
+        "status": "INCONCLUSIVE_KEEP_VALIDATED_64_HALF_BASELINE",
+        "actual_wall_seconds": 635.6607743748464,
+        "peak_process_rss_bytes": 1458405376,
+        "candidates": [
+          {
+            "half_walkers": 64,
+            "total_walkers": 128,
+            "status": "INCONCLUSIVE",
+            "time_to_target_seconds": null,
+            "actual_wall_seconds": 215.2151499169413,
+            "excluded_compilation_and_disposable_seconds": 0.17389316717162728,
+            "post_compilation_censored_seconds": 215.04125674976967
+          },
+          {
+            "half_walkers": 128,
+            "total_walkers": 256,
+            "status": "INCONCLUSIVE",
+            "time_to_target_seconds": null,
+            "actual_wall_seconds": 210.20120662497357,
+            "excluded_compilation_and_disposable_seconds": 0.09602070855908096,
+            "post_compilation_censored_seconds": 210.10518591641448
+          },
+          {
+            "half_walkers": 256,
+            "total_walkers": 512,
+            "status": "INCONCLUSIVE",
+            "time_to_target_seconds": null,
+            "actual_wall_seconds": 210.2062863749452,
+            "excluded_compilation_and_disposable_seconds": 0.15718541713431478,
+            "post_compilation_censored_seconds": 210.04910095781088
+          }
+        ]
+      },
+      {
+        "cells": 5,
+        "status": "INCONCLUSIVE_KEEP_VALIDATED_64_HALF_BASELINE",
+        "actual_wall_seconds": 658.1531714580487,
+        "peak_process_rss_bytes": 771227648,
+        "candidates": [
+          {
+            "half_walkers": 64,
+            "total_walkers": 128,
+            "status": "INCONCLUSIVE",
+            "time_to_target_seconds": null,
+            "actual_wall_seconds": 216.41323683294468,
+            "excluded_compilation_and_disposable_seconds": 0.26852708403021097,
+            "post_compilation_censored_seconds": 216.14470974891447
+          },
+          {
+            "half_walkers": 128,
+            "total_walkers": 256,
+            "status": "INCONCLUSIVE",
+            "time_to_target_seconds": null,
+            "actual_wall_seconds": 216.0006189160049,
+            "excluded_compilation_and_disposable_seconds": 0.3677108329720795,
+            "post_compilation_censored_seconds": 215.63290808303282
+          },
+          {
+            "half_walkers": 256,
+            "total_walkers": 512,
+            "status": "INCONCLUSIVE",
+            "time_to_target_seconds": null,
+            "actual_wall_seconds": 225.70925495796837,
+            "excluded_compilation_and_disposable_seconds": 0.7826597089879215,
+            "post_compilation_censored_seconds": 224.92659524898045
+          }
+        ]
+      }
+    ]
+  },
+  "04-baselines.json": {
+    "sha256": "79e7b5e574daaa95db309407ff12890992877e130afe749ce3c84fa350844e02",
+    "data": {
+      "status": "PASS_LOCAL_P05_PRACTICAL_FINAL_INFERENCE",
+      "rows": [
+        {
+          "workflow": "Affine + matched deferred outputs",
+          "sampling_with_initialization_seconds": 178.98398954956792,
+          "post_compilation_executed_pipeline_seconds": 359.97588031110354,
+          "parameter_ess": 41191.557743254445,
+          "output_ess": 5833.320531018797,
+          "output_phase_seconds": 77.59914791584015,
+          "compile_disposable_seconds": 0.17299816594459116,
+          "settings": "4 independent ensembles;128 total walkers;100 warmup;4000 retained sweeps",
+          "parameter_ess_per_sampling_second": 230.14101902028972,
+          "output_ess_per_executed_pipeline_second": 16.20475384622281,
+          "executed_pipeline_ratio_to_affine": 1.0
+        },
+        {
+          "workflow": "Parameter-only CmdStan + matched deferred outputs",
+          "sampling_with_initialization_seconds": 324.3502671672031,
+          "post_compilation_executed_pipeline_seconds": 398.50091216736473,
+          "parameter_ess": 3155.588245519847,
+          "output_ess": 2915.6432231240556,
+          "output_phase_seconds": 73.35450550029054,
+          "compile_disposable_seconds": 6.711887124925852,
+          "settings": "4 chains;parallel2;500 warmup +3000 retained/chain",
+          "parameter_ess_per_sampling_second": 9.728952200594723,
+          "output_ess_per_executed_pipeline_second": 7.316528354393143,
+          "executed_pipeline_ratio_to_affine": 1.1070211477029142
+        },
+        {
+          "workflow": "Original CmdStan with generated outputs",
+          "sampling_with_initialization_seconds": 345.56312570907176,
+          "post_compilation_executed_pipeline_seconds": 379.3861995271873,
+          "parameter_ess": 3165.4413743943783,
+          "output_ess": 3165.4413743943783,
+          "output_phase_seconds": 32.445849110838026,
+          "compile_disposable_seconds": 7.441800250904635,
+          "settings": "4 chains;parallel2;500 warmup +3000 retained/chain;original GQ for all12000draws",
+          "parameter_ess_per_sampling_second": 9.160240601190043,
+          "output_ess_per_executed_pipeline_second": 8.343585977400686,
+          "executed_pipeline_ratio_to_affine": 1.0539211660495382
+        }
+      ],
+      "affine_synchronized_sampling_seconds_by_run": [
+        44.73872800846584,
+        44.64903428917751,
+        44.768878958188,
+        44.75017937668599
+      ],
+      "affine_initialization_seconds": 0.07716891705058515,
+      "affine_review_inclusive_elapsed_to_parameter_pass": 550.609518289566,
+      "affine_review_inclusive_elapsed_plus_output_phase": 628.0356680394616,
+      "comparisons": [
+        {
+          "path": "reports/04-practical-vanilla_ar1-p05-lat01-v3.json",
+          "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+          "metrics": 203,
+          "flags": []
+        },
+        {
+          "path": "reports/04-practical-vanilla_ar1-p05-lat01-original-gq-v3.json",
+          "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+          "metrics": 203,
+          "flags": [
+            "q95:slope[395]",
+            "q95:AR_component[395]"
+          ]
+        }
+      ],
+      "limitations": [
+        "Single controlled seed set, one frozen panel; no guarantee of general speedup",
+        "Pipeline sum includes executed diagnostics/I/O and first review wait, excludes inter-job conversational gaps; not uninterrupted end-to-end latency",
+        "Affine elapsed including actual final review is recorded separately; manual review latency prevents a clean unattended wall-time speedup",
+        "All variants pass practical ESS2000; achieved ESS differs, no extrapolated exact time-to-2000",
+        "Affine/parameter Stan reconstruct2048draws/run; original Stan outputsall12000. Prespecified scientific summaries match; output contracts differ",
+        "Original audit includes validated CDF supplement; sampled signs also pass",
+        "Initialization/warmup included; all known compilation/disposable warmup excluded; bootstrap comparisons ran concurrently and their times are excluded from performance ratios",
+        "Kernel GPU timings do not qualify GPU scientific inference"
+      ]
+    }
+  }
+}

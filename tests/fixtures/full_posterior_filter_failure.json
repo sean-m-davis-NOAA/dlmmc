@@ -1,0 +1,8 @@
+{
+  "source": "diagnosed p05-lat01 CmdStan replacement w1000-s10000-seed20261204; full-posterior-stretch/cpu challenge seed20261112",
+  "model": "vanilla_ar1",
+  "threshold": 0.01,
+  "original_joseph_error": -0.0104305737795,
+  "sha256": "dfdb8c74ea1a3fd9c733935f7d2cedec1412cf947d09817c57389381447490b0",
+  "policy": "M32/M64 identical legacy variances and priors; normalize64_then_cast; no masks in source data"
+}

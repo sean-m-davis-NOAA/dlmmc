@@ -15,7 +15,12 @@ from typing import Any
 
 import numpy as np
 import xarray as xr
-from cmdstanpy import CmdStanModel
+try:
+    from cmdstanpy import CmdStanModel
+except ModuleNotFoundError as exc:
+    if exc.name != 'cmdstanpy':
+        raise
+    CmdStanModel = None
 from platformdirs import user_cache_dir
 
 from . import _stan_models
@@ -166,6 +171,8 @@ def _sampling_interval(sampling: str | float) -> float:
 
 @lru_cache(maxsize=None)
 def _compiled_model(source_name: str, digest: str, cache_root: str) -> CmdStanModel:
+    if CmdStanModel is None:
+        raise ImportError('Stan fitting requires dlmmc[stan] and a local CmdStan installation.')
     source = getattr(_stan_models, source_name)
     cache_dir = Path(cache_root)
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -270,6 +277,8 @@ def fit(
     starting Python to choose temporary storage.
     """
     model_name, spec = _resolve_model(model)
+    from .input_contract import validate_no_seasonal_input
+    validate_no_seasonal_input(data, model_name)
     time = _time_coordinate(data)
     if data.sizes["time"] < 2:
         raise ValueError("data must contain at least two time points.")

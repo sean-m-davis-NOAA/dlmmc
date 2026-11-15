@@ -1,0 +1,97 @@
+{
+  "stage": "05",
+  "explicit_user_response": "lets do 4 panels",
+  "recorded_at": 1794551968.445832,
+  "panel_ids": [
+    "p10-lat04",
+    "p10-lat05",
+    "p11-lat04",
+    "p11-lat05"
+  ],
+  "source_indices": [
+    [
+      10,
+      4
+    ],
+    [
+      10,
+      5
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      11,
+      5
+    ]
+  ],
+  "coordinates": {
+    "pressure": [
+      21.544347763061523,
+      21.544347763061523,
+      17.782794952392578,
+      17.782794952392578
+    ],
+    "latitude": [
+      -15.0,
+      -5.0,
+      -15.0,
+      -5.0
+    ]
+  },
+  "count": 4,
+  "approved_maximum_panels": 4,
+  "config_hash": "def6700a3c478cdf64e32d7d43ddbfc4d158b66767595da25c7d41b639277382",
+  "prepared_checksum": "84cdebcc3d8a2e3ac3a7a12980d8d6d471d56650343d43c294510c5b19b3b489",
+  "model": "vanilla_ar1",
+  "prior": {
+    "vertical": [
+      3.0701134973703614,
+      3.0701134973703614,
+      2.878231414154225,
+      2.878231414154225
+    ],
+    "latitude": [
+      -15.0,
+      -5.0,
+      -15.0,
+      -5.0
+    ],
+    "length_vertical": 0.1629696363601444,
+    "length_latitude": 8.493218002880191,
+    "vertical_coordinate": "log_pressure",
+    "vertical_unit": "dimensionless_log_pressure_ratio",
+    "latitude_unit": "degrees_north",
+    "mean": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      0.0001,
+      0.0001,
+      0.0001,
+      0.0001
+    ],
+    "field_unit": "normalized_ozone_per_month",
+    "lower": 0.0,
+    "upper": Infinity
+  },
+  "estimate_presented": "reports/05-spatial-runtime-estimate.md;4panels40\u201380minutes; initial90-minute option; separate mixing uncertainty",
+  "estimate_sha256": "c0406cd189aaa1f55023cbc5041b35825b75d6ce4da3d7ffb4ea00e6a6d64267",
+  "initial_wall_budget_seconds": 5400,
+  "output_target": {
+    "parameter_ess": 2000,
+    "reconstructed_summary_ess": 2000,
+    "selected_state_draws_per_run": 2048
+  },
+  "iteration_plan": {
+    "warmup": 1000,
+    "first_retained_checkpoint": 1000,
+    "planned_retained": 4000,
+    "extension": "Only after stable trace/diagnostic review within original90-minute total budget"
+  },
+  "scope": "Stage05 sigma_trend field only; no stage06 lag approval or extendedbenchmark/calibration authorization"
+}

@@ -1,0 +1,13 @@
+{
+  "scope": "Four-cell48-time synthetic joint target;10000fixed proposals, not device/posterior or larger-grid qualification",
+  "status_float64": "PASS",
+  "status_float32": "FAIL_SCOPED_NUMERICAL",
+  "maximum_joint_delta_error_float64": 2.496847173460992e-11,
+  "maximum_joint_delta_error_float32": 0.014841640318763893,
+  "unchanged_gate_float32": 0.01,
+  "fixture_sha256": "7dcf6bfad9726bccdef2929aad79a9bef52f8a2fab69d084bf8b8059794b35ba",
+  "worst_float32_index": 6606,
+  "seed": 2026112908,
+  "policy": "Identical fixedvariances/masks/priors;float32input rounding separated frommodelchanges. Earlierindependentfloat32failure retained; neitherpasshere norCPUinferencequalifiesMPS",
+  "source_sha256": "beffff410ae4016881d098cc63aad856d7bf63f14f6cf06aa4983c5928d1fcf2"
+}

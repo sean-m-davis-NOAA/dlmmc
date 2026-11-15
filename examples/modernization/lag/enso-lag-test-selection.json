@@ -1,0 +1,131 @@
+{
+  "stage": "06",
+  "explicit_user_response": "Same four panels; initial 2-hour cap",
+  "recorded_at": 1794558268.127718,
+  "panel_ids": [
+    "p10-lat04",
+    "p10-lat05",
+    "p11-lat04",
+    "p11-lat05"
+  ],
+  "source_indices": [
+    [
+      10,
+      4
+    ],
+    [
+      10,
+      5
+    ],
+    [
+      11,
+      4
+    ],
+    [
+      11,
+      5
+    ]
+  ],
+  "coordinates": {
+    "pressure": [
+      21.544347763061523,
+      21.544347763061523,
+      17.782794952392578,
+      17.782794952392578
+    ],
+    "latitude": [
+      -15.0,
+      -5.0,
+      -15.0,
+      -5.0
+    ]
+  },
+  "count": 4,
+  "approved_maximum_panels": 4,
+  "config_hash": "d0b8e968f55c20899a3754bf027850cd141dfb66c591123c1a039810645a5d17",
+  "prepared_checksum": "84cdebcc3d8a2e3ac3a7a12980d8d6d471d56650343d43c294510c5b19b3b489",
+  "model": "vanilla_ar1",
+  "sigma_prior": {
+    "vertical": [
+      3.0701134973703614,
+      3.0701134973703614,
+      2.878231414154225,
+      2.878231414154225
+    ],
+    "latitude": [
+      -15.0,
+      -5.0,
+      -15.0,
+      -5.0
+    ],
+    "length_vertical": 0.1629696363601444,
+    "length_latitude": 8.493218002880191,
+    "vertical_coordinate": "log_pressure",
+    "vertical_unit": "dimensionless_log_pressure_ratio",
+    "latitude_unit": "degrees_north",
+    "mean": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      0.0001,
+      0.0001,
+      0.0001,
+      0.0001
+    ],
+    "field_unit": "normalized_ozone_per_month",
+    "lower": 0.0,
+    "upper": Infinity
+  },
+  "lag_prior": {
+    "vertical": [
+      3.0701134973703614,
+      3.0701134973703614,
+      2.878231414154225,
+      2.878231414154225
+    ],
+    "latitude": [
+      -15.0,
+      -5.0,
+      -15.0,
+      -5.0
+    ],
+    "length_vertical": 0.1629696363601444,
+    "length_latitude": 8.493218002880191,
+    "vertical_coordinate": "log_pressure",
+    "vertical_unit": "dimensionless_log_pressure_ratio",
+    "latitude_unit": "degrees_north",
+    "mean": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      2.0,
+      2.0,
+      2.0,
+      2.0
+    ],
+    "field_unit": "months",
+    "lower": 0.0,
+    "upper": 12
+  },
+  "estimate_presented": "reports/06-enso-lag-runtime-estimate.md;fourpanels52\u2013113minutes includingburnin/tuning/outputs; initial2hourcap",
+  "estimate_sha256": "7d6322b1e1687844954aaaabd05c9195a944a6b7d4e037241ffc17cba4eea89b",
+  "initial_wall_budget_seconds": 7200,
+  "output_target": {
+    "parameter_ess": 2000,
+    "reconstructed_summary_ess": 2000,
+    "selected_state_draws_per_run": 2048
+  },
+  "iteration_plan": {
+    "warmup": 1000,
+    "first_retained_checkpoint": 1000,
+    "planned_retained": 4000,
+    "extension": "Only after actualstablemixing review within original2hourbudget"
+  },
+  "scope": "Named stage06 two-field ENSOlag test only; no extendedbenchmark/calibration authorization"
+}

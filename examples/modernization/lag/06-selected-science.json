@@ -1,0 +1,176 @@
+{
+  "status": "SCIENCE_PLOTS_REVIEW_PENDING",
+  "panel_ids": [
+    "p10-lat04",
+    "p10-lat05",
+    "p11-lat04",
+    "p11-lat05"
+  ],
+  "minimum_output_ess": [
+    5883.199399992605,
+    5983.625414555813,
+    5872.439393864548,
+    5641.684461813431
+  ],
+  "minimum_scalar_output_ess": [
+    5883.199399992605,
+    5983.625414555813,
+    5872.439393864548,
+    5641.684461813431
+  ],
+  "minimum_lag_product_ess": [
+    6565.864196099247,
+    6177.1759306504755,
+    6356.40810158704,
+    6830.637712569859
+  ],
+  "sigma_quantiles": [
+    [
+      4.329688362845151e-06,
+      5.820427442021343e-06,
+      4.905799854519641e-06,
+      4.72485643773584e-06
+    ],
+    [
+      4.5073459310354135e-05,
+      5.793690194348231e-05,
+      4.7425913599983345e-05,
+      4.862126262998399e-05
+    ],
+    [
+      0.00014207947535744298,
+      0.0001624628899469135,
+      0.00013868789820243538,
+      0.00014783775645310827
+    ]
+  ],
+  "lag_quantiles": [
+    [
+      0.37434458614195537,
+      0.7770612634045593,
+      0.5232760620773085,
+      0.4421492655506927
+    ],
+    [
+      1.7888977514286468,
+      1.7724568773391796,
+      1.4810014928548978,
+      1.32777673553995
+    ],
+    [
+      3.5467400276958236,
+      3.6029356984219625,
+      2.4147063916630533,
+      3.111083443826886
+    ]
+  ],
+  "field_correlation": [
+    [
+      1.0,
+      0.17658420976385616,
+      0.15244326554981288,
+      -0.01885765635940731,
+      0.002119616591231789,
+      0.0019106177303805313,
+      -0.0004594001748372015,
+      0.002370271129304868
+    ],
+    [
+      0.17658420976385616,
+      1.0,
+      -0.024014626355765938,
+      0.18556131136794574,
+      0.001659557519646257,
+      0.0008781600820262195,
+      -0.001005532483687623,
+      0.0034657458895881337
+    ],
+    [
+      0.15244326554981288,
+      -0.024014626355765938,
+      1.0,
+      0.15526669392006356,
+      0.0035678183855183112,
+      -0.0010013478773881774,
+      -0.0022864053148195307,
+      -0.0022342973177846715
+    ],
+    [
+      -0.01885765635940731,
+      0.18556131136794574,
+      0.1552666939200636,
+      1.0,
+      -0.0027400262647408018,
+      -0.00161004333486251,
+      -0.007349966762953166,
+      -0.0066683421531609196
+    ],
+    [
+      0.002119616591231789,
+      0.0016595575196462573,
+      0.003567818385518311,
+      -0.0027400262647408013,
+      0.9999999999999999,
+      0.16453044500056535,
+      0.12057364321493705,
+      -0.034113397775268096
+    ],
+    [
+      0.001910617730380531,
+      0.0008781600820262195,
+      -0.0010013478773881774,
+      -0.00161004333486251,
+      0.16453044500056538,
+      1.0,
+      -0.017589723789670914,
+      0.1672278084838341
+    ],
+    [
+      -0.00045940017483720146,
+      -0.0010055324836876231,
+      -0.0022864053148195303,
+      -0.007349966762953167,
+      0.12057364321493706,
+      -0.01758972378967091,
+      1.0,
+      0.11990008177450537
+    ],
+    [
+      0.002370271129304868,
+      0.003465745889588134,
+      -0.0022342973177846715,
+      -0.006668342153160919,
+      -0.034113397775268096,
+      0.1672278084838341,
+      0.11990008177450538,
+      1.0
+    ]
+  ],
+  "plots": {
+    "reports/06-selected-components-cell0.png": "56453f651bbf37b74fed3608d6eee500be61554ad39c7c45069ad53f8f3b8a02",
+    "reports/06-selected-components-cell1.png": "ff85f785663a579a46f6f5752ea4b90084bfc64b3eb14210143cf693118e1025",
+    "reports/06-selected-components-cell2.png": "73484eba73e62b91a911df50974e62405012c40f9bfc78cb4938eb08afbf9b65",
+    "reports/06-selected-components-cell3.png": "5460677e7efc0ce2408e9d501fe100da1fefe24f5cf0d7d75e82dc9995dd0546",
+    "reports/06-selected-lags.png": "d4cb07d9bce449f29fc0ed496e447c7d520cca438f8c83c4c0dfcae614fbf38c",
+    "reports/06-selected-fields.png": "263df94aa4d992a6f2131d3a24d41add2ba30d5ffa82447e2401c6bbbd4f299f",
+    "reports/06-selected-stage05-illustration.png": "dddaa15df838eb96e6eedb14647b0e09bdee5e86ac6e2c84522e52bc48c3abab"
+  },
+  "illustration": "Qualified stage05 coupled result versus added lag field; intended predictor/model change, not backend equality or proof of causality.",
+  "prior_illustration": {
+    "iid_gaussian_proposals": 50000,
+    "jointly_supported": 8900,
+    "no_clipping": true
+  },
+  "provenance": {
+    "experiments/stage06_selected_science.py": "32167415d29363586aa7be3530da12c221c8f0317a3cae031b5a1e2411c20189",
+    "experiments/stage06-selected/config.json": "31c2c58b0599f913d16ab21b922dc11df08a12c0ffbc354dd47f4b333c2e26dc",
+    "experiments/stage06-selected/parameter-certificate.json": "ca6723fa281b7cd3fed1289a0fef28cf62645163c2e61e7aa51aeff25e811699",
+    "experiments/stage06-selected/output-diagnostics.json": "58745c77a40f1cfe8a5db2ba00cac62a9528d4dd1785c2a8e807d3333efc69ce",
+    "experiments/stage06-selected/outputs/config.json": "f807eba0c0dd27ade75d443e888f196938e08a1d29f68c3e1c2b5a67780b2f43",
+    "experiments/stage06-selected/outputs/index.json": "ac62bff909a5b26084fdec98fd5d8d2280cd766be47a9cf1196275bf08977e36",
+    "experiments/stage06-selected/scientific-output-selection-v1.json": "7f72c56a8b95a419e70b40f0e59f87aaf5d5f72214cb6767f9e31300317692cb",
+    "experiments/stage06-selected/scientific-summary.npz": "4f87eefad4d94761b7f0e77d35b5c9872cd479b565e87f050f78072d943451cf",
+    "experiments/stage05-selected/scientific-summary.npz": "a2a6cd643d7099e3ca24f11f411377b69d81b535d9f3daa19b4c1701b8a96f4a",
+    "reports/05-selected-actual-review.json": "6c1acb8f37330a35656af4e3d3b07cc451d7a58127c55192fb321d97caaaac72"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "vertical": [
+    3.0701134973703614,
+    3.0701134973703614,
+    2.878231414154225,
+    2.878231414154225
+  ],
+  "latitude": [
+    -15.0,
+    -5.0,
+    -15.0,
+    -5.0
+  ],
+  "length_vertical": 0.1629696363601444,
+  "length_latitude": 8.493218002880191,
+  "vertical_coordinate": "log_pressure",
+  "vertical_unit": "dimensionless_log_pressure_ratio",
+  "latitude_unit": "degrees_north",
+  "mean": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "scale": [
+    0.0001,
+    0.0001,
+    0.0001,
+    0.0001
+  ],
+  "field_unit": "normalized_ozone_per_month",
+  "lower": 0.0,
+  "upper": Infinity
+}

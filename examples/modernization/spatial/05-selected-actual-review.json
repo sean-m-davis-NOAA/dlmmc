@@ -1,0 +1,14 @@
+{
+  "status": "ACTUALLY_INSPECTED_ELIGIBLE",
+  "reviewed_at": 1794554669.945027,
+  "plots": {
+    "reports/05-selected-components-cell0.png": "a8afffde4290bed9ababc0412135accd43143256717a00febb5831f2baa419f3",
+    "reports/05-selected-components-cell1.png": "12540b9a0f2bb8dd20f2664cc50e0fe9ee29d2cc83e6a94fbd6726edb9f94a53",
+    "reports/05-selected-components-cell2.png": "f3d73c749b4f53051f407aa7a559e8d53b80211a46d6ec497c55aa71c95f25af",
+    "reports/05-selected-components-cell3.png": "b73b6cb63d54ee4f1d83279db7772a73fe079c56c6868913e4fae5742d330162",
+    "reports/05-selected-independent-illustration.png": "5aa4b22f9c7686c4581049067e2625547e5687623b1942d5ad1c61d5d2b85483",
+    "reports/05-selected-field.png": "1c6312a1afc8a378f4733fa72be4839aee525f9eadb6f47d39ec29ceca489190"
+  },
+  "assessment": "Inspected all four component figures, sigma field/correlation figure and cached independent p10 overlay. Trends are smooth with larger endpoint uncertainty; slope intervals include zero; annual/semiannual cycles and AR excursions are distinct. p10 independent and coupled bands largely overlap, an illustration of the prior change, not an equality gate. All four parameter and reconstructed-summary gates pass. The original rare-tail draw and failed output selection remain preserved. Axis units are ppmv/month or normalized sigma units as labeled; pressure is never labeled altitude.",
+  "scope": "Selected stage05 four panels only; no stage06 selection"
+}

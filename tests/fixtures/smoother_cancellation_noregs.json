@@ -1,0 +1,14 @@
+{
+  "model": "noregs_ar1",
+  "panel": "p05-lat01",
+  "data_sha256": "4a638d3598bb2175c96fd419ef1fe5594aa58e193eff3da6ebb40f7912590221",
+  "fixed_parameters": {
+    "sigma_trend": 4.71616e-05,
+    "sigma_seas": 0.000797894,
+    "sigma_AR": 0.0557047,
+    "rhoAR1": 0.76136
+  },
+  "source": "bundled DLMMC ozone; parameters from unqualified vanilla_ar1 pilot used only as a fixed-parameter fixture",
+  "failure": "subtractive RTS covariance min eigenvalue -4.404e-7 vs predeclared audit tolerance 1.387e-7",
+  "no_posterior_qualification": true
+}

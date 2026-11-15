@@ -1,0 +1,93 @@
+{
+  "status": "PASS",
+  "underlying_kernel": [
+    [
+      1.0,
+      0.5,
+      0.5,
+      0.25
+    ],
+    [
+      0.5,
+      1.0,
+      0.25,
+      0.5
+    ],
+    [
+      0.5,
+      0.25,
+      1.0,
+      0.5
+    ],
+    [
+      0.25,
+      0.5,
+      0.5,
+      1.0
+    ]
+  ],
+  "untruncated_sample_correlation": [
+    [
+      1.0,
+      0.5011986079482701,
+      0.5006468974793657,
+      0.25056283085957853
+    ],
+    [
+      0.5011986079482701,
+      1.0,
+      0.25088297272593885,
+      0.4991883540605398
+    ],
+    [
+      0.5006468974793657,
+      0.25088297272593885,
+      0.9999999999999999,
+      0.5004485594697423
+    ],
+    [
+      0.25056283085957853,
+      0.49918835406053985,
+      0.5004485594697422,
+      0.9999999999999999
+    ]
+  ],
+  "positive_truncated_sample_correlation": [
+    [
+      1.0,
+      0.29474088284397154,
+      0.3024227721901073,
+      0.03044737761969191
+    ],
+    [
+      0.29474088284397154,
+      1.0,
+      0.04205599536836035,
+      0.29269581421777596
+    ],
+    [
+      0.3024227721901073,
+      0.042055995368360355,
+      1.0,
+      0.29666735775801845
+    ],
+    [
+      0.030447377619691914,
+      0.292695814217776,
+      0.29666735775801845,
+      1.0
+    ]
+  ],
+  "iid_gaussian_proposals": 500000,
+  "accepted_joint_positive": 89693,
+  "orthant_probability": 0.179386,
+  "orthant_probability_95percent_interval": [
+    0.1783233859677875,
+    0.18045233047161713
+  ],
+  "seed": 2026112813,
+  "maximum_untruncated_correlation_error": 0.0011986079482700918,
+  "normalizer_policy": "Fixed prior hyperparameters/support: constant orthant normalizer omitted from MCMC target; probability here is a diagnostic estimate, never recomputed inside likelihood",
+  "interpretation": "Only underlying Gaussian neighbors target0.5; observed post-truncation correlations are not retuned",
+  "source_sha256": "c7af3aacbec3cf954ce207e85c3fe9ae83f0d9abc9fe465e1319b5a1d0e83b77"
+}

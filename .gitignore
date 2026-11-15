@@ -21,3 +21,12 @@ results/
 *.csv
 *.nbconvert.ipynb
 /.vscode/settings.json
+
+# Local environments, dependency checkouts and notebook history
+.venv/
+.deps/
+.ci-affine/
+.pytest_cache/
+/notebooks/history/
+*.DS_Store
+!/examples/modernization/current/*.csv

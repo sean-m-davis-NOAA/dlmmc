@@ -1,0 +1,316 @@
+{
+  "status": "ESTIMATE_READY_STAGE06_SELECTION_REQUIRED",
+  "hardware": "Apple M5 /32GiB unifiedmemory;CPU64Numba2threads/Torch1thread",
+  "pilot_actual_wall_seconds": 443.84740829467773,
+  "pilot_sampling_seconds": 439.37103792186826,
+  "candidate_status": [
+    {
+      "half_walkers": 64,
+      "status": "INITIAL_WINDOW_REVIEW_REQUIRED",
+      "iterations": [
+        400,
+        400,
+        400,
+        400
+      ],
+      "minimum_ess": 3621.444081705283,
+      "numeric_eligible": false
+    },
+    {
+      "half_walkers": 128,
+      "status": "INCONCLUSIVE",
+      "iterations": [
+        218,
+        200,
+        200,
+        200
+      ],
+      "minimum_ess": null,
+      "numeric_eligible": null
+    }
+  ],
+  "winner": null,
+  "retained_phase_seconds_per_run_sweep": 0.1358015645807609,
+  "per_run_sweep_p10_p90": [
+    0.1348473710916005,
+    0.1369365950752981
+  ],
+  "measured_retained_blocks": 24,
+  "compilation_and_disposable": [
+    {
+      "half_walkers": 64,
+      "compilation_or_cache_load_seconds": 0.08366587501950562,
+      "signature": "(Array(float64, 2, 'C', False, aligned=True), Array(float64, 2, 'C', False, aligned=True), Array(bool, 2, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True))",
+      "parameter_shape": [
+        64,
+        4,
+        4
+      ],
+      "data_shape": [
+        4,
+        396
+      ],
+      "state_dimension": 12,
+      "fastmath": false,
+      "disposable_exact_shape_warmup_seconds": 0.02263237489387393
+    },
+    {
+      "half_walkers": 128,
+      "compilation_or_cache_load_seconds": 4.3625012040138245e-05,
+      "signature": "(Array(float64, 2, 'C', False, aligned=True), Array(float64, 2, 'C', False, aligned=True), Array(bool, 2, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True))",
+      "parameter_shape": [
+        128,
+        4,
+        4
+      ],
+      "data_shape": [
+        4,
+        396
+      ],
+      "state_dimension": 12,
+      "fastmath": false,
+      "disposable_exact_shape_warmup_seconds": 0.043666332960128784
+    }
+  ],
+  "initialization": [
+    {
+      "half_walkers": 64,
+      "seconds": 0.7980420000385493
+    },
+    {
+      "half_walkers": 128,
+      "seconds": 0.9964244998991489
+    }
+  ],
+  "grid": {
+    "shape": [
+      27,
+      12
+    ],
+    "cells": 324,
+    "all_missing_cells": 0,
+    "exclusions": [],
+    "time_points": 396
+  },
+  "scenarios": [
+    {
+      "cells": 4,
+      "shape": [
+        2,
+        2
+      ],
+      "half_walkers": 64,
+      "runs": 4,
+      "warmup_sweeps": 1000,
+      "retained_sweeps": 4000,
+      "reconstructed_draws_per_run": 2048,
+      "selected_tuning_max_seconds": 900,
+      "estimated_sampling_seconds": 2716.031291615218,
+      "estimated_total_seconds": 3838.2631180796307,
+      "execution_cost_range_seconds": [
+        3103.697338559723,
+        6776.526236159261
+      ],
+      "resources": {
+        "cells": 4,
+        "moved_dimension": 4,
+        "total_parameter_dimension": 20,
+        "update_schedule": "sigma_field_lag_field_local",
+        "target_evaluations_per_sweep": 6,
+        "half_walkers": 64,
+        "total_walkers": 128,
+        "observation_vector_bytes": 9732096,
+        "parameter_matrices_bytes": 1179648,
+        "ensemble_bytes": 81920,
+        "parameter_chunk_bytes": 1024000,
+        "parameter_chain_bytes": 327680000,
+        "prior_factors_bytes": 768,
+        "sampling_working_bytes_lower_bound": 14451456,
+        "joint_summary_quantities": 54,
+        "joint_summary_window_bytes": 884736000,
+        "diagnostic_working_bytes_lower_bound": 1212416000,
+        "diagnostic_multiplier_scenarios": [
+          4,
+          12
+        ],
+        "prior_setup_complexity": "dense O(cells^3); no full-grid factorization measured",
+        "scope": "Analytical dimensions only; allocator/workspace/process overhead and log-probability files additional; not a measured memory maximum",
+        "interpolation_working_bytes_lower_bound": 2433024,
+        "fields": 2
+      },
+      "mixing_scenarios": [
+        {
+          "assumed_controlling_iat": 100,
+          "retained_sweeps": 4000,
+          "estimated_total_seconds": 3838.2631180796307,
+          "interpretation": "Scenario, not measured full-grid time-to-ESS; nominal ESS and reliable blocks must both pass"
+        },
+        {
+          "assumed_controlling_iat": 500,
+          "retained_sweeps": 15000,
+          "estimated_total_seconds": 9813.53195963311,
+          "interpretation": "Scenario, not measured full-grid time-to-ESS; nominal ESS and reliable blocks must both pass"
+        },
+        {
+          "assumed_controlling_iat": 2000,
+          "retained_sweeps": 60000,
+          "estimated_total_seconds": 34257.81358417007,
+          "interpretation": "Scenario, not measured full-grid time-to-ESS; nominal ESS and reliable blocks must both pass"
+        }
+      ],
+      "current_feasibility": "FEASIBLE_SMALL_SCOPE"
+    },
+    {
+      "cells": 8,
+      "shape": [
+        2,
+        4
+      ],
+      "half_walkers": 64,
+      "runs": 4,
+      "warmup_sweeps": 1000,
+      "retained_sweeps": 4000,
+      "reconstructed_draws_per_run": 2048,
+      "selected_tuning_max_seconds": 900,
+      "estimated_sampling_seconds": 5445.432780496776,
+      "estimated_total_seconds": 6789.8983376752585,
+      "execution_cost_range_seconds": [
+        5317.423753256444,
+        12679.796675350517
+      ],
+      "resources": {
+        "cells": 8,
+        "moved_dimension": 8,
+        "total_parameter_dimension": 40,
+        "update_schedule": "sigma_field_lag_field_local",
+        "target_evaluations_per_sweep": 6,
+        "half_walkers": 64,
+        "total_walkers": 128,
+        "observation_vector_bytes": 19464192,
+        "parameter_matrices_bytes": 2359296,
+        "ensemble_bytes": 163840,
+        "parameter_chunk_bytes": 2048000,
+        "parameter_chain_bytes": 655360000,
+        "prior_factors_bytes": 3072,
+        "sampling_working_bytes_lower_bound": 28904448,
+        "joint_summary_quantities": 170,
+        "joint_summary_window_bytes": 2785280000,
+        "diagnostic_working_bytes_lower_bound": 3440640000,
+        "diagnostic_multiplier_scenarios": [
+          4,
+          12
+        ],
+        "prior_setup_complexity": "dense O(cells^3); no full-grid factorization measured",
+        "scope": "Analytical dimensions only; allocator/workspace/process overhead and log-probability files additional; not a measured memory maximum",
+        "interpolation_working_bytes_lower_bound": 4866048,
+        "fields": 2
+      },
+      "mixing_scenarios": [
+        {
+          "assumed_controlling_iat": 100,
+          "retained_sweeps": 4000,
+          "estimated_total_seconds": 6789.8983376752585,
+          "interpretation": "Scenario, not measured full-grid time-to-ESS; nominal ESS and reliable blocks must both pass"
+        },
+        {
+          "assumed_controlling_iat": 500,
+          "retained_sweeps": 15000,
+          "estimated_total_seconds": 18769.850454768166,
+          "interpretation": "Scenario, not measured full-grid time-to-ESS; nominal ESS and reliable blocks must both pass"
+        },
+        {
+          "assumed_controlling_iat": 2000,
+          "retained_sweeps": 60000,
+          "estimated_total_seconds": 67778.74547923915,
+          "interpretation": "Scenario, not measured full-grid time-to-ESS; nominal ESS and reliable blocks must both pass"
+        }
+      ],
+      "current_feasibility": "MEMORY_PRESSURE_POSSIBLE"
+    },
+    {
+      "cells": 324,
+      "shape": [
+        27,
+        12
+      ],
+      "half_walkers": 512,
+      "runs": 4,
+      "warmup_sweeps": 1000,
+      "retained_sweeps": 4000,
+      "reconstructed_draws_per_run": 2048,
+      "selected_tuning_max_seconds": 900,
+      "estimated_sampling_seconds": 2106543.7901102006,
+      "estimated_total_seconds": 2125613.2084034374,
+      "execution_cost_range_seconds": [
+        1594434.906302578,
+        4250326.416806875
+      ],
+      "resources": {
+        "cells": 324,
+        "moved_dimension": 324,
+        "total_parameter_dimension": 1620,
+        "update_schedule": "sigma_field_lag_field_local",
+        "target_evaluations_per_sweep": 6,
+        "half_walkers": 512,
+        "total_walkers": 1024,
+        "observation_vector_bytes": 6306398208,
+        "parameter_matrices_bytes": 764411904,
+        "ensemble_bytes": 53084160,
+        "parameter_chunk_bytes": 663552000,
+        "parameter_chain_bytes": 212336640000,
+        "prior_factors_bytes": 5038848,
+        "sampling_working_bytes_lower_bound": 9369084672,
+        "joint_summary_quantities": 211574,
+        "joint_summary_window_bytes": 27731427328000,
+        "diagnostic_working_bytes_lower_bound": 27943763968000,
+        "diagnostic_multiplier_scenarios": [
+          4,
+          12
+        ],
+        "prior_setup_complexity": "dense O(cells^3); no full-grid factorization measured",
+        "scope": "Analytical dimensions only; allocator/workspace/process overhead and log-probability files additional; not a measured memory maximum",
+        "interpolation_working_bytes_lower_bound": 1576599552,
+        "fields": 2
+      },
+      "mixing_scenarios": [
+        {
+          "assumed_controlling_iat": 100,
+          "retained_sweeps": 4000,
+          "estimated_total_seconds": 2125613.2084034374,
+          "interpretation": "Scenario, not measured full-grid time-to-ESS; nominal ESS and reliable blocks must both pass"
+        },
+        {
+          "assumed_controlling_iat": 500,
+          "retained_sweeps": 15000,
+          "estimated_total_seconds": 6760009.546645879,
+          "interpretation": "Scenario, not measured full-grid time-to-ESS; nominal ESS and reliable blocks must both pass"
+        },
+        {
+          "assumed_controlling_iat": 2000,
+          "retained_sweeps": 60000,
+          "estimated_total_seconds": 25718903.657637686,
+          "interpretation": "Scenario, not measured full-grid time-to-ESS; nominal ESS and reliable blocks must both pass"
+        }
+      ],
+      "current_feasibility": "NOT_FEASIBLE_CURRENT_DIAGNOSTICS"
+    }
+  ],
+  "peak_pilot_process_rss_bytes": 1297530880,
+  "scope": "New actual lag-inclusive four-cell pilot, not inherited spatial timings",
+  "cost_model": "Six likelihood calls/sweep including interpolation. Likelihood W*G cost and two dense prior W*G^2 costs scaled separately; G^3 setup. Four independent ensembles serial. Include1000MCMCwarmup, up to900tuningseconds,2048outputs/run and60seconds/4cells setup/IO/diagnostic allowance. Exclude compilation and disposable runtimewarmup. Larger-grid scaling and mixing are analytical scenarios.",
+  "memory": "Actual two-field all-pairs summary dimension; parameter plus summary windows lower bound. Add4\u201312x diagnostic temporary scenario; peakRSS includes other runtime overhead. No full-grid allocation/factorization performed.",
+  "limitations": [
+    "Short pilot cannot establish reliableESS1000/2000 or select a winner",
+    "100pilotwarmup is a timing probe, not productionburnin qualification",
+    "Full324-panel diagnostics infeasible on32GiB; compute estimate is counterfactual until memory implementation changes",
+    "0.75\u20132x execution range is a scenario, not confidence interval",
+    "Reconstruction refinement may cost more; preserve previous initial failures and additive state selections",
+    "No larger-grid/GPU/float32posterior qualification"
+  ],
+  "provenance": {
+    "experiments/report_stage06_runtime.py": "9ae9674ed5e17deeffc224740ce0ceb16fbebd31b87549ec87b065696db1831e",
+    "experiments/stage06-pilot/report.json": "b330551f8ff6951f8f7297a8cb2fd990e66a4d4e035bc2f8114fb3913d44041e",
+    "reports/06-runtime-components.json": "e44498ba2e1d7223ce4620ba7d2def7d09542980f0e4c90ae0128dd210124df1",
+    "experiments/stage06-pilot-inputs/manifest.json": "f9d7d258d33d2399399a58e46ee52e46ed3e67ba206048ef348ce7895edd4fbb"
+  }
+}

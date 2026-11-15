@@ -1,0 +1,12 @@
+include LICENSE
+include *.md
+include *.ipynb
+recursive-include vendor *
+recursive-include docs *.md *.json
+recursive-include examples/modernization *
+recursive-include scripts *.py
+recursive-include tests *.py *.json *.npz
+include src/dlmmc/_affine_provenance.json
+prune notebooks/history
+recursive-exclude * __pycache__ *.py[cod]
+include .gitattributes

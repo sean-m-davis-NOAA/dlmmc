@@ -1,0 +1,109 @@
+{
+  "05-prior-calibration.json": {
+    "source": "reports/05-prior-calibration.json",
+    "sha256": "1d5aa844c5ec74469e07b3ab359d878c7664acf4f9d46e4ce4904c7a2fa675bc"
+  },
+  "05-joint-posterior-comparison.json": {
+    "source": "reports/05-joint-posterior-comparison.json",
+    "sha256": "73c3763ecd9ffbf350b11ac104c17391574b5ab1095393249cc79b47600f2e3f"
+  },
+  "05-joint-precision.json": {
+    "source": "reports/05-joint-precision.json",
+    "sha256": "f0e1852395009784caeefb025eda46fcdbc4f60d1c1190fe0e4ba788e0eb977c"
+  },
+  "05-spatial-runtime-estimate.json": {
+    "source": "reports/05-spatial-runtime-estimate.json",
+    "sha256": "c0406cd189aaa1f55023cbc5041b35825b75d6ce4da3d7ffb4ea00e6a6d64267"
+  },
+  "05-sampler-tuning.json": {
+    "source": "reports/05-sampler-tuning.json",
+    "sha256": "8cddcf1defe9083ba2301b541af39ca8f583c580686a9599279c07725e213884"
+  },
+  "05-scientific-vanilla_ar1-s00-v4.json": {
+    "source": "reports/05-scientific-vanilla_ar1-s00-v4.json",
+    "sha256": "505ce4685d75cf4ed6ffd72019f4463fa01b579e5214913d8e027ffccd7fe27a"
+  },
+  "05-scientific-vanilla_ar1-s00-v4.png": {
+    "source": "reports/05-scientific-vanilla_ar1-s00-v4.png",
+    "sha256": "9ef77218236c488faa17963fe46d2c3705f425402b9486b32716d91625dab9d1"
+  },
+  "05-scientific-vanilla_ar1-s01-v4.json": {
+    "source": "reports/05-scientific-vanilla_ar1-s01-v4.json",
+    "sha256": "3fc88dc4a6d444be4cf6cbd438f1b17f3c86df4bd9b2466b4c3d8fe493eebb52"
+  },
+  "05-scientific-vanilla_ar1-s01-v4.png": {
+    "source": "reports/05-scientific-vanilla_ar1-s01-v4.png",
+    "sha256": "e343dd6db98a4543e801765311523abf33c0633abcdd981e6c6bbe7959d6d6b9"
+  },
+  "05-scientific-vanilla_ar1-s10-v4.json": {
+    "source": "reports/05-scientific-vanilla_ar1-s10-v4.json",
+    "sha256": "2413172379af1a9796352fe9877a177897c2286e5a12427765a3399db61ce96f"
+  },
+  "05-scientific-vanilla_ar1-s10-v4.png": {
+    "source": "reports/05-scientific-vanilla_ar1-s10-v4.png",
+    "sha256": "9e8475b2577073846bd509e0dff51b1f38d991f2cddda4dc758d89ed94975b7d"
+  },
+  "05-scientific-vanilla_ar1-s11-v4.json": {
+    "source": "reports/05-scientific-vanilla_ar1-s11-v4.json",
+    "sha256": "9dd5084b3e6078c68cd69011526ca0c643689393a10bedf50a11ccbacbeb6567"
+  },
+  "05-scientific-vanilla_ar1-s11-v4.png": {
+    "source": "reports/05-scientific-vanilla_ar1-s11-v4.png",
+    "sha256": "0a3d089b3d7c4726ffb6adda6703900e97d4ba27599fe16fdf5c5ceaa7945658"
+  },
+  "synthetic-sigma-summary.npz": {
+    "source": "Qualified four-cell synthetic joint affine6000 window; prior in normalized units",
+    "sha256": "48b2569d62d03f114f92f745e812c8cff8c68eab2b1baa713a6f42f9733cde1f",
+    "fit_config_sha256": "e4a60fa79f908f4fd0decc59910090cf0f87c7fa217e4ff2d9c53d493b9fe6e7"
+  },
+  "05-selected-science.json": {
+    "sha256": "33bad30032c29d23b22f6f614b277ea28ba4f6c3e650f5cedf8443448a8dc008",
+    "source": "reports/05-selected-science.json",
+    "execution": "CACHED_QUALIFIED_SELECTED_STAGE05"
+  },
+  "05-selected-actual-review.json": {
+    "sha256": "6c1acb8f37330a35656af4e3d3b07cc451d7a58127c55192fb321d97caaaac72",
+    "source": "reports/05-selected-actual-review.json",
+    "execution": "CACHED_QUALIFIED_SELECTED_STAGE05"
+  },
+  "spatial-test-selection.json": {
+    "sha256": "2da599d86baf391b5f7ae48e3158e886e59bd3aaace84625651e352441da517d",
+    "source": "reports/spatial-test-selection.json",
+    "execution": "CACHED_QUALIFIED_SELECTED_STAGE05"
+  },
+  "scientific-summary.npz": {
+    "sha256": "a2a6cd643d7099e3ca24f11f411377b69d81b535d9f3daa19b4c1701b8a96f4a",
+    "source": "experiments/stage05-selected/scientific-summary.npz",
+    "execution": "CACHED_QUALIFIED_SELECTED_STAGE05"
+  },
+  "05-selected-components-cell0.png": {
+    "sha256": "a8afffde4290bed9ababc0412135accd43143256717a00febb5831f2baa419f3",
+    "source": "reports/05-selected-components-cell0.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_STAGE05"
+  },
+  "05-selected-components-cell1.png": {
+    "sha256": "12540b9a0f2bb8dd20f2664cc50e0fe9ee29d2cc83e6a94fbd6726edb9f94a53",
+    "source": "reports/05-selected-components-cell1.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_STAGE05"
+  },
+  "05-selected-components-cell2.png": {
+    "sha256": "f3d73c749b4f53051f407aa7a559e8d53b80211a46d6ec497c55aa71c95f25af",
+    "source": "reports/05-selected-components-cell2.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_STAGE05"
+  },
+  "05-selected-components-cell3.png": {
+    "sha256": "b73b6cb63d54ee4f1d83279db7772a73fe079c56c6868913e4fae5742d330162",
+    "source": "reports/05-selected-components-cell3.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_STAGE05"
+  },
+  "05-selected-independent-illustration.png": {
+    "sha256": "5aa4b22f9c7686c4581049067e2625547e5687623b1942d5ad1c61d5d2b85483",
+    "source": "reports/05-selected-independent-illustration.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_STAGE05"
+  },
+  "05-selected-field.png": {
+    "sha256": "1c6312a1afc8a378f4733fa72be4839aee525f9eadb6f47d39ec29ceca489190",
+    "source": "reports/05-selected-field.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_STAGE05"
+  }
+}

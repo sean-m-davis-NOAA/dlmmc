@@ -1,0 +1,268 @@
+diff --git a/affine/__init__.py b/affine/__init__.py
+index 830f9bf..dbc4783 100644
+--- a/affine/__init__.py
++++ b/affine/__init__.py
+@@ -11,7 +11,7 @@ importing the framework until the first call, so ``import affine`` needs none
+ of them installed.
+ """
+ 
+-__version__ = "1.0.0"
++__version__ = "1.0.0+dlmmc1"
+ 
+ 
+ def affine_sample(*args, **kwargs):
+diff --git a/pyproject.toml b/pyproject.toml
+index 13d6e9e..e7699a1 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
+ 
+ [project]
+ name = "affine"
+-version = "1.0.0"
++version = "1.0.0+dlmmc1"
+ description = "Parallelized affine-invariant ensemble MCMC sampling in TensorFlow, PyTorch, and JAX"
+ readme = "README.md"
+ license = { text = "MIT" }
+diff --git a/affine/torch_stream.py b/affine/torch_stream.py
+new file mode 100644
+index 0000000..ff1dfae
+--- /dev/null
++++ b/affine/torch_stream.py
+@@ -0,0 +1,173 @@
++"""Bounded, resumable extension of the pinned affine Torch transition.
++
++The stretch proposal, shared batch partner indices, random-call order and
++updated first-half partners match affine.torch. The original API is unchanged.
++Checkpoints include the unthinned terminal state and actual acceptance counts.
++"""
++from dataclasses import dataclass
++import json
++from pathlib import Path
++import numpy as np
++import torch
++
++
++def _rng_get(device):
++    if device.type == 'cpu': return torch.get_rng_state()
++    if device.type == 'cuda': return torch.cuda.get_rng_state(device)
++    if device.type == 'mps': return torch.mps.get_rng_state()
++    raise ValueError('Unsupported RNG device')
++
++
++def _rng_set(device, state):
++    if device.type == 'cpu': torch.set_rng_state(state)
++    elif device.type == 'cuda': torch.cuda.set_rng_state(state, device)
++    elif device.type == 'mps': torch.mps.set_rng_state(state)
++    else: raise ValueError('Unsupported RNG device')
++
++
++def _evaluate(callback, x, args, extras):
++    result = callback(x, *args)
++    if extras:
++        if not isinstance(result, tuple) or len(result) != 2:
++            raise ValueError('Expected (logp, extras) callback')
++        lp, value = result
++    else: lp, value = result, None
++    if not isinstance(lp, torch.Tensor) or lp.shape != x.shape[:-1]:
++        raise ValueError('Callback logp must match every walker/cell axis exactly')
++    if lp.dtype != x.dtype or lp.device != x.device:
++        raise ValueError('Callback logp dtype/device mismatch')
++    if bool(torch.isnan(lp).any() or torch.isposinf(lp).any()):
++        raise FloatingPointError('Unexpected NaN/+inf; use -inf for explicit support rejection')
++    if extras and (not isinstance(value,torch.Tensor) or value.shape[:-1] != lp.shape
++                   or value.dtype != x.dtype or value.device != x.device):
++        raise ValueError('Extras shape/dtype/device mismatch')
++    return lp, value
++
++
++@dataclass
++class State:
++    halves: tuple
++    logp: tuple
++    extras: tuple | None
++    iteration: int
++    rng: torch.Tensor
++    accepted: torch.Tensor
++    proposed: torch.Tensor
++    warmup_accepted: torch.Tensor
++    warmup_proposed: torch.Tensor
++    warmup: int
++    thin: int
++    provenance: str
++
++
++@torch.no_grad()
++def initialize(callback, halves, *, seed, warmup=100, thin=1, args=(),
++               save_extras=False, provenance=''):
++    if len(halves) != 2 or not all(isinstance(x,torch.Tensor) for x in halves):
++        raise ValueError('Exactly two tensor halves required')
++    a,b=halves
++    if a.shape != b.shape or a.ndim not in (2,3) or min(a.shape)<1:
++        raise ValueError('Matching nonempty [walker,parameter] or [walker,cell,parameter] halves required')
++    if a.dtype not in (torch.float32,torch.float64) or b.dtype!=a.dtype or b.device!=a.device:
++        raise ValueError('Matching explicit floating dtype/device required')
++    if warmup<0 or thin<1 or int(warmup)!=warmup or int(thin)!=thin:
++        raise ValueError('Integer nonnegative warmup and positive thinning required')
++    if not bool(torch.isfinite(a).all() and torch.isfinite(b).all()):
++        raise ValueError('Initial coordinates must be finite')
++    a,b=a.clone(),b.clone()
++    la,ea=_evaluate(callback,a,args,save_extras);lb,eb=_evaluate(callback,b,args,save_extras)
++    if not bool(torch.isfinite(la).all() and torch.isfinite(lb).all()):
++        raise ValueError('Every initial walker must have finite supported density')
++    old=_rng_get(a.device)
++    try:
++        if a.device.type=='cpu': torch.random.default_generator.manual_seed(seed)
++        elif a.device.type=='cuda':
++            with torch.cuda.device(a.device): torch.cuda.manual_seed(seed)
++        elif a.device.type=='mps': torch.mps.manual_seed(seed)
++        rng=_rng_get(a.device).clone()
++    finally: _rng_set(a.device,old)
++    counts=torch.zeros((2,*a.shape[:-1]),dtype=torch.int64,device=a.device)
++    return State((a,b),(la.clone(),lb.clone()),None if not save_extras else (ea.clone(),eb.clone()),
++                 0,rng,counts.clone(),counts.clone(),counts.clone(),counts.clone(),int(warmup),int(thin),provenance)
++
++
++@torch.no_grad()
++def advance(callback, state, transitions, *, args=()):
++    """Advance a bounded chunk; retained steps start AFTER warmup transitions.
++
++    Return (new_state, draws, logp, extras, global_iterations). Even an empty
++    retained chunk has explicit correctly shaped arrays. Caller RNG is restored.
++    The input state is not mutated, so interrupted callers can retry a chunk.
++    """
++    if transitions<1 or int(transitions)!=transitions:
++        raise ValueError('Positive integer transition count required')
++    a,b=(x.clone() for x in state.halves);device=a.device;w=a.shape[0];d=a.shape[-1]
++    lp=[x.clone() for x in state.logp]
++    extra=None if state.extras is None else [x.clone() for x in state.extras]
++    accepted=state.accepted.clone();proposed=state.proposed.clone()
++    wa=state.warmup_accepted.clone();wp=state.warmup_proposed.clone()
++    halves=[a,b];draws=[];logs=[];ex=[];steps=[]
++    old=_rng_get(device)
++    try:
++        _rng_set(device,state.rng)
++        for iteration in range(state.iteration+1,state.iteration+int(transitions)+1):
++            for half in (0,1):
++                current=halves[half]
++                partners=halves[1-half][torch.randint(0,w,(w,),device=device)]
++                z=.5*(torch.rand(current.shape[:-1],dtype=current.dtype,device=device)+1)**2
++                candidate=partners+z[...,None]*(current-partners)
++                new_lp,new_extra=_evaluate(callback,candidate,args,extra is not None)
++                log_accept=(d-1)*torch.log(z).to(new_lp.dtype)+new_lp-lp[half]
++                uniform=torch.rand(current.shape[:-1],dtype=new_lp.dtype,device=device)
++                decision=torch.log(uniform)<log_accept
++                halves[half]=torch.where(decision[...,None],candidate,current)
++                lp[half]=torch.where(decision,new_lp,lp[half])
++                if extra is not None:extra[half]=torch.where(decision[...,None],new_extra,extra[half])
++                if iteration<=state.warmup:
++                    wa[half]+=decision;wp[half]+=1
++                else:
++                    accepted[half]+=decision;proposed[half]+=1
++            if iteration>state.warmup and (iteration-state.warmup-1)%state.thin==0:
++                draws.append(torch.cat(halves));logs.append(torch.cat(lp));steps.append(iteration)
++                if extra is not None:ex.append(torch.cat(extra))
++        rng=_rng_get(device).clone()
++    finally: _rng_set(device,old)
++    new=State(tuple(halves),tuple(lp),None if extra is None else tuple(extra),iteration,rng,
++              accepted,proposed,wa,wp,state.warmup,state.thin,state.provenance)
++    shape=(0,2*w,*a.shape[1:])
++    output=torch.stack(draws) if draws else a.new_empty(shape)
++    log_output=torch.stack(logs) if logs else a.new_empty(shape[:-1])
++    extra_output=None if extra is None else torch.stack(ex) if ex else a.new_empty((*shape[:-1],extra[0].shape[-1]))
++    return new,output,log_output,extra_output,np.asarray(steps,dtype=np.int64)
++
++
++def save_state(path, state, *, payload=None):
++    """Atomic, pickle-free checkpoint; preserve dtype and actual device identity."""
++    path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
++    meta=dict(schema=1,iteration=state.iteration,warmup=state.warmup,thin=state.thin,
++              provenance=state.provenance,device=str(state.halves[0].device),extras=state.extras is not None)
++    values={name:getattr(state,name).detach().cpu().numpy() for name in
++            ('rng','accepted','proposed','warmup_accepted','warmup_proposed')}
++    for i in range(2):
++        values[f'half{i}']=state.halves[i].cpu().numpy();values[f'logp{i}']=state.logp[i].cpu().numpy()
++        if state.extras is not None:values[f'extras{i}']=state.extras[i].cpu().numpy()
++    if payload:
++        if set(payload)&(set(values)|{'metadata'}):raise ValueError('Reserved checkpoint payload key')
++        values.update(payload)
++    temp=path.with_name(path.name+'.tmp')
++    with temp.open('wb') as f:np.savez(f,metadata=json.dumps(meta),**values)
++    temp.replace(path)
++
++
++def load_state(path, *, provenance, device=None):
++    with np.load(path,allow_pickle=False) as z:
++        meta=json.loads(str(z['metadata']))
++        if meta['schema']!=1 or meta['provenance']!=provenance:
++            raise ValueError('Checkpoint schema/target provenance mismatch')
++        device=meta['device'] if device is None else str(torch.device(device))
++        if device!=meta['device']:raise ValueError('Exact continuation requires the same device')
++        def tensor(name):return torch.from_numpy(z[name].copy()).to(device)
++        return State(tuple(tensor(f'half{i}') for i in range(2)),tuple(tensor(f'logp{i}') for i in range(2)),
++            tuple(tensor(f'extras{i}') for i in range(2)) if meta['extras'] else None,
++            meta['iteration'],torch.from_numpy(z['rng'].copy()),*(tensor(name) for name in
++            ('accepted','proposed','warmup_accepted','warmup_proposed')),meta['warmup'],meta['thin'],provenance)
+diff --git a/tests/test_torch_stream.py b/tests/test_torch_stream.py
+new file mode 100644
+index 0000000..c43d743
+--- /dev/null
++++ b/tests/test_torch_stream.py
+@@ -0,0 +1,57 @@
++import numpy as np
++import pytest
++import torch
++from affine.torch import sample,sample_batch
++from affine.torch_stream import initialize,advance,save_state,load_state
++
++
++@pytest.mark.parametrize('batch',[False,True])
++@pytest.mark.parametrize('dtype',[torch.float32,torch.float64])
++def test_exact_stock_transitions_and_unstored_checkpoint(tmp_path,batch,dtype):
++    def target(x):return -.5*(x*x).sum(-1),torch.cat([x,x*x],-1)
++    gen=torch.Generator().manual_seed(101)
++    shape=(8,3,2) if batch else (8,2)
++    halves=tuple(torch.randn(shape,dtype=dtype,generator=gen) for _ in range(2))
++    torch.manual_seed(91)
++    expected=(sample_batch if batch else sample)(target,32,halves,n_burnin=6,thin=3,
++        progress=False,save_lp=True,save_extras=True)
++    state=initialize(target,halves,seed=91,warmup=5,thin=3,save_extras=True,provenance='fixed')
++    caller=torch.get_rng_state().clone()
++    state,a,la,ea,sa=advance(target,state,14)
++    assert torch.equal(caller,torch.get_rng_state())
++    assert state.iteration==14 and sa[-1]==12  # terminal state is not stored
++    save_state(tmp_path/'state.npz',state)
++    restored=load_state(tmp_path/'state.npz',provenance='fixed')
++    state,b,lb,eb,sb=advance(target,restored,17)
++    for actual,reference in zip((torch.cat([a,b]),torch.cat([la,lb]),torch.cat([ea,eb])),expected):
++        assert torch.equal(actual,reference)
++    assert np.array_equal(np.concatenate([sa,sb]),np.arange(6,32,3))
++    assert bool((state.proposed==26).all() and (state.warmup_proposed==5).all())
++    assert bool((state.accepted<=state.proposed).all())
++
++
++def test_actual_acceptance_counters_include_identical_accepted_points():
++    # Degenerate halves deliberately test counters, not a valid initialization
++    # for scientific inference: every d=1 stretch move accepts identical zeros.
++    halves=(torch.zeros(4,1),torch.zeros(4,1))
++    s=initialize(lambda x:torch.zeros(x.shape[:-1]),halves,seed=1,warmup=2)
++    s,x,*_=advance(lambda x:torch.zeros(x.shape[:-1]),s,7)
++    assert bool((s.accepted==5).all() and (s.warmup_accepted==2).all())
++    assert bool((x==0).all())
++
++
++def test_malformed_callback_and_initial_support_rejected():
++    h=(torch.zeros(4,2),torch.zeros(4,2))
++    with pytest.raises(ValueError):initialize(lambda x:torch.zeros(4,1),h,seed=1)
++    with pytest.raises(ValueError):initialize(lambda x:torch.full((4,),-torch.inf),h,seed=1)
++    with pytest.raises(FloatingPointError):initialize(lambda x:torch.full((4,),torch.nan),h,seed=1)
++    with pytest.raises(ValueError):initialize(lambda x:torch.zeros(4,dtype=torch.float64),h,seed=1)
++
++
++def test_empty_retained_chunk_and_target_identity(tmp_path):
++    h=(torch.ones(4,2),torch.ones(4,2))
++    s=initialize(lambda x:-x.square().sum(-1),h,seed=4,warmup=10,provenance='A')
++    s,x,lp,e,steps=advance(lambda x:-x.square().sum(-1),s,3)
++    assert x.shape==(0,8,2) and lp.shape==(0,8) and e is None and len(steps)==0
++    save_state(tmp_path/'state.npz',s)
++    with pytest.raises(ValueError):load_state(tmp_path/'state.npz',provenance='B')

@@ -1,0 +1,202 @@
+{
+  "core_comparisons": [
+    {
+      "comparison": "individual",
+      "panel": "p05-lat01",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_saved_ess": 30790.102371798548
+    },
+    {
+      "comparison": "individual",
+      "panel": "p10-lat04",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_saved_ess": 32658.409128854353
+    },
+    {
+      "comparison": "individual",
+      "panel": "p16-lat07",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_saved_ess": 30325.438177857533
+    },
+    {
+      "comparison": "individual",
+      "panel": "p22-lat10",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_saved_ess": 16729.049225427334
+    },
+    {
+      "comparison": "individual",
+      "panel": "p00-lat00",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_saved_ess": 32753.219809464164
+    },
+    {
+      "comparison": "all_five_batch",
+      "panel": "p05-lat01",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_saved_ess": 16553.639245419632
+    },
+    {
+      "comparison": "all_five_batch",
+      "panel": "p10-lat04",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_saved_ess": 17585.043859863268
+    },
+    {
+      "comparison": "all_five_batch",
+      "panel": "p16-lat07",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_saved_ess": 16138.80972201613
+    },
+    {
+      "comparison": "all_five_batch",
+      "panel": "p22-lat10",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_saved_ess": 16729.049225427334
+    },
+    {
+      "comparison": "all_five_batch",
+      "panel": "p00-lat00",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_saved_ess": 17773.475934099093
+    }
+  ],
+  "layout_comparisons": [
+    {
+      "panel": "p05-lat01",
+      "comparison": "singleton_to_individual",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 6305.62387286595,
+      "point_flags": 0,
+      "report": "reports/01-practical-layout-numba-singleton-p05-lat01-p05-lat01-16000-8192.json",
+      "actual_wall_seconds": 16.23161005973816
+    },
+    {
+      "panel": "p10-lat04",
+      "comparison": "singleton_to_individual",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 5578.590122074126,
+      "point_flags": 1,
+      "report": "reports/01-practical-layout-numba-singleton-p10-lat04-p10-lat04-16000-8192.json",
+      "actual_wall_seconds": 11.790654182434082
+    },
+    {
+      "panel": "p16-lat07",
+      "comparison": "singleton_to_individual",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 4342.296252250108,
+      "point_flags": 1,
+      "report": "reports/01-practical-layout-numba-singleton-p16-lat07-p16-lat07-8000-8192.json",
+      "actual_wall_seconds": 15.10592007637024
+    },
+    {
+      "panel": "p22-lat10",
+      "comparison": "singleton_to_individual",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 5844.968646579266,
+      "point_flags": 0,
+      "report": "reports/01-practical-layout-numba-singleton-p22-lat10-p22-lat10-16000-8192.json",
+      "actual_wall_seconds": 46.013193130493164
+    },
+    {
+      "panel": "p00-lat00",
+      "comparison": "singleton_to_individual",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 5944.250381478623,
+      "point_flags": 0,
+      "report": "reports/01-practical-layout-numba-singleton-p00-lat00-p00-lat00-16000-8192.json",
+      "actual_wall_seconds": 45.61505198478699
+    },
+    {
+      "panel": "p00-lat00",
+      "comparison": "permuted_batch_to_baseline",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 5580.982461730033,
+      "point_flags": 4,
+      "report": "reports/01-practical-layout-numba-permuted-p00-lat00-16000-8192.json",
+      "actual_wall_seconds": 46.347206830978394
+    },
+    {
+      "panel": "p22-lat10",
+      "comparison": "permuted_batch_to_baseline",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 5401.469907631411,
+      "point_flags": 0,
+      "report": "reports/01-practical-layout-numba-permuted-p22-lat10-16000-8192.json",
+      "actual_wall_seconds": 46.078269243240356
+    },
+    {
+      "panel": "p16-lat07",
+      "comparison": "permuted_batch_to_baseline",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 4945.703548161907,
+      "point_flags": 2,
+      "report": "reports/01-practical-layout-numba-permuted-p16-lat07-8000-8192.json",
+      "actual_wall_seconds": 14.874858856201172
+    },
+    {
+      "panel": "p10-lat04",
+      "comparison": "permuted_batch_to_baseline",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 5860.644398628157,
+      "point_flags": 1,
+      "report": "reports/01-practical-layout-numba-permuted-p10-lat04-16000-8192.json",
+      "actual_wall_seconds": 46.08179688453674
+    },
+    {
+      "panel": "p05-lat01",
+      "comparison": "permuted_batch_to_baseline",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 4812.237854350806,
+      "point_flags": 0,
+      "report": "reports/01-practical-layout-numba-permuted-p05-lat01-8000-8192.json",
+      "actual_wall_seconds": 14.994072198867798
+    },
+    {
+      "panel": "p05-lat01",
+      "comparison": "chunked_batch_to_baseline",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 4984.35857382329,
+      "point_flags": 2,
+      "report": "reports/01-practical-layout-numba-chunk-first2-p05-lat01-8000-8192.json",
+      "actual_wall_seconds": 11.223711013793945
+    },
+    {
+      "panel": "p10-lat04",
+      "comparison": "chunked_batch_to_baseline",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 4812.903338289962,
+      "point_flags": 1,
+      "report": "reports/01-practical-layout-numba-chunk-first2-p10-lat04-8000-8192.json",
+      "actual_wall_seconds": 11.140633821487427
+    },
+    {
+      "panel": "p16-lat07",
+      "comparison": "chunked_batch_to_baseline",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 5669.12831628346,
+      "point_flags": 1,
+      "report": "reports/01-practical-layout-numba-chunk-last3-p16-lat07-16000-8192.json",
+      "actual_wall_seconds": 42.72766304016113
+    },
+    {
+      "panel": "p22-lat10",
+      "comparison": "chunked_batch_to_baseline",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 5401.469907631411,
+      "point_flags": 0,
+      "report": "reports/01-practical-layout-numba-chunk-last3-p22-lat10-16000-8192.json",
+      "actual_wall_seconds": 41.92998719215393
+    },
+    {
+      "panel": "p00-lat00",
+      "comparison": "chunked_batch_to_baseline",
+      "status": "PRACTICALLY_CONSISTENT_AT_ACHIEVED_MC_PRECISION",
+      "minimum_ess": 4716.423451508171,
+      "point_flags": 1,
+      "report": "reports/01-practical-layout-numba-chunk-last3-p00-lat00-8000-8192.json",
+      "actual_wall_seconds": 11.271430015563965
+    }
+  ],
+  "float32": "Retained research path; p05 CPU final-inference study practically consistent; original0.1474proposal-difference failure preserved; GPU reassessment pending"
+}

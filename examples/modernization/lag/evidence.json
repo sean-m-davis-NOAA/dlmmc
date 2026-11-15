@@ -1,0 +1,142 @@
+{
+  "06-joint-posterior-comparison.json": {
+    "sha256": "fc364ad75561be7a0617f53963e4b9675346082910b6a1a8d03016239b3d6267",
+    "source": "reports/06-joint-posterior-comparison.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-joint-precision.json": {
+    "sha256": "2cfb5b101a4b07c3ae31c991b32350aa10b3c1d41eb2cc8d169f50c73c2b08d1",
+    "source": "reports/06-joint-precision.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-conditional-modes-comparison.json": {
+    "sha256": "1c29f1f12652b798980f1260455198a3acf8a633eddf5826953f2488fddeb93e",
+    "source": "reports/06-conditional-modes-comparison.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-enso-lag-runtime-estimate.json": {
+    "sha256": "efd30e0da26f1893cf3fc231d0362bccd864485ac4830aab238b16d98555fb7f",
+    "source": "reports/06-enso-lag-runtime-estimate.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-sampler-tuning.json": {
+    "sha256": "af0c765693eab615e9fe964757eed3da6d458797625b91ef239b849dbcfc0b95",
+    "source": "reports/06-sampler-tuning.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-output-actual-review.json": {
+    "sha256": "d53957c2de6e92b46cb6b238b06c65d3d22c707b4a7f3ac9c73c926afe3678d5",
+    "source": "reports/06-output-actual-review.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-conditional-modes-actual-review.json": {
+    "sha256": "fbfc7538a7f794c3e4228db6810907c52b9d7d7a5bef1d4f5e890aae5c6ce023",
+    "source": "reports/06-conditional-modes-actual-review.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "trace-24000.png": {
+    "sha256": "516c75a1599c61d4d9f866bdc4b03e38ad71c0ee8850e86eaa52a776fb6474a7",
+    "source": "experiments/stage06-conditional-modes/trace-24000.png",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "ENSO_MEI_1950_201802.txt": {
+    "sha256": "24beb279f318934b7132f54584b2698cbe674463317ed58bea508a86c8755b7a",
+    "source": "checkouts/dlmmc/regressors/ENSO_MEI_1950_201802.txt",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-scientific-cell0.json": {
+    "sha256": "f5701122766dda71248b4b6c77282725ec627729c1482f55e194a2b0aa1ff58e",
+    "source": "reports/06-scientific-cell0.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-scientific-cell0.png": {
+    "sha256": "bed4e81e537eaf62aa67351106860a7856979840e79fc002fe56735a84b38035",
+    "source": "reports/06-scientific-cell0.png",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-scientific-cell1.json": {
+    "sha256": "7cdb336ad58437e3b3a6b3f0b8c62603c042a9e0f0547e59b3f1b59ea84b8496",
+    "source": "reports/06-scientific-cell1.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-scientific-cell1.png": {
+    "sha256": "93f681aedb966f693d7ac31a2e926b42dbda6a7480239ad6e8442949f66a3948",
+    "source": "reports/06-scientific-cell1.png",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-scientific-cell2.json": {
+    "sha256": "a3ece00985831323385d16854050f964cfdc51d38cf786a8c5cb5df10c965524",
+    "source": "reports/06-scientific-cell2.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-scientific-cell2.png": {
+    "sha256": "0f4ad9ae11c70c56aa5737555e95b2209ad8274ed8b89bc1f23ec004c665c77b",
+    "source": "reports/06-scientific-cell2.png",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-scientific-cell3.json": {
+    "sha256": "02d6a8045e6ed62fcc29bb580bf3eefe09e3362a8f6ac399668dabcca69ecf13",
+    "source": "reports/06-scientific-cell3.json",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-scientific-cell3.png": {
+    "sha256": "3db69f43dc83e2b6767271da1a9e0c9ce8a4a0f7ce5e122e6aa08e521ac91021",
+    "source": "reports/06-scientific-cell3.png",
+    "execution": "CACHED_SYNTHETIC_QUALIFIED_OR_EXPLICIT_RUNTIME_PRECISION_SCOPE"
+  },
+  "06-selected-science.json": {
+    "sha256": "c93f4a12af0d68d483123f3de37ff0e2bd49a868da10a894df5bb91f56dbe948",
+    "source": "reports/06-selected-science.json",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  },
+  "06-selected-actual-review.json": {
+    "sha256": "580fc0ff2d07064649b6336995a2c70a507fce4517dd64a9749df9a549102e5b",
+    "source": "reports/06-selected-actual-review.json",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  },
+  "06-selected-result.json": {
+    "sha256": "ab4d74d9bfc3e58080bfe957bd4c7bf9b1d55c0db05cea351fc3c56df374e088",
+    "source": "reports/06-selected-result.json",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  },
+  "enso-lag-test-selection.json": {
+    "sha256": "fd7d37dcf449c50271ffd4125c9af5959a5094a65072341c775117a7d12c4506",
+    "source": "reports/enso-lag-test-selection.json",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  },
+  "06-selected-components-cell0.png": {
+    "sha256": "56453f651bbf37b74fed3608d6eee500be61554ad39c7c45069ad53f8f3b8a02",
+    "source": "reports/06-selected-components-cell0.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  },
+  "06-selected-components-cell1.png": {
+    "sha256": "ff85f785663a579a46f6f5752ea4b90084bfc64b3eb14210143cf693118e1025",
+    "source": "reports/06-selected-components-cell1.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  },
+  "06-selected-components-cell2.png": {
+    "sha256": "73484eba73e62b91a911df50974e62405012c40f9bfc78cb4938eb08afbf9b65",
+    "source": "reports/06-selected-components-cell2.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  },
+  "06-selected-components-cell3.png": {
+    "sha256": "5460677e7efc0ce2408e9d501fe100da1fefe24f5cf0d7d75e82dc9995dd0546",
+    "source": "reports/06-selected-components-cell3.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  },
+  "06-selected-lags.png": {
+    "sha256": "d4cb07d9bce449f29fc0ed496e447c7d520cca438f8c83c4c0dfcae614fbf38c",
+    "source": "reports/06-selected-lags.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  },
+  "06-selected-fields.png": {
+    "sha256": "263df94aa4d992a6f2131d3a24d41add2ba30d5ffa82447e2401c6bbbd4f299f",
+    "source": "reports/06-selected-fields.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  },
+  "06-selected-stage05-illustration.png": {
+    "sha256": "dddaa15df838eb96e6eedb14647b0e09bdee5e86ac6e2c84522e52bc48c3abab",
+    "source": "reports/06-selected-stage05-illustration.png",
+    "execution": "CACHED_QUALIFIED_SELECTED_FOUR_PANEL_REAL_LAG_RESULT"
+  }
+}

@@ -1,0 +1,4681 @@
+{
+  "status": "COMPLETE_PRODUCTION_GPU_COMPARISON_WITH_FLAGS",
+  "qualification_eligible": false,
+  "scope": "One user-selected312-panel fit; five-panel exploratory MC comparison; no new Stan fits",
+  "interpretation": "Differences include finite-chain randomness and MPS32 arithmetic. No isolated bias estimate or convergence certificate.",
+  "run": {
+    "status": "COMPLETE_PRODUCTION_WITH_FLAGS",
+    "scope": "grid",
+    "panels": 312,
+    "cap_seconds": 5400,
+    "backend": "mps",
+    "dtype": "float32",
+    "seed": 2026111801,
+    "output_seed": 2026111802,
+    "threads": {
+      "numba": 8,
+      "torch": 1
+    },
+    "import_seconds": 1.0351939159445465,
+    "started_unix": 1794746691.0668511,
+    "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "driver_sha256": "b80e95cca339706ce1746df210417e0b40b43c2dbf7c06a296796417798001da",
+    "actual_wall_seconds": 487.9968073340133,
+    "peak_process_rss_bytes": 1454014464,
+    "phase": "complete",
+    "input_loading_seconds": 0.1821968329604715,
+    "sample": {
+      "fit_wall_seconds": 404.091051624855,
+      "sampling_seconds": 380.9586736697238,
+      "burnin_seconds": 76.22666908288375,
+      "retained_sampling_seconds": 304.73200458684005,
+      "initialization_seconds": 20.11951283318922,
+      "compilation": {
+        "compilation_or_cache_load_seconds": 0.23764529102481902,
+        "disposable_exact_shape_warmup_seconds": 2.1397438750136644,
+        "metal_compile_pipeline_seconds": 0.0013244999572634697,
+        "cpu_initializer_compile": {
+          "compilation_or_cache_load_seconds": 0.09663345804437995,
+          "signature": "(Array(float64, 2, 'C', False, aligned=True), Array(float64, 2, 'C', False, aligned=True), Array(bool, 2, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True))",
+          "parameter_shape": [
+            64,
+            312,
+            4
+          ],
+          "data_shape": [
+            312,
+            396
+          ],
+          "state_dimension": 12,
+          "fastmath": false
+        },
+        "device_preparation_seconds": 0.21808145800605416
+      },
+      "post_compilation_fit_seconds": 401.71366245881654,
+      "peak_process_rss_bytes": 1454014464,
+      "fit_provenance": "fcc8899c0eb6e22def915730d673775fb2c97325eb772b3ec93a6ab45eb32539",
+      "likelihood_half_batch_shape": [
+        64,
+        312,
+        4
+      ],
+      "checkpoint_sweeps": 16,
+      "panel_chunking": false
+    },
+    "diagnostic_and_parameter_cache_seconds": 2.437462833011523,
+    "output": {
+      "wall_seconds": 61.96839383314364,
+      "preparation_seconds": 0.0013667091261595488,
+      "selection_seconds": 0.4273860410321504,
+      "compilation_or_cache_load_seconds": 0.00092879100702703,
+      "disposable_exact_shape_warmup_seconds": 0.15769133297726512,
+      "smoothing_and_reduction_seconds": 61.24481045897119,
+      "diagnostics_and_output_io_seconds": 0.13128800014965236,
+      "post_compile_output_seconds": 61.80549708404578,
+      "full_batch_shape": [
+        2048,
+        312
+      ],
+      "draw_chunking": true,
+      "panel_chunking": false,
+      "cap_exceeded": false
+    },
+    "fit_outputs_post_compile_seconds": 466.17992079397663,
+    "plot_subprocess_seconds": 19.28074770909734,
+    "end_to_end_post_compile_seconds": 485.46078537707217,
+    "whole_process_seconds_including_imports": 489.03199087502435,
+    "excluded_compile_and_disposable_warmup_seconds": 2.5360092900227755
+  },
+  "numba_baseline": {
+    "status": "COMPLETE_PRODUCTION_WITH_FLAGS",
+    "scope": "grid",
+    "panels": 312,
+    "cap_seconds": 5400,
+    "backend": "numba",
+    "dtype": "float64",
+    "seed": 2026111801,
+    "output_seed": 2026111802,
+    "threads": {
+      "numba": 8,
+      "torch": 1
+    },
+    "import_seconds": 0.7679204170126468,
+    "started_unix": 1794745044.3932438,
+    "hardware": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "driver_sha256": "b80e95cca339706ce1746df210417e0b40b43c2dbf7c06a296796417798001da",
+    "actual_wall_seconds": 1613.9823875410948,
+    "peak_process_rss_bytes": 2094268416,
+    "phase": "complete",
+    "input_loading_seconds": 0.306823916034773,
+    "sample": {
+      "fit_wall_seconds": 882.1626974579412,
+      "sampling_seconds": 854.7779000818264,
+      "burnin_seconds": 169.32520104199648,
+      "retained_sampling_seconds": 685.4526990398299,
+      "initialization_seconds": 22.287625917000696,
+      "compilation": {
+        "compilation_or_cache_load_seconds": 0.20444970787502825,
+        "signature": "(Array(float64, 2, 'C', False, aligned=True), Array(float64, 2, 'C', False, aligned=True), Array(bool, 2, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True), Array(float64, 3, 'C', False, aligned=True))",
+        "parameter_shape": [
+          64,
+          312,
+          4
+        ],
+        "data_shape": [
+          312,
+          396
+        ],
+        "state_dimension": 12,
+        "fastmath": false,
+        "disposable_exact_shape_warmup_seconds": 4.435697792097926
+      },
+      "post_compilation_fit_seconds": 877.5225499579683,
+      "peak_process_rss_bytes": 1363410944,
+      "fit_provenance": "6365d83fee143fe3168de0ceccc9f9be7cf74711ccf97da2b145c41d9d2e100b",
+      "likelihood_half_batch_shape": [
+        64,
+        312,
+        4
+      ],
+      "checkpoint_sweeps": 16,
+      "panel_chunking": false
+    },
+    "diagnostic_and_parameter_cache_seconds": 2.39322741702199,
+    "output": {
+      "wall_seconds": 706.1236527909059,
+      "preparation_seconds": 0.0189172918908298,
+      "selection_seconds": 0.4340572920627892,
+      "compilation_or_cache_load_seconds": 0.014375875005498528,
+      "disposable_exact_shape_warmup_seconds": 355.5312964578625,
+      "smoothing_and_reduction_seconds": 349.9639527089894,
+      "diagnostics_and_output_io_seconds": 0.15317116701044142,
+      "post_compile_output_seconds": 350.57028283411637,
+      "full_batch_shape": [
+        2048,
+        312
+      ],
+      "draw_chunking": false,
+      "panel_chunking": false,
+      "cap_exceeded": false
+    },
+    "fit_outputs_post_compile_seconds": 1230.8413359581027,
+    "plot_subprocess_seconds": 22.955088417045772,
+    "end_to_end_post_compile_seconds": 1253.7965528331697,
+    "whole_process_seconds_including_imports": 1614.7502947500907,
+    "excluded_compile_and_disposable_warmup_seconds": 360.18581983284093
+  },
+  "timing": {
+    "sampling_including_burnin": {
+      "numba_seconds": 854.7779000818264,
+      "gpu_seconds": 380.9586736697238,
+      "numba_over_gpu": 2.243754924511537
+    },
+    "burnin": {
+      "numba_seconds": 169.32520104199648,
+      "gpu_seconds": 76.22666908288375,
+      "numba_over_gpu": 2.2213380576538593
+    },
+    "retained_sampling": {
+      "numba_seconds": 685.4526990398299,
+      "gpu_seconds": 304.73200458684005,
+      "numba_over_gpu": 2.249362353551201
+    },
+    "initialization": {
+      "numba_seconds": 22.287625917000696,
+      "gpu_seconds": 20.11951283318922,
+      "numba_over_gpu": 1.1077617088339708
+    },
+    "fit_post_compile": {
+      "numba_seconds": 877.5225499579683,
+      "gpu_seconds": 401.71366245881654,
+      "numba_over_gpu": 2.1844478591711614
+    },
+    "smoothing_and_summary_post_compile": {
+      "numba_seconds": 350.57028283411637,
+      "gpu_seconds": 61.80549708404578,
+      "numba_over_gpu": 5.672153762591631
+    },
+    "fit_and_output_post_compile": {
+      "numba_seconds": 1230.8413359581027,
+      "gpu_seconds": 466.17992079397663,
+      "numba_over_gpu": 2.6402710221019157
+    },
+    "plotting": {
+      "numba_seconds": 22.955088417045772,
+      "gpu_seconds": 19.28074770909734,
+      "numba_over_gpu": 1.1905704469238372
+    },
+    "end_to_end_post_compile": {
+      "numba_seconds": 1254.5644749172498,
+      "gpu_seconds": 486.4959815850016,
+      "numba_over_gpu": 2.578776644423423
+    },
+    "whole_process_including_compile_warmup": {
+      "numba_seconds": 1614.7502947500907,
+      "gpu_seconds": 489.03199087502435,
+      "numba_over_gpu": 3.301931826302038
+    }
+  },
+  "curve_summary": {
+    "max_absolute_mean_difference_ppmv": {
+      "maximum": 0.005246382979766651,
+      "median": 0.00042991083347754255,
+      "maximum_panel": "p15-lat03"
+    },
+    "max_mean_difference_in_numba_sd": {
+      "maximum": 0.05162162237447228,
+      "median": 0.01187754933004322,
+      "maximum_panel": "p15-lat03"
+    },
+    "max_absolute_sd_relative_difference": {
+      "maximum": 0.12461186301724214,
+      "median": 0.007449167687179126,
+      "maximum_panel": "p10-lat05"
+    },
+    "max_change_mean_difference_in_numba_sd": {
+      "maximum": 0.060922390941953335,
+      "median": 0.013724777183648451,
+      "maximum_panel": "p15-lat03"
+    },
+    "max_change_sd_relative_difference": {
+      "maximum": 0.06471265578742313,
+      "median": 0.014928498219676234,
+      "maximum_panel": "p12-lat02"
+    }
+  },
+  "panels": [
+    {
+      "panel": "p00-lat00",
+      "pressure_hpa": 146.77992248535156,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0001625859607721769,
+      "max_mean_difference_in_numba_sd": 0.015407572260818278,
+      "max_absolute_sd_relative_difference": 0.011379320330444642,
+      "max_change_mean_difference_in_numba_sd": 0.017656610426076278,
+      "max_change_sd_relative_difference": 0.01217524813996751
+    },
+    {
+      "panel": "p00-lat01",
+      "pressure_hpa": 146.77992248535156,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0002130910174023004,
+      "max_mean_difference_in_numba_sd": 0.0476625526640632,
+      "max_absolute_sd_relative_difference": 0.014035487611891995,
+      "max_change_mean_difference_in_numba_sd": 0.044929216981376065,
+      "max_change_sd_relative_difference": 0.031385908070559854
+    },
+    {
+      "panel": "p00-lat02",
+      "pressure_hpa": 146.77992248535156,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 2.3840605284486394e-05,
+      "max_mean_difference_in_numba_sd": 0.005292620277096693,
+      "max_absolute_sd_relative_difference": 0.005237802921750134,
+      "max_change_mean_difference_in_numba_sd": 0.0065842822234253836,
+      "max_change_sd_relative_difference": 0.006818832726436463
+    },
+    {
+      "panel": "p00-lat09",
+      "pressure_hpa": 146.77992248535156,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.00010368597933077539,
+      "max_mean_difference_in_numba_sd": 0.015607398211133421,
+      "max_absolute_sd_relative_difference": 0.0044529528769293725,
+      "max_change_mean_difference_in_numba_sd": 0.018163177422699947,
+      "max_change_sd_relative_difference": 0.008971260656624458
+    },
+    {
+      "panel": "p00-lat10",
+      "pressure_hpa": 146.77992248535156,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.00016942496174632282,
+      "max_mean_difference_in_numba_sd": 0.012569711529865663,
+      "max_absolute_sd_relative_difference": 0.011721235761534166,
+      "max_change_mean_difference_in_numba_sd": 0.01612726844459994,
+      "max_change_sd_relative_difference": 0.015534144088039215
+    },
+    {
+      "panel": "p00-lat11",
+      "pressure_hpa": 146.77992248535156,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 4.8725232825952425e-05,
+      "max_mean_difference_in_numba_sd": 0.003641601220801338,
+      "max_absolute_sd_relative_difference": 0.0069209490298403065,
+      "max_change_mean_difference_in_numba_sd": 0.00362668267345262,
+      "max_change_sd_relative_difference": 0.006023529012802786
+    },
+    {
+      "panel": "p01-lat00",
+      "pressure_hpa": 121.15275573730469,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 2.4180283588970397e-05,
+      "max_mean_difference_in_numba_sd": 0.0023548582534311004,
+      "max_absolute_sd_relative_difference": 0.004883484643887881,
+      "max_change_mean_difference_in_numba_sd": 0.004603811949290416,
+      "max_change_sd_relative_difference": 0.0057904773936050535
+    },
+    {
+      "panel": "p01-lat01",
+      "pressure_hpa": 121.15275573730469,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.00012502890734616967,
+      "max_mean_difference_in_numba_sd": 0.01744434770281372,
+      "max_absolute_sd_relative_difference": 0.006846524709799295,
+      "max_change_mean_difference_in_numba_sd": 0.016761654382866066,
+      "max_change_sd_relative_difference": 0.007697797993950761
+    },
+    {
+      "panel": "p01-lat02",
+      "pressure_hpa": 121.15275573730469,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 8.583567912134882e-05,
+      "max_mean_difference_in_numba_sd": 0.014704525517317416,
+      "max_absolute_sd_relative_difference": 0.007184130268055311,
+      "max_change_mean_difference_in_numba_sd": 0.016307345319034404,
+      "max_change_sd_relative_difference": 0.012558827369287817
+    },
+    {
+      "panel": "p01-lat09",
+      "pressure_hpa": 121.15275573730469,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 1.320725330145045e-05,
+      "max_mean_difference_in_numba_sd": 0.00306988409160603,
+      "max_absolute_sd_relative_difference": 0.0023491019929962054,
+      "max_change_mean_difference_in_numba_sd": 0.003414901551998183,
+      "max_change_sd_relative_difference": 0.007175609469161293
+    },
+    {
+      "panel": "p01-lat10",
+      "pressure_hpa": 121.15275573730469,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 6.753355191835286e-05,
+      "max_mean_difference_in_numba_sd": 0.0054020552522588226,
+      "max_absolute_sd_relative_difference": 0.012077902123899142,
+      "max_change_mean_difference_in_numba_sd": 0.007787955103588506,
+      "max_change_sd_relative_difference": 0.024051189215035018
+    },
+    {
+      "panel": "p01-lat11",
+      "pressure_hpa": 121.15275573730469,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.00016583305061879106,
+      "max_mean_difference_in_numba_sd": 0.010852258831359185,
+      "max_absolute_sd_relative_difference": 0.013788279509001633,
+      "max_change_mean_difference_in_numba_sd": 0.014362487940844373,
+      "max_change_sd_relative_difference": 0.011348141932168154
+    },
+    {
+      "panel": "p02-lat00",
+      "pressure_hpa": 100.0,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 2.5978853633090715e-05,
+      "max_mean_difference_in_numba_sd": 0.0021406166037865383,
+      "max_absolute_sd_relative_difference": 0.0013692665513581614,
+      "max_change_mean_difference_in_numba_sd": 0.0021608648121761976,
+      "max_change_sd_relative_difference": 0.002160475543599105
+    },
+    {
+      "panel": "p02-lat01",
+      "pressure_hpa": 100.0,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.00023015743975685066,
+      "max_mean_difference_in_numba_sd": 0.019592628210180055,
+      "max_absolute_sd_relative_difference": 0.02750773742654644,
+      "max_change_mean_difference_in_numba_sd": 0.017805621344678342,
+      "max_change_sd_relative_difference": 0.04260630097767959
+    },
+    {
+      "panel": "p02-lat02",
+      "pressure_hpa": 100.0,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.00010183625821025277,
+      "max_mean_difference_in_numba_sd": 0.012084290635411457,
+      "max_absolute_sd_relative_difference": 0.012364497945747788,
+      "max_change_mean_difference_in_numba_sd": 0.023622797293438216,
+      "max_change_sd_relative_difference": 0.030105629791173483
+    },
+    {
+      "panel": "p02-lat03",
+      "pressure_hpa": 100.0,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0002630086226738382,
+      "max_mean_difference_in_numba_sd": 0.045324631342367715,
+      "max_absolute_sd_relative_difference": 0.00893942811438464,
+      "max_change_mean_difference_in_numba_sd": 0.04571707216232501,
+      "max_change_sd_relative_difference": 0.025958663139118432
+    },
+    {
+      "panel": "p02-lat04",
+      "pressure_hpa": 100.0,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 5.88991869405614e-05,
+      "max_mean_difference_in_numba_sd": 0.01439867531645237,
+      "max_absolute_sd_relative_difference": 0.004611313800489958,
+      "max_change_mean_difference_in_numba_sd": 0.016858422668002884,
+      "max_change_sd_relative_difference": 0.018679345328449948
+    },
+    {
+      "panel": "p02-lat05",
+      "pressure_hpa": 100.0,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.00017245210820196477,
+      "max_mean_difference_in_numba_sd": 0.018682840867551096,
+      "max_absolute_sd_relative_difference": 0.020109877422977096,
+      "max_change_mean_difference_in_numba_sd": 0.02329297141105262,
+      "max_change_sd_relative_difference": 0.015579212029273481
+    },
+    {
+      "panel": "p02-lat06",
+      "pressure_hpa": 100.0,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 3.1695227396502657e-05,
+      "max_mean_difference_in_numba_sd": 0.008749341145655705,
+      "max_absolute_sd_relative_difference": 0.014375933042688915,
+      "max_change_mean_difference_in_numba_sd": 0.014193908799523418,
+      "max_change_sd_relative_difference": 0.011870859129965217
+    },
+    {
+      "panel": "p02-lat07",
+      "pressure_hpa": 100.0,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 6.16974741417392e-05,
+      "max_mean_difference_in_numba_sd": 0.007291100599779318,
+      "max_absolute_sd_relative_difference": 0.008716824521153965,
+      "max_change_mean_difference_in_numba_sd": 0.007923815227596179,
+      "max_change_sd_relative_difference": 0.008568643327573566
+    },
+    {
+      "panel": "p02-lat08",
+      "pressure_hpa": 100.0,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 2.0469798531180805e-05,
+      "max_mean_difference_in_numba_sd": 0.004085511940291649,
+      "max_absolute_sd_relative_difference": 0.007349226267800546,
+      "max_change_mean_difference_in_numba_sd": 0.005738496392098835,
+      "max_change_sd_relative_difference": 0.0175308417083071
+    },
+    {
+      "panel": "p02-lat09",
+      "pressure_hpa": 100.0,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.00022812290390272771,
+      "max_mean_difference_in_numba_sd": 0.02705210413243214,
+      "max_absolute_sd_relative_difference": 0.015209081516139977,
+      "max_change_mean_difference_in_numba_sd": 0.03683778937265889,
+      "max_change_sd_relative_difference": 0.037488594843051115
+    },
+    {
+      "panel": "p02-lat10",
+      "pressure_hpa": 100.0,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.00033188369513725835,
+      "max_mean_difference_in_numba_sd": 0.018925485899983947,
+      "max_absolute_sd_relative_difference": 0.016975217276241628,
+      "max_change_mean_difference_in_numba_sd": 0.022202894202088312,
+      "max_change_sd_relative_difference": 0.02312694278510985
+    },
+    {
+      "panel": "p02-lat11",
+      "pressure_hpa": 100.0,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0005248534359734158,
+      "max_mean_difference_in_numba_sd": 0.015846297316602975,
+      "max_absolute_sd_relative_difference": 0.004135756775619948,
+      "max_change_mean_difference_in_numba_sd": 0.018149973817165488,
+      "max_change_sd_relative_difference": 0.017270543441801012
+    },
+    {
+      "panel": "p03-lat00",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.00032309912167582944,
+      "max_mean_difference_in_numba_sd": 0.014880326058254529,
+      "max_absolute_sd_relative_difference": 0.016772724449864995,
+      "max_change_mean_difference_in_numba_sd": 0.018782673467427135,
+      "max_change_sd_relative_difference": 0.03214198553518477
+    },
+    {
+      "panel": "p03-lat01",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0006331046771138604,
+      "max_mean_difference_in_numba_sd": 0.03100121120880261,
+      "max_absolute_sd_relative_difference": 0.01178737722174672,
+      "max_change_mean_difference_in_numba_sd": 0.025939382197278447,
+      "max_change_sd_relative_difference": 0.026358972791194146
+    },
+    {
+      "panel": "p03-lat02",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0004449079853007243,
+      "max_mean_difference_in_numba_sd": 0.03041915238854656,
+      "max_absolute_sd_relative_difference": 0.007668755581489162,
+      "max_change_mean_difference_in_numba_sd": 0.03673583263111588,
+      "max_change_sd_relative_difference": 0.04827605917613731
+    },
+    {
+      "panel": "p03-lat03",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 9.453383678142968e-05,
+      "max_mean_difference_in_numba_sd": 0.011194085709271941,
+      "max_absolute_sd_relative_difference": 0.006704746998731026,
+      "max_change_mean_difference_in_numba_sd": 0.013110139097250548,
+      "max_change_sd_relative_difference": 0.01558065582317436
+    },
+    {
+      "panel": "p03-lat04",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 5.296258256615172e-05,
+      "max_mean_difference_in_numba_sd": 0.010318566575196173,
+      "max_absolute_sd_relative_difference": 0.013267059460759678,
+      "max_change_mean_difference_in_numba_sd": 0.015083116812620506,
+      "max_change_sd_relative_difference": 0.02252471616789009
+    },
+    {
+      "panel": "p03-lat05",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 2.888948980617201e-05,
+      "max_mean_difference_in_numba_sd": 0.0047232112109596575,
+      "max_absolute_sd_relative_difference": 0.013811741732606464,
+      "max_change_mean_difference_in_numba_sd": 0.007027041315729927,
+      "max_change_sd_relative_difference": 0.01637703483406705
+    },
+    {
+      "panel": "p03-lat06",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 9.682297012325591e-05,
+      "max_mean_difference_in_numba_sd": 0.009965211580829803,
+      "max_absolute_sd_relative_difference": 0.020555897170272286,
+      "max_change_mean_difference_in_numba_sd": 0.011965839011874611,
+      "max_change_sd_relative_difference": 0.019411011522354915
+    },
+    {
+      "panel": "p03-lat07",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 5.7649453119895666e-05,
+      "max_mean_difference_in_numba_sd": 0.010287896197091856,
+      "max_absolute_sd_relative_difference": 0.004172555110615872,
+      "max_change_mean_difference_in_numba_sd": 0.011267594252845951,
+      "max_change_sd_relative_difference": 0.027807061925233745
+    },
+    {
+      "panel": "p03-lat08",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 2.133083938599123e-05,
+      "max_mean_difference_in_numba_sd": 0.004975698187510713,
+      "max_absolute_sd_relative_difference": 0.0033533801860152757,
+      "max_change_mean_difference_in_numba_sd": 0.007179637087762424,
+      "max_change_sd_relative_difference": 0.01967731018590957
+    },
+    {
+      "panel": "p03-lat09",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.00018416806763343896,
+      "max_mean_difference_in_numba_sd": 0.015663275446987184,
+      "max_absolute_sd_relative_difference": 0.006859298329928043,
+      "max_change_mean_difference_in_numba_sd": 0.018519933113844575,
+      "max_change_sd_relative_difference": 0.010383196748879664
+    },
+    {
+      "panel": "p03-lat10",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0004601428848769462,
+      "max_mean_difference_in_numba_sd": 0.019081043372779535,
+      "max_absolute_sd_relative_difference": 0.01837760731355731,
+      "max_change_mean_difference_in_numba_sd": 0.022639916185901676,
+      "max_change_sd_relative_difference": 0.024707550427513603
+    },
+    {
+      "panel": "p03-lat11",
+      "pressure_hpa": 82.54041290283203,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.00017769674790191203,
+      "max_mean_difference_in_numba_sd": 0.010792621663143953,
+      "max_absolute_sd_relative_difference": 0.007996684885082983,
+      "max_change_mean_difference_in_numba_sd": 0.012747680835857169,
+      "max_change_sd_relative_difference": 0.021276215772166873
+    },
+    {
+      "panel": "p04-lat00",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.00034125916842109305,
+      "max_mean_difference_in_numba_sd": 0.013320718433746102,
+      "max_absolute_sd_relative_difference": 0.0083827717451177,
+      "max_change_mean_difference_in_numba_sd": 0.013115609298659896,
+      "max_change_sd_relative_difference": 0.010964427367225804
+    },
+    {
+      "panel": "p04-lat01",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.00018815719732678815,
+      "max_mean_difference_in_numba_sd": 0.012705888474707466,
+      "max_absolute_sd_relative_difference": 0.011742318908857241,
+      "max_change_mean_difference_in_numba_sd": 0.01178489729555364,
+      "max_change_sd_relative_difference": 0.014571522615822396
+    },
+    {
+      "panel": "p04-lat02",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0001731348323696924,
+      "max_mean_difference_in_numba_sd": 0.009814807208909544,
+      "max_absolute_sd_relative_difference": 0.010613557907698246,
+      "max_change_mean_difference_in_numba_sd": 0.011716833026654098,
+      "max_change_sd_relative_difference": 0.009260566982363216
+    },
+    {
+      "panel": "p04-lat03",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.00015769504780693833,
+      "max_mean_difference_in_numba_sd": 0.01664492754626589,
+      "max_absolute_sd_relative_difference": 0.010162193020415211,
+      "max_change_mean_difference_in_numba_sd": 0.018434546694476615,
+      "max_change_sd_relative_difference": 0.04156705449782727
+    },
+    {
+      "panel": "p04-lat04",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.0002104802517848836,
+      "max_mean_difference_in_numba_sd": 0.025550566757578212,
+      "max_absolute_sd_relative_difference": 0.008012439934689697,
+      "max_change_mean_difference_in_numba_sd": 0.03905857940975583,
+      "max_change_sd_relative_difference": 0.04882373228785486
+    },
+    {
+      "panel": "p04-lat05",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 8.771360754072921e-05,
+      "max_mean_difference_in_numba_sd": 0.011398913504950594,
+      "max_absolute_sd_relative_difference": 0.01970785012582743,
+      "max_change_mean_difference_in_numba_sd": 0.009766645068776645,
+      "max_change_sd_relative_difference": 0.027055623792406003
+    },
+    {
+      "panel": "p04-lat06",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.00044244661899495163,
+      "max_mean_difference_in_numba_sd": 0.024334120492654154,
+      "max_absolute_sd_relative_difference": 0.010334692914044874,
+      "max_change_mean_difference_in_numba_sd": 0.0282819313929897,
+      "max_change_sd_relative_difference": 0.028470700819660966
+    },
+    {
+      "panel": "p04-lat07",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00021256107133682534,
+      "max_mean_difference_in_numba_sd": 0.015793016038030794,
+      "max_absolute_sd_relative_difference": 0.011431425654731209,
+      "max_change_mean_difference_in_numba_sd": 0.02003350287123868,
+      "max_change_sd_relative_difference": 0.018496664010845154
+    },
+    {
+      "panel": "p04-lat08",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 5.3017233631269534e-05,
+      "max_mean_difference_in_numba_sd": 0.0036899722412139053,
+      "max_absolute_sd_relative_difference": 0.003105626718864274,
+      "max_change_mean_difference_in_numba_sd": 0.004380898333003747,
+      "max_change_sd_relative_difference": 0.008508642563877178
+    },
+    {
+      "panel": "p04-lat09",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.00012008005653862952,
+      "max_mean_difference_in_numba_sd": 0.005767009722162835,
+      "max_absolute_sd_relative_difference": 0.004838898274993397,
+      "max_change_mean_difference_in_numba_sd": 0.00697876806771881,
+      "max_change_sd_relative_difference": 0.01095796542996963
+    },
+    {
+      "panel": "p04-lat10",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.00027020587922099715,
+      "max_mean_difference_in_numba_sd": 0.010337209405489952,
+      "max_absolute_sd_relative_difference": 0.006941811540612575,
+      "max_change_mean_difference_in_numba_sd": 0.012754250059619752,
+      "max_change_sd_relative_difference": 0.010029579954736745
+    },
+    {
+      "panel": "p04-lat11",
+      "pressure_hpa": 68.12921142578125,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.00047267741211975967,
+      "max_mean_difference_in_numba_sd": 0.014635929473241866,
+      "max_absolute_sd_relative_difference": 0.005304231410676041,
+      "max_change_mean_difference_in_numba_sd": 0.016599983356673367,
+      "max_change_sd_relative_difference": 0.006196396094331091
+    },
+    {
+      "panel": "p05-lat00",
+      "pressure_hpa": 56.234130859375,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0011767177957113795,
+      "max_mean_difference_in_numba_sd": 0.02808257849627239,
+      "max_absolute_sd_relative_difference": 0.02002577031168229,
+      "max_change_mean_difference_in_numba_sd": 0.024996540374259288,
+      "max_change_sd_relative_difference": 0.03183327135970526
+    },
+    {
+      "panel": "p05-lat01",
+      "pressure_hpa": 56.234130859375,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0004167674843316149,
+      "max_mean_difference_in_numba_sd": 0.01131266590060989,
+      "max_absolute_sd_relative_difference": 0.006251472000213143,
+      "max_change_mean_difference_in_numba_sd": 0.014573810474345063,
+      "max_change_sd_relative_difference": 0.009391627731851093
+    },
+    {
+      "panel": "p05-lat02",
+      "pressure_hpa": 56.234130859375,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0006904153032007976,
+      "max_mean_difference_in_numba_sd": 0.023816025549097574,
+      "max_absolute_sd_relative_difference": 0.01992357745444373,
+      "max_change_mean_difference_in_numba_sd": 0.029093115919530232,
+      "max_change_sd_relative_difference": 0.054199388792398606
+    },
+    {
+      "panel": "p05-lat03",
+      "pressure_hpa": 56.234130859375,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.00047415111540582977,
+      "max_mean_difference_in_numba_sd": 0.020109848715098272,
+      "max_absolute_sd_relative_difference": 0.012194899218117339,
+      "max_change_mean_difference_in_numba_sd": 0.019938308942590913,
+      "max_change_sd_relative_difference": 0.05626886204715409
+    },
+    {
+      "panel": "p05-lat04",
+      "pressure_hpa": 56.234130859375,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 8.09485048383074e-05,
+      "max_mean_difference_in_numba_sd": 0.003930350076004377,
+      "max_absolute_sd_relative_difference": 0.009430780788551418,
+      "max_change_mean_difference_in_numba_sd": 0.008717467539339531,
+      "max_change_sd_relative_difference": 0.031459880526843786
+    },
+    {
+      "panel": "p05-lat05",
+      "pressure_hpa": 56.234130859375,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0004180798721693524,
+      "max_mean_difference_in_numba_sd": 0.016814254805770857,
+      "max_absolute_sd_relative_difference": 0.006593217965574771,
+      "max_change_mean_difference_in_numba_sd": 0.020421121595747205,
+      "max_change_sd_relative_difference": 0.0077749230986290385
+    },
+    {
+      "panel": "p05-lat06",
+      "pressure_hpa": 56.234130859375,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.00011782881947375312,
+      "max_mean_difference_in_numba_sd": 0.005015712445357875,
+      "max_absolute_sd_relative_difference": 0.007232292760561698,
+      "max_change_mean_difference_in_numba_sd": 0.0059388571286042415,
+      "max_change_sd_relative_difference": 0.0098017862164691
+    },
+    {
+      "panel": "p05-lat07",
+      "pressure_hpa": 56.234130859375,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.0002768988642225523,
+      "max_mean_difference_in_numba_sd": 0.012668949945126323,
+      "max_absolute_sd_relative_difference": 0.01927979963902693,
+      "max_change_mean_difference_in_numba_sd": 0.014775559550362156,
+      "max_change_sd_relative_difference": 0.03326663527818563
+    },
+    {
+      "panel": "p05-lat08",
+      "pressure_hpa": 56.234130859375,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.00027681507527299587,
+      "max_mean_difference_in_numba_sd": 0.018593156622648724,
+      "max_absolute_sd_relative_difference": 0.007274843376254392,
+      "max_change_mean_difference_in_numba_sd": 0.020984078160893052,
+      "max_change_sd_relative_difference": 0.04236962063775285
+    },
+    {
+      "panel": "p05-lat09",
+      "pressure_hpa": 56.234130859375,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 6.6810556007324e-05,
+      "max_mean_difference_in_numba_sd": 0.003228021768729968,
+      "max_absolute_sd_relative_difference": 0.007416241117925493,
+      "max_change_mean_difference_in_numba_sd": 0.0047163144155547235,
+      "max_change_sd_relative_difference": 0.00930601947058074
+    },
+    {
+      "panel": "p05-lat10",
+      "pressure_hpa": 56.234130859375,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0008265800948339397,
+      "max_mean_difference_in_numba_sd": 0.027462959689141107,
+      "max_absolute_sd_relative_difference": 0.007419174486236302,
+      "max_change_mean_difference_in_numba_sd": 0.032675212598081156,
+      "max_change_sd_relative_difference": 0.008939712396911603
+    },
+    {
+      "panel": "p05-lat11",
+      "pressure_hpa": 56.234130859375,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 9.708942782982177e-05,
+      "max_mean_difference_in_numba_sd": 0.004102234524832788,
+      "max_absolute_sd_relative_difference": 0.004387671812495664,
+      "max_change_mean_difference_in_numba_sd": 0.0027609021209860666,
+      "max_change_sd_relative_difference": 0.009662759542042099
+    },
+    {
+      "panel": "p06-lat00",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0001584342142728623,
+      "max_mean_difference_in_numba_sd": 0.0034566570970529977,
+      "max_absolute_sd_relative_difference": 0.008918667957297455,
+      "max_change_mean_difference_in_numba_sd": 0.0042320629350824,
+      "max_change_sd_relative_difference": 0.007730218091206775
+    },
+    {
+      "panel": "p06-lat01",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0005907392077411089,
+      "max_mean_difference_in_numba_sd": 0.011107150403301945,
+      "max_absolute_sd_relative_difference": 0.01686960609727839,
+      "max_change_mean_difference_in_numba_sd": 0.01342837544635057,
+      "max_change_sd_relative_difference": 0.018940402089312025
+    },
+    {
+      "panel": "p06-lat02",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0006613475250349943,
+      "max_mean_difference_in_numba_sd": 0.013782603689765291,
+      "max_absolute_sd_relative_difference": 0.0061983313693905195,
+      "max_change_mean_difference_in_numba_sd": 0.016480835450678362,
+      "max_change_sd_relative_difference": 0.04181683533838565
+    },
+    {
+      "panel": "p06-lat03",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 8.562452979710145e-05,
+      "max_mean_difference_in_numba_sd": 0.002002639346189411,
+      "max_absolute_sd_relative_difference": 0.004748868756045965,
+      "max_change_mean_difference_in_numba_sd": 0.0027624304537222444,
+      "max_change_sd_relative_difference": 0.013783351534378374
+    },
+    {
+      "panel": "p06-lat04",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.00047259165789870217,
+      "max_mean_difference_in_numba_sd": 0.01281673188999393,
+      "max_absolute_sd_relative_difference": 0.007247918735585612,
+      "max_change_mean_difference_in_numba_sd": 0.01604940865610419,
+      "max_change_sd_relative_difference": 0.00895404635253838
+    },
+    {
+      "panel": "p06-lat05",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.000563263092648203,
+      "max_mean_difference_in_numba_sd": 0.02887802205876705,
+      "max_absolute_sd_relative_difference": 0.011041547484600178,
+      "max_change_mean_difference_in_numba_sd": 0.024117392117133075,
+      "max_change_sd_relative_difference": 0.03768789386881788
+    },
+    {
+      "panel": "p06-lat06",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.0005484341233836787,
+      "max_mean_difference_in_numba_sd": 0.015357548852212003,
+      "max_absolute_sd_relative_difference": 0.013430524757523155,
+      "max_change_mean_difference_in_numba_sd": 0.018895381094341666,
+      "max_change_sd_relative_difference": 0.013832803844714636
+    },
+    {
+      "panel": "p06-lat07",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00024264228010006939,
+      "max_mean_difference_in_numba_sd": 0.009596849710589552,
+      "max_absolute_sd_relative_difference": 0.011962262174387783,
+      "max_change_mean_difference_in_numba_sd": 0.010101035203483683,
+      "max_change_sd_relative_difference": 0.019878291628359746
+    },
+    {
+      "panel": "p06-lat08",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.00013714764595507134,
+      "max_mean_difference_in_numba_sd": 0.006062528210634552,
+      "max_absolute_sd_relative_difference": 0.003159845237280301,
+      "max_change_mean_difference_in_numba_sd": 0.0076627262891931485,
+      "max_change_sd_relative_difference": 0.022000449177066783
+    },
+    {
+      "panel": "p06-lat09",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.00040714003465325277,
+      "max_mean_difference_in_numba_sd": 0.00856252534552795,
+      "max_absolute_sd_relative_difference": 0.012800364680737308,
+      "max_change_mean_difference_in_numba_sd": 0.008742500948123821,
+      "max_change_sd_relative_difference": 0.020804174118654095
+    },
+    {
+      "panel": "p06-lat10",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0008683610556605714,
+      "max_mean_difference_in_numba_sd": 0.026271535233598996,
+      "max_absolute_sd_relative_difference": 0.012054018854979365,
+      "max_change_mean_difference_in_numba_sd": 0.031202018793248215,
+      "max_change_sd_relative_difference": 0.011805700573583211
+    },
+    {
+      "panel": "p06-lat11",
+      "pressure_hpa": 46.4158821105957,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0008619233325375397,
+      "max_mean_difference_in_numba_sd": 0.027410003099972838,
+      "max_absolute_sd_relative_difference": 0.009738870618126727,
+      "max_change_mean_difference_in_numba_sd": 0.03305516796789087,
+      "max_change_sd_relative_difference": 0.0224099754400493
+    },
+    {
+      "panel": "p07-lat00",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0011570067305290976,
+      "max_mean_difference_in_numba_sd": 0.02418328907588679,
+      "max_absolute_sd_relative_difference": 0.009942320388250492,
+      "max_change_mean_difference_in_numba_sd": 0.025697847619414307,
+      "max_change_sd_relative_difference": 0.01655613315282678
+    },
+    {
+      "panel": "p07-lat01",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0006532430851287074,
+      "max_mean_difference_in_numba_sd": 0.0130002738106215,
+      "max_absolute_sd_relative_difference": 0.01482388410127089,
+      "max_change_mean_difference_in_numba_sd": 0.014832694884705174,
+      "max_change_sd_relative_difference": 0.03671623475793595
+    },
+    {
+      "panel": "p07-lat02",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.00043112491993468893,
+      "max_mean_difference_in_numba_sd": 0.0076993838586071235,
+      "max_absolute_sd_relative_difference": 0.004050814366378219,
+      "max_change_mean_difference_in_numba_sd": 0.00980920286538956,
+      "max_change_sd_relative_difference": 0.02196543528970807
+    },
+    {
+      "panel": "p07-lat03",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.00014743962800922716,
+      "max_mean_difference_in_numba_sd": 0.0026610118896581328,
+      "max_absolute_sd_relative_difference": 0.00395859448522673,
+      "max_change_mean_difference_in_numba_sd": 0.003661634005584277,
+      "max_change_sd_relative_difference": 0.005854154197053707
+    },
+    {
+      "panel": "p07-lat04",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.00032409561923163466,
+      "max_mean_difference_in_numba_sd": 0.008104736017514458,
+      "max_absolute_sd_relative_difference": 0.001755285048872679,
+      "max_change_mean_difference_in_numba_sd": 0.010158097062126822,
+      "max_change_sd_relative_difference": 0.007212799799156677
+    },
+    {
+      "panel": "p07-lat05",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.00039141479455429007,
+      "max_mean_difference_in_numba_sd": 0.013530939691056171,
+      "max_absolute_sd_relative_difference": 0.006021062513536846,
+      "max_change_mean_difference_in_numba_sd": 0.024392186324947294,
+      "max_change_sd_relative_difference": 0.029200686150582245
+    },
+    {
+      "panel": "p07-lat06",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 8.395161850494048e-05,
+      "max_mean_difference_in_numba_sd": 0.0036771032836345127,
+      "max_absolute_sd_relative_difference": 0.0031783272352559067,
+      "max_change_mean_difference_in_numba_sd": 0.005286451374497912,
+      "max_change_sd_relative_difference": 0.013684198839180484
+    },
+    {
+      "panel": "p07-lat07",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00033926157952679503,
+      "max_mean_difference_in_numba_sd": 0.009973369801546492,
+      "max_absolute_sd_relative_difference": 0.020264207538391643,
+      "max_change_mean_difference_in_numba_sd": 0.012361647877473033,
+      "max_change_sd_relative_difference": 0.04249278025465464
+    },
+    {
+      "panel": "p07-lat08",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0009581610575488675,
+      "max_mean_difference_in_numba_sd": 0.015940566620009654,
+      "max_absolute_sd_relative_difference": 0.024192555103898616,
+      "max_change_mean_difference_in_numba_sd": 0.013712088598883019,
+      "max_change_sd_relative_difference": 0.02542051390060074
+    },
+    {
+      "panel": "p07-lat09",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.00037966193890781597,
+      "max_mean_difference_in_numba_sd": 0.012598686420679274,
+      "max_absolute_sd_relative_difference": 0.01584284817293724,
+      "max_change_mean_difference_in_numba_sd": 0.013450121707359194,
+      "max_change_sd_relative_difference": 0.022859729846641974
+    },
+    {
+      "panel": "p07-lat10",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0011248539868140561,
+      "max_mean_difference_in_numba_sd": 0.041567211838247735,
+      "max_absolute_sd_relative_difference": 0.008966475805568974,
+      "max_change_mean_difference_in_numba_sd": 0.046770556035963216,
+      "max_change_sd_relative_difference": 0.044905730506385355
+    },
+    {
+      "panel": "p07-lat11",
+      "pressure_hpa": 38.31187057495117,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0006127205404875546,
+      "max_mean_difference_in_numba_sd": 0.01623349090882916,
+      "max_absolute_sd_relative_difference": 0.018922830500035737,
+      "max_change_mean_difference_in_numba_sd": 0.01945283187416124,
+      "max_change_sd_relative_difference": 0.027698429911664157
+    },
+    {
+      "panel": "p08-lat00",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0009584772650690354,
+      "max_mean_difference_in_numba_sd": 0.022331675705009477,
+      "max_absolute_sd_relative_difference": 0.014825225333840564,
+      "max_change_mean_difference_in_numba_sd": 0.03084102130916743,
+      "max_change_sd_relative_difference": 0.028653160645719655
+    },
+    {
+      "panel": "p08-lat01",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0004531937161198485,
+      "max_mean_difference_in_numba_sd": 0.010751085730589707,
+      "max_absolute_sd_relative_difference": 0.005025810341575454,
+      "max_change_mean_difference_in_numba_sd": 0.01248596837593101,
+      "max_change_sd_relative_difference": 0.00842799278519335
+    },
+    {
+      "panel": "p08-lat02",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0003651268833557708,
+      "max_mean_difference_in_numba_sd": 0.008384475315712455,
+      "max_absolute_sd_relative_difference": 0.004978747699602715,
+      "max_change_mean_difference_in_numba_sd": 0.010484388558409946,
+      "max_change_sd_relative_difference": 0.010522841017826079
+    },
+    {
+      "panel": "p08-lat03",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0002489785255139765,
+      "max_mean_difference_in_numba_sd": 0.008753650535178285,
+      "max_absolute_sd_relative_difference": 0.008842949876215811,
+      "max_change_mean_difference_in_numba_sd": 0.011197748574534106,
+      "max_change_sd_relative_difference": 0.026841941818628978
+    },
+    {
+      "panel": "p08-lat04",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 3.497152697917727e-05,
+      "max_mean_difference_in_numba_sd": 0.0013473352114388207,
+      "max_absolute_sd_relative_difference": 0.006660214952863952,
+      "max_change_mean_difference_in_numba_sd": 0.0011293585234449855,
+      "max_change_sd_relative_difference": 0.01837089050978291
+    },
+    {
+      "panel": "p08-lat05",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.00017971631339941396,
+      "max_mean_difference_in_numba_sd": 0.0022715281085242582,
+      "max_absolute_sd_relative_difference": 0.029666233297809375,
+      "max_change_mean_difference_in_numba_sd": 0.0035358619327811136,
+      "max_change_sd_relative_difference": 0.02488052497507709
+    },
+    {
+      "panel": "p08-lat06",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.00042411895269456323,
+      "max_mean_difference_in_numba_sd": 0.007075829694880461,
+      "max_absolute_sd_relative_difference": 0.012043699454093781,
+      "max_change_mean_difference_in_numba_sd": 0.00964474505887724,
+      "max_change_sd_relative_difference": 0.017723455440829206
+    },
+    {
+      "panel": "p08-lat07",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00016414797137853654,
+      "max_mean_difference_in_numba_sd": 0.004158522200240996,
+      "max_absolute_sd_relative_difference": 0.00457491988396197,
+      "max_change_mean_difference_in_numba_sd": 0.005822872936546692,
+      "max_change_sd_relative_difference": 0.012142396757190754
+    },
+    {
+      "panel": "p08-lat08",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0007439988846735801,
+      "max_mean_difference_in_numba_sd": 0.021856100216886963,
+      "max_absolute_sd_relative_difference": 0.023946737596524326,
+      "max_change_mean_difference_in_numba_sd": 0.022070437443690007,
+      "max_change_sd_relative_difference": 0.044192695153873474
+    },
+    {
+      "panel": "p08-lat09",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0003579459759155412,
+      "max_mean_difference_in_numba_sd": 0.015286377345148183,
+      "max_absolute_sd_relative_difference": 0.0055534578055425055,
+      "max_change_mean_difference_in_numba_sd": 0.018102793740700136,
+      "max_change_sd_relative_difference": 0.02142828474097036
+    },
+    {
+      "panel": "p08-lat10",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0006055871885299879,
+      "max_mean_difference_in_numba_sd": 0.01902879402323793,
+      "max_absolute_sd_relative_difference": 0.004400996965508441,
+      "max_change_mean_difference_in_numba_sd": 0.020841893439446098,
+      "max_change_sd_relative_difference": 0.013157079955967044
+    },
+    {
+      "panel": "p08-lat11",
+      "pressure_hpa": 31.622777938842773,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.000835041995457253,
+      "max_mean_difference_in_numba_sd": 0.029384552877416297,
+      "max_absolute_sd_relative_difference": 0.012144807248786638,
+      "max_change_mean_difference_in_numba_sd": 0.03411108942671778,
+      "max_change_sd_relative_difference": 0.029979237606234665
+    },
+    {
+      "panel": "p09-lat00",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0006492956166201935,
+      "max_mean_difference_in_numba_sd": 0.013526797622168069,
+      "max_absolute_sd_relative_difference": 0.00702589581698454,
+      "max_change_mean_difference_in_numba_sd": 0.016534318114485504,
+      "max_change_sd_relative_difference": 0.011039949780816127
+    },
+    {
+      "panel": "p09-lat01",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.00031139671623048315,
+      "max_mean_difference_in_numba_sd": 0.007657363059826153,
+      "max_absolute_sd_relative_difference": 0.0063295637545395245,
+      "max_change_mean_difference_in_numba_sd": 0.007151034346079972,
+      "max_change_sd_relative_difference": 0.013820960719371111
+    },
+    {
+      "panel": "p09-lat02",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0010345089036336574,
+      "max_mean_difference_in_numba_sd": 0.0368057950456072,
+      "max_absolute_sd_relative_difference": 0.01684034684993152,
+      "max_change_mean_difference_in_numba_sd": 0.038906073637359685,
+      "max_change_sd_relative_difference": 0.03392659094374739
+    },
+    {
+      "panel": "p09-lat03",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.00025129148962399483,
+      "max_mean_difference_in_numba_sd": 0.010355676315178395,
+      "max_absolute_sd_relative_difference": 0.013917702127832832,
+      "max_change_mean_difference_in_numba_sd": 0.012715153764989138,
+      "max_change_sd_relative_difference": 0.017011366317786214
+    },
+    {
+      "panel": "p09-lat04",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.00044789711268933274,
+      "max_mean_difference_in_numba_sd": 0.009674862672321996,
+      "max_absolute_sd_relative_difference": 0.007194491276142134,
+      "max_change_mean_difference_in_numba_sd": 0.010465913730521479,
+      "max_change_sd_relative_difference": 0.018284183508072482
+    },
+    {
+      "panel": "p09-lat05",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.00012005789620062046,
+      "max_mean_difference_in_numba_sd": 0.0013201184691172688,
+      "max_absolute_sd_relative_difference": 0.00433961326101473,
+      "max_change_mean_difference_in_numba_sd": 0.001209770149483397,
+      "max_change_sd_relative_difference": 0.008178798603321269
+    },
+    {
+      "panel": "p09-lat06",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.0009978180357856914,
+      "max_mean_difference_in_numba_sd": 0.0062689978432899475,
+      "max_absolute_sd_relative_difference": 0.04188115393119818,
+      "max_change_mean_difference_in_numba_sd": 0.008516023638118894,
+      "max_change_sd_relative_difference": 0.017295832682352352
+    },
+    {
+      "panel": "p09-lat07",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00047188983651569316,
+      "max_mean_difference_in_numba_sd": 0.011670808024674984,
+      "max_absolute_sd_relative_difference": 0.006957865329222601,
+      "max_change_mean_difference_in_numba_sd": 0.014325295784757866,
+      "max_change_sd_relative_difference": 0.011356179591099691
+    },
+    {
+      "panel": "p09-lat08",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0001980990761323298,
+      "max_mean_difference_in_numba_sd": 0.008299927979337077,
+      "max_absolute_sd_relative_difference": 0.005354948591618669,
+      "max_change_mean_difference_in_numba_sd": 0.008587377877740776,
+      "max_change_sd_relative_difference": 0.012574891522114884
+    },
+    {
+      "panel": "p09-lat09",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.00012415515274977196,
+      "max_mean_difference_in_numba_sd": 0.0037499334102962852,
+      "max_absolute_sd_relative_difference": 0.0025361169348426804,
+      "max_change_mean_difference_in_numba_sd": 0.004083893512176967,
+      "max_change_sd_relative_difference": 0.005640009775696009
+    },
+    {
+      "panel": "p09-lat10",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0008088422299765696,
+      "max_mean_difference_in_numba_sd": 0.025684771140633316,
+      "max_absolute_sd_relative_difference": 0.014029816909158832,
+      "max_change_mean_difference_in_numba_sd": 0.031047349748687753,
+      "max_change_sd_relative_difference": 0.02860772792391586
+    },
+    {
+      "panel": "p09-lat11",
+      "pressure_hpa": 26.10157012939453,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.00047342921671678084,
+      "max_mean_difference_in_numba_sd": 0.01687999407511224,
+      "max_absolute_sd_relative_difference": 0.008050483819494803,
+      "max_change_mean_difference_in_numba_sd": 0.01847533691239549,
+      "max_change_sd_relative_difference": 0.013573615945975392
+    },
+    {
+      "panel": "p10-lat00",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0006593705595658861,
+      "max_mean_difference_in_numba_sd": 0.013774217061667962,
+      "max_absolute_sd_relative_difference": 0.006150070527269791,
+      "max_change_mean_difference_in_numba_sd": 0.01187615120282825,
+      "max_change_sd_relative_difference": 0.014496103556314699
+    },
+    {
+      "panel": "p10-lat01",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0009121474218591885,
+      "max_mean_difference_in_numba_sd": 0.02070510748201996,
+      "max_absolute_sd_relative_difference": 0.009673033264864017,
+      "max_change_mean_difference_in_numba_sd": 0.023047107240511518,
+      "max_change_sd_relative_difference": 0.010989768733846272
+    },
+    {
+      "panel": "p10-lat02",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.001407500788415561,
+      "max_mean_difference_in_numba_sd": 0.030136377718243523,
+      "max_absolute_sd_relative_difference": 0.01604941744513566,
+      "max_change_mean_difference_in_numba_sd": 0.03653067167734875,
+      "max_change_sd_relative_difference": 0.02189543286358553
+    },
+    {
+      "panel": "p10-lat03",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.00010041664713611453,
+      "max_mean_difference_in_numba_sd": 0.0038923276987398153,
+      "max_absolute_sd_relative_difference": 0.003488845439161503,
+      "max_change_mean_difference_in_numba_sd": 0.0048659518958180225,
+      "max_change_sd_relative_difference": 0.012606980801591394
+    },
+    {
+      "panel": "p10-lat04",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.00016689680775527904,
+      "max_mean_difference_in_numba_sd": 0.0062304389733073414,
+      "max_absolute_sd_relative_difference": 0.01399103533667323,
+      "max_change_mean_difference_in_numba_sd": 0.00793432029410975,
+      "max_change_sd_relative_difference": 0.024750721018817368
+    },
+    {
+      "panel": "p10-lat05",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0006816251024224229,
+      "max_mean_difference_in_numba_sd": 0.003487214969191774,
+      "max_absolute_sd_relative_difference": 0.12461186301724214,
+      "max_change_mean_difference_in_numba_sd": 0.0033951430744219306,
+      "max_change_sd_relative_difference": 0.04056409624764057
+    },
+    {
+      "panel": "p10-lat06",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.0010702134248958828,
+      "max_mean_difference_in_numba_sd": 0.0064184380727274545,
+      "max_absolute_sd_relative_difference": 0.011255935299968156,
+      "max_change_mean_difference_in_numba_sd": 0.00797542710518806,
+      "max_change_sd_relative_difference": 0.029290059840632043
+    },
+    {
+      "panel": "p10-lat07",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00020144484364603699,
+      "max_mean_difference_in_numba_sd": 0.004251982880599018,
+      "max_absolute_sd_relative_difference": 0.0033878317416478065,
+      "max_change_mean_difference_in_numba_sd": 0.0060539148075639485,
+      "max_change_sd_relative_difference": 0.017144461665727917
+    },
+    {
+      "panel": "p10-lat08",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0005253341539965817,
+      "max_mean_difference_in_numba_sd": 0.01657977059832744,
+      "max_absolute_sd_relative_difference": 0.016682429321966397,
+      "max_change_mean_difference_in_numba_sd": 0.023131357602758282,
+      "max_change_sd_relative_difference": 0.037455813615161926
+    },
+    {
+      "panel": "p10-lat09",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.001121181207506261,
+      "max_mean_difference_in_numba_sd": 0.02912845497442537,
+      "max_absolute_sd_relative_difference": 0.011450273257463839,
+      "max_change_mean_difference_in_numba_sd": 0.03992040834659413,
+      "max_change_sd_relative_difference": 0.03383995538575113
+    },
+    {
+      "panel": "p10-lat10",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.00033334926082506655,
+      "max_mean_difference_in_numba_sd": 0.00868425721306627,
+      "max_absolute_sd_relative_difference": 0.007068451022581801,
+      "max_change_mean_difference_in_numba_sd": 0.010940437299910899,
+      "max_change_sd_relative_difference": 0.007571097254691628
+    },
+    {
+      "panel": "p10-lat11",
+      "pressure_hpa": 21.544347763061523,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.000581576798781569,
+      "max_mean_difference_in_numba_sd": 0.019496204106021233,
+      "max_absolute_sd_relative_difference": 0.009925505484879249,
+      "max_change_mean_difference_in_numba_sd": 0.023414757960975776,
+      "max_change_sd_relative_difference": 0.01729590785299462
+    },
+    {
+      "panel": "p11-lat00",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0003424183586755447,
+      "max_mean_difference_in_numba_sd": 0.009183689829675495,
+      "max_absolute_sd_relative_difference": 0.00889814612819384,
+      "max_change_mean_difference_in_numba_sd": 0.013827480416514005,
+      "max_change_sd_relative_difference": 0.01786555361672204
+    },
+    {
+      "panel": "p11-lat01",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0009566444999880019,
+      "max_mean_difference_in_numba_sd": 0.023779390469043305,
+      "max_absolute_sd_relative_difference": 0.005713523988228664,
+      "max_change_mean_difference_in_numba_sd": 0.026912808649385354,
+      "max_change_sd_relative_difference": 0.033781356782359495
+    },
+    {
+      "panel": "p11-lat02",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.00028990776943693675,
+      "max_mean_difference_in_numba_sd": 0.004442983934053616,
+      "max_absolute_sd_relative_difference": 0.00747916088812195,
+      "max_change_mean_difference_in_numba_sd": 0.004929158967923872,
+      "max_change_sd_relative_difference": 0.008652441176852932
+    },
+    {
+      "panel": "p11-lat03",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0010939582300135697,
+      "max_mean_difference_in_numba_sd": 0.029756468254705553,
+      "max_absolute_sd_relative_difference": 0.020283252209861935,
+      "max_change_mean_difference_in_numba_sd": 0.03167584092487301,
+      "max_change_sd_relative_difference": 0.04248735475382304
+    },
+    {
+      "panel": "p11-lat04",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.00029498970516605993,
+      "max_mean_difference_in_numba_sd": 0.004786038087622303,
+      "max_absolute_sd_relative_difference": 0.0060276981848133016,
+      "max_change_mean_difference_in_numba_sd": 0.005506575867224651,
+      "max_change_sd_relative_difference": 0.004891134563156374
+    },
+    {
+      "panel": "p11-lat05",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.000541400347714216,
+      "max_mean_difference_in_numba_sd": 0.00672419941076329,
+      "max_absolute_sd_relative_difference": 0.01820494549080265,
+      "max_change_mean_difference_in_numba_sd": 0.008400001444416768,
+      "max_change_sd_relative_difference": 0.018150223562916956
+    },
+    {
+      "panel": "p11-lat06",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.0005094877345044324,
+      "max_mean_difference_in_numba_sd": 0.01250296145142418,
+      "max_absolute_sd_relative_difference": 0.026101267661923444,
+      "max_change_mean_difference_in_numba_sd": 0.012409763844338246,
+      "max_change_sd_relative_difference": 0.05851415836314544
+    },
+    {
+      "panel": "p11-lat07",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00023818730737357185,
+      "max_mean_difference_in_numba_sd": 0.005888222084051002,
+      "max_absolute_sd_relative_difference": 0.007221103669040496,
+      "max_change_mean_difference_in_numba_sd": 0.010570949104904836,
+      "max_change_sd_relative_difference": 0.02563469251598638
+    },
+    {
+      "panel": "p11-lat08",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0004247422816012758,
+      "max_mean_difference_in_numba_sd": 0.006395181214529985,
+      "max_absolute_sd_relative_difference": 0.016441205870924125,
+      "max_change_mean_difference_in_numba_sd": 0.011218808644451342,
+      "max_change_sd_relative_difference": 0.015803589615904445
+    },
+    {
+      "panel": "p11-lat09",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0013387254290933015,
+      "max_mean_difference_in_numba_sd": 0.022582078021789215,
+      "max_absolute_sd_relative_difference": 0.011427101692254249,
+      "max_change_mean_difference_in_numba_sd": 0.02462405487844901,
+      "max_change_sd_relative_difference": 0.026995361030990095
+    },
+    {
+      "panel": "p11-lat10",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.00029175630510636097,
+      "max_mean_difference_in_numba_sd": 0.009683069388314211,
+      "max_absolute_sd_relative_difference": 0.004354574691846191,
+      "max_change_mean_difference_in_numba_sd": 0.013041760447170007,
+      "max_change_sd_relative_difference": 0.009346911993216356
+    },
+    {
+      "panel": "p11-lat11",
+      "pressure_hpa": 17.782794952392578,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.000812443536339913,
+      "max_mean_difference_in_numba_sd": 0.012930768137055116,
+      "max_absolute_sd_relative_difference": 0.011519713049856883,
+      "max_change_mean_difference_in_numba_sd": 0.015079489983315228,
+      "max_change_sd_relative_difference": 0.018479373083217787
+    },
+    {
+      "panel": "p12-lat00",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0012565169355269745,
+      "max_mean_difference_in_numba_sd": 0.019938170045006476,
+      "max_absolute_sd_relative_difference": 0.007005186812370279,
+      "max_change_mean_difference_in_numba_sd": 0.02209213755944067,
+      "max_change_sd_relative_difference": 0.023856191574242347
+    },
+    {
+      "panel": "p12-lat01",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0005877630017847579,
+      "max_mean_difference_in_numba_sd": 0.010700658592607163,
+      "max_absolute_sd_relative_difference": 0.006469282229214057,
+      "max_change_mean_difference_in_numba_sd": 0.01119550378487692,
+      "max_change_sd_relative_difference": 0.021358819473066504
+    },
+    {
+      "panel": "p12-lat02",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0016382450978129626,
+      "max_mean_difference_in_numba_sd": 0.0369985102471709,
+      "max_absolute_sd_relative_difference": 0.021718992233338064,
+      "max_change_mean_difference_in_numba_sd": 0.04309759012979402,
+      "max_change_sd_relative_difference": 0.06471265578742313
+    },
+    {
+      "panel": "p12-lat03",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0009142178706644799,
+      "max_mean_difference_in_numba_sd": 0.015078436811718688,
+      "max_absolute_sd_relative_difference": 0.010883070291294095,
+      "max_change_mean_difference_in_numba_sd": 0.01712803482058756,
+      "max_change_sd_relative_difference": 0.01533899926263027
+    },
+    {
+      "panel": "p12-lat04",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.002495155078104716,
+      "max_mean_difference_in_numba_sd": 0.02830297495893579,
+      "max_absolute_sd_relative_difference": 0.016788355896520057,
+      "max_change_mean_difference_in_numba_sd": 0.03066785830956318,
+      "max_change_sd_relative_difference": 0.03577047232660924
+    },
+    {
+      "panel": "p12-lat05",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0003378636083368747,
+      "max_mean_difference_in_numba_sd": 0.005750863021894209,
+      "max_absolute_sd_relative_difference": 0.006471263457922594,
+      "max_change_mean_difference_in_numba_sd": 0.006080289646023814,
+      "max_change_sd_relative_difference": 0.01995389778751233
+    },
+    {
+      "panel": "p12-lat06",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.00028046431057759946,
+      "max_mean_difference_in_numba_sd": 0.004277290089333274,
+      "max_absolute_sd_relative_difference": 0.013920281986945282,
+      "max_change_mean_difference_in_numba_sd": 0.004901371384351634,
+      "max_change_sd_relative_difference": 0.03535117150703693
+    },
+    {
+      "panel": "p12-lat07",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.0006479813159820935,
+      "max_mean_difference_in_numba_sd": 0.010139437402019141,
+      "max_absolute_sd_relative_difference": 0.011859274495091388,
+      "max_change_mean_difference_in_numba_sd": 0.016727625724729633,
+      "max_change_sd_relative_difference": 0.03972833837763856
+    },
+    {
+      "panel": "p12-lat08",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0004005789764320866,
+      "max_mean_difference_in_numba_sd": 0.0036055964076754437,
+      "max_absolute_sd_relative_difference": 0.013448049107008808,
+      "max_change_mean_difference_in_numba_sd": 0.004674259999936819,
+      "max_change_sd_relative_difference": 0.009366002675088136
+    },
+    {
+      "panel": "p12-lat09",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.00019482736392184563,
+      "max_mean_difference_in_numba_sd": 0.005091591036342745,
+      "max_absolute_sd_relative_difference": 0.006450842638154208,
+      "max_change_mean_difference_in_numba_sd": 0.006538274216057713,
+      "max_change_sd_relative_difference": 0.014313273812934568
+    },
+    {
+      "panel": "p12-lat10",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0009554079500606605,
+      "max_mean_difference_in_numba_sd": 0.02461150467567487,
+      "max_absolute_sd_relative_difference": 0.008095457910887172,
+      "max_change_mean_difference_in_numba_sd": 0.02725743604967929,
+      "max_change_sd_relative_difference": 0.020096592069611452
+    },
+    {
+      "panel": "p12-lat11",
+      "pressure_hpa": 14.67799186706543,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0017682024597425183,
+      "max_mean_difference_in_numba_sd": 0.029826249656648977,
+      "max_absolute_sd_relative_difference": 0.01386469991641437,
+      "max_change_mean_difference_in_numba_sd": 0.03158146648520008,
+      "max_change_sd_relative_difference": 0.03209971358146324
+    },
+    {
+      "panel": "p13-lat00",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.00019303258092939757,
+      "max_mean_difference_in_numba_sd": 0.002960722446176938,
+      "max_absolute_sd_relative_difference": 0.004530624828021468,
+      "max_change_mean_difference_in_numba_sd": 0.005299010658535333,
+      "max_change_sd_relative_difference": 0.01396261530343934
+    },
+    {
+      "panel": "p13-lat01",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0008103540681654309,
+      "max_mean_difference_in_numba_sd": 0.019034736870386558,
+      "max_absolute_sd_relative_difference": 0.011691116242802169,
+      "max_change_mean_difference_in_numba_sd": 0.02289069191734893,
+      "max_change_sd_relative_difference": 0.01114614509914913
+    },
+    {
+      "panel": "p13-lat02",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0002608040822442703,
+      "max_mean_difference_in_numba_sd": 0.004195185201214284,
+      "max_absolute_sd_relative_difference": 0.008113329785849333,
+      "max_change_mean_difference_in_numba_sd": 0.004948225246367748,
+      "max_change_sd_relative_difference": 0.008204641410721747
+    },
+    {
+      "panel": "p13-lat03",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0005405761246919383,
+      "max_mean_difference_in_numba_sd": 0.0055418468565074635,
+      "max_absolute_sd_relative_difference": 0.014554240279741948,
+      "max_change_mean_difference_in_numba_sd": 0.004996167884220482,
+      "max_change_sd_relative_difference": 0.020645877309856453
+    },
+    {
+      "panel": "p13-lat04",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.0017595650280171071,
+      "max_mean_difference_in_numba_sd": 0.013659209802908563,
+      "max_absolute_sd_relative_difference": 0.020860794273798167,
+      "max_change_mean_difference_in_numba_sd": 0.015513214213048231,
+      "max_change_sd_relative_difference": 0.03375459983325402
+    },
+    {
+      "panel": "p13-lat05",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0014342406537704022,
+      "max_mean_difference_in_numba_sd": 0.009586643817743566,
+      "max_absolute_sd_relative_difference": 0.004135725864966577,
+      "max_change_mean_difference_in_numba_sd": 0.012389195348065266,
+      "max_change_sd_relative_difference": 0.018979020877600172
+    },
+    {
+      "panel": "p13-lat06",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.0006040866784342569,
+      "max_mean_difference_in_numba_sd": 0.006097251822373518,
+      "max_absolute_sd_relative_difference": 0.017141151343897487,
+      "max_change_mean_difference_in_numba_sd": 0.007657031131438295,
+      "max_change_sd_relative_difference": 0.02346074325157077
+    },
+    {
+      "panel": "p13-lat07",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.0006385094540206637,
+      "max_mean_difference_in_numba_sd": 0.004230200997752313,
+      "max_absolute_sd_relative_difference": 0.0019827953509615748,
+      "max_change_mean_difference_in_numba_sd": 0.005863402552561988,
+      "max_change_sd_relative_difference": 0.0014076629487780323
+    },
+    {
+      "panel": "p13-lat08",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0007430126176917184,
+      "max_mean_difference_in_numba_sd": 0.011113584707876911,
+      "max_absolute_sd_relative_difference": 0.024840957197210245,
+      "max_change_mean_difference_in_numba_sd": 0.013737465768413882,
+      "max_change_sd_relative_difference": 0.05126537426727118
+    },
+    {
+      "panel": "p13-lat09",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0007785803728550533,
+      "max_mean_difference_in_numba_sd": 0.011583511178523482,
+      "max_absolute_sd_relative_difference": 0.005387402163256616,
+      "max_change_mean_difference_in_numba_sd": 0.014479459384166334,
+      "max_change_sd_relative_difference": 0.00940740253435901
+    },
+    {
+      "panel": "p13-lat10",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0008483866220947434,
+      "max_mean_difference_in_numba_sd": 0.018795480546375455,
+      "max_absolute_sd_relative_difference": 0.00748197201434353,
+      "max_change_mean_difference_in_numba_sd": 0.0210343251841974,
+      "max_change_sd_relative_difference": 0.024638878950190346
+    },
+    {
+      "panel": "p13-lat11",
+      "pressure_hpa": 12.115277290344238,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0002904801052192596,
+      "max_mean_difference_in_numba_sd": 0.005985354012473903,
+      "max_absolute_sd_relative_difference": 0.0033011124010910997,
+      "max_change_mean_difference_in_numba_sd": 0.0074437222060161545,
+      "max_change_sd_relative_difference": 0.009163251835834885
+    },
+    {
+      "panel": "p14-lat00",
+      "pressure_hpa": 10.0,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0009124994485496529,
+      "max_mean_difference_in_numba_sd": 0.01409980608980594,
+      "max_absolute_sd_relative_difference": 0.004824388787263101,
+      "max_change_mean_difference_in_numba_sd": 0.017203214337965997,
+      "max_change_sd_relative_difference": 0.02076270441017125
+    },
+    {
+      "panel": "p14-lat01",
+      "pressure_hpa": 10.0,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.00052287767636372,
+      "max_mean_difference_in_numba_sd": 0.01611970759429783,
+      "max_absolute_sd_relative_difference": 0.006778551452426784,
+      "max_change_mean_difference_in_numba_sd": 0.02073382918448246,
+      "max_change_sd_relative_difference": 0.008606829446166642
+    },
+    {
+      "panel": "p14-lat02",
+      "pressure_hpa": 10.0,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0003683750563938659,
+      "max_mean_difference_in_numba_sd": 0.007305372576078878,
+      "max_absolute_sd_relative_difference": 0.005818277627568369,
+      "max_change_mean_difference_in_numba_sd": 0.009740275868239643,
+      "max_change_sd_relative_difference": 0.016777614647878525
+    },
+    {
+      "panel": "p14-lat03",
+      "pressure_hpa": 10.0,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0005779239421013216,
+      "max_mean_difference_in_numba_sd": 0.009304509436730156,
+      "max_absolute_sd_relative_difference": 0.01764914764223735,
+      "max_change_mean_difference_in_numba_sd": 0.008514185670893955,
+      "max_change_sd_relative_difference": 0.01378831100224831
+    },
+    {
+      "panel": "p14-lat04",
+      "pressure_hpa": 10.0,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.0004905467235705174,
+      "max_mean_difference_in_numba_sd": 0.002623188813729175,
+      "max_absolute_sd_relative_difference": 0.009385075950633537,
+      "max_change_mean_difference_in_numba_sd": 0.0029504627998752906,
+      "max_change_sd_relative_difference": 0.01637185172361111
+    },
+    {
+      "panel": "p14-lat05",
+      "pressure_hpa": 10.0,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0031327024863934128,
+      "max_mean_difference_in_numba_sd": 0.015662041820556992,
+      "max_absolute_sd_relative_difference": 0.015594229332557275,
+      "max_change_mean_difference_in_numba_sd": 0.015164624961363879,
+      "max_change_sd_relative_difference": 0.022995156036888398
+    },
+    {
+      "panel": "p14-lat06",
+      "pressure_hpa": 10.0,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.001958483767792174,
+      "max_mean_difference_in_numba_sd": 0.010328649919180984,
+      "max_absolute_sd_relative_difference": 0.013692912210237718,
+      "max_change_mean_difference_in_numba_sd": 0.010078906343259315,
+      "max_change_sd_relative_difference": 0.012514331707108806
+    },
+    {
+      "panel": "p14-lat07",
+      "pressure_hpa": 10.0,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.0009167126928932845,
+      "max_mean_difference_in_numba_sd": 0.005824298961992677,
+      "max_absolute_sd_relative_difference": 0.0027365503901624066,
+      "max_change_mean_difference_in_numba_sd": 0.0077153865853143684,
+      "max_change_sd_relative_difference": 0.010498181353812197
+    },
+    {
+      "panel": "p14-lat08",
+      "pressure_hpa": 10.0,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0007737593476040416,
+      "max_mean_difference_in_numba_sd": 0.007851117618974373,
+      "max_absolute_sd_relative_difference": 0.0014005045662370819,
+      "max_change_mean_difference_in_numba_sd": 0.009307891073243181,
+      "max_change_sd_relative_difference": 0.01054461666512152
+    },
+    {
+      "panel": "p14-lat09",
+      "pressure_hpa": 10.0,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0015906535393019894,
+      "max_mean_difference_in_numba_sd": 0.023210100354201933,
+      "max_absolute_sd_relative_difference": 0.014243542151079258,
+      "max_change_mean_difference_in_numba_sd": 0.02644586423021591,
+      "max_change_sd_relative_difference": 0.02178088642402176
+    },
+    {
+      "panel": "p14-lat10",
+      "pressure_hpa": 10.0,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0008560594654989373,
+      "max_mean_difference_in_numba_sd": 0.020358397643026743,
+      "max_absolute_sd_relative_difference": 0.006538357149107332,
+      "max_change_mean_difference_in_numba_sd": 0.023652472307195214,
+      "max_change_sd_relative_difference": 0.02157924999371974
+    },
+    {
+      "panel": "p14-lat11",
+      "pressure_hpa": 10.0,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.00031551516778804967,
+      "max_mean_difference_in_numba_sd": 0.01010332820777253,
+      "max_absolute_sd_relative_difference": 0.010560395151767543,
+      "max_change_mean_difference_in_numba_sd": 0.009606248734656566,
+      "max_change_sd_relative_difference": 0.022460597488984657
+    },
+    {
+      "panel": "p15-lat00",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.00043217955964625077,
+      "max_mean_difference_in_numba_sd": 0.009252957839725686,
+      "max_absolute_sd_relative_difference": 0.008045732293578522,
+      "max_change_mean_difference_in_numba_sd": 0.012697742616398278,
+      "max_change_sd_relative_difference": 0.01917009051192997
+    },
+    {
+      "panel": "p15-lat01",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0007364500335507174,
+      "max_mean_difference_in_numba_sd": 0.02078473112898537,
+      "max_absolute_sd_relative_difference": 0.02005654890385067,
+      "max_change_mean_difference_in_numba_sd": 0.020511457204711134,
+      "max_change_sd_relative_difference": 0.03309107744689277
+    },
+    {
+      "panel": "p15-lat02",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0006941721325732786,
+      "max_mean_difference_in_numba_sd": 0.018398277813485533,
+      "max_absolute_sd_relative_difference": 0.007416839439297052,
+      "max_change_mean_difference_in_numba_sd": 0.016980551779887113,
+      "max_change_sd_relative_difference": 0.019090859749053224
+    },
+    {
+      "panel": "p15-lat03",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.005246382979766651,
+      "max_mean_difference_in_numba_sd": 0.05162162237447228,
+      "max_absolute_sd_relative_difference": 0.018572862089245135,
+      "max_change_mean_difference_in_numba_sd": 0.060922390941953335,
+      "max_change_sd_relative_difference": 0.052857678824811516
+    },
+    {
+      "panel": "p15-lat04",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.0005425712134918825,
+      "max_mean_difference_in_numba_sd": 0.0033871516216539676,
+      "max_absolute_sd_relative_difference": 0.005083663155151186,
+      "max_change_mean_difference_in_numba_sd": 0.0034512802173423617,
+      "max_change_sd_relative_difference": 0.007770064085638295
+    },
+    {
+      "panel": "p15-lat05",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0007527821681492242,
+      "max_mean_difference_in_numba_sd": 0.005043578273693591,
+      "max_absolute_sd_relative_difference": 0.005604688463623275,
+      "max_change_mean_difference_in_numba_sd": 0.005065225494838857,
+      "max_change_sd_relative_difference": 0.004977799169884944
+    },
+    {
+      "panel": "p15-lat06",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.001514702130512191,
+      "max_mean_difference_in_numba_sd": 0.00665034337745258,
+      "max_absolute_sd_relative_difference": 0.007001649422825551,
+      "max_change_mean_difference_in_numba_sd": 0.006863081627157419,
+      "max_change_sd_relative_difference": 0.00510880355899368
+    },
+    {
+      "panel": "p15-lat07",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.0018048291662644544,
+      "max_mean_difference_in_numba_sd": 0.01338409798635444,
+      "max_absolute_sd_relative_difference": 0.005497841763993261,
+      "max_change_mean_difference_in_numba_sd": 0.015042799889601766,
+      "max_change_sd_relative_difference": 0.008275291825343922
+    },
+    {
+      "panel": "p15-lat08",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0005112629675014801,
+      "max_mean_difference_in_numba_sd": 0.00651278776112519,
+      "max_absolute_sd_relative_difference": 0.001199905075093044,
+      "max_change_mean_difference_in_numba_sd": 0.006155486584812946,
+      "max_change_sd_relative_difference": 0.00533720575714014
+    },
+    {
+      "panel": "p15-lat09",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0005121809705226354,
+      "max_mean_difference_in_numba_sd": 0.016355699537676904,
+      "max_absolute_sd_relative_difference": 0.010868372316153563,
+      "max_change_mean_difference_in_numba_sd": 0.022324130835103973,
+      "max_change_sd_relative_difference": 0.03172749204422476
+    },
+    {
+      "panel": "p15-lat10",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.00045718207808942424,
+      "max_mean_difference_in_numba_sd": 0.009517267538715485,
+      "max_absolute_sd_relative_difference": 0.008929613336043918,
+      "max_change_mean_difference_in_numba_sd": 0.011020055689064999,
+      "max_change_sd_relative_difference": 0.010270069862116982
+    },
+    {
+      "panel": "p15-lat11",
+      "pressure_hpa": 8.254043579101562,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0006651034842652948,
+      "max_mean_difference_in_numba_sd": 0.021399946046666424,
+      "max_absolute_sd_relative_difference": 0.012617430210459801,
+      "max_change_mean_difference_in_numba_sd": 0.027276710796383278,
+      "max_change_sd_relative_difference": 0.02505349417725189
+    },
+    {
+      "panel": "p16-lat00",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.000432423399640669,
+      "max_mean_difference_in_numba_sd": 0.012746423955618895,
+      "max_absolute_sd_relative_difference": 0.013388842101610843,
+      "max_change_mean_difference_in_numba_sd": 0.016788625515388546,
+      "max_change_sd_relative_difference": 0.018432538970615586
+    },
+    {
+      "panel": "p16-lat01",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.001141242118498198,
+      "max_mean_difference_in_numba_sd": 0.027339670077809086,
+      "max_absolute_sd_relative_difference": 0.006516983791400643,
+      "max_change_mean_difference_in_numba_sd": 0.028279574209128105,
+      "max_change_sd_relative_difference": 0.01674277721237527
+    },
+    {
+      "panel": "p16-lat02",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0005452140852728604,
+      "max_mean_difference_in_numba_sd": 0.011605874267235094,
+      "max_absolute_sd_relative_difference": 0.009027565074737232,
+      "max_change_mean_difference_in_numba_sd": 0.014849800892736862,
+      "max_change_sd_relative_difference": 0.008248036311091944
+    },
+    {
+      "panel": "p16-lat03",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.00024855098599729786,
+      "max_mean_difference_in_numba_sd": 0.00393234618572917,
+      "max_absolute_sd_relative_difference": 0.004292049920075369,
+      "max_change_mean_difference_in_numba_sd": 0.005317664852153122,
+      "max_change_sd_relative_difference": 0.006331211523500024
+    },
+    {
+      "panel": "p16-lat04",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.0012667637788084107,
+      "max_mean_difference_in_numba_sd": 0.009114728529484771,
+      "max_absolute_sd_relative_difference": 0.015579981602466542,
+      "max_change_mean_difference_in_numba_sd": 0.009509928996879241,
+      "max_change_sd_relative_difference": 0.030140794020412587
+    },
+    {
+      "panel": "p16-lat05",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.002316972949770957,
+      "max_mean_difference_in_numba_sd": 0.012715292531363085,
+      "max_absolute_sd_relative_difference": 0.0022853973139533856,
+      "max_change_mean_difference_in_numba_sd": 0.01502313045707193,
+      "max_change_sd_relative_difference": 0.0031709562125230573
+    },
+    {
+      "panel": "p16-lat06",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.00038106837262397164,
+      "max_mean_difference_in_numba_sd": 0.0019672807428950277,
+      "max_absolute_sd_relative_difference": 0.003236575609061987,
+      "max_change_mean_difference_in_numba_sd": 0.0020348080598313533,
+      "max_change_sd_relative_difference": 0.00311749731648181
+    },
+    {
+      "panel": "p16-lat07",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.0008318159673432746,
+      "max_mean_difference_in_numba_sd": 0.009647982585977863,
+      "max_absolute_sd_relative_difference": 0.005846762792664606,
+      "max_change_mean_difference_in_numba_sd": 0.010526688741848703,
+      "max_change_sd_relative_difference": 0.007924384540752172
+    },
+    {
+      "panel": "p16-lat08",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0020879877185642215,
+      "max_mean_difference_in_numba_sd": 0.026272133065093035,
+      "max_absolute_sd_relative_difference": 0.002877243754508818,
+      "max_change_mean_difference_in_numba_sd": 0.028394030478183483,
+      "max_change_sd_relative_difference": 0.005812339399753119
+    },
+    {
+      "panel": "p16-lat09",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0003584048390399275,
+      "max_mean_difference_in_numba_sd": 0.009364900317561323,
+      "max_absolute_sd_relative_difference": 0.01289051329764268,
+      "max_change_mean_difference_in_numba_sd": 0.010492004152042125,
+      "max_change_sd_relative_difference": 0.029301520651169977
+    },
+    {
+      "panel": "p16-lat10",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0002464235485115651,
+      "max_mean_difference_in_numba_sd": 0.009520236307875143,
+      "max_absolute_sd_relative_difference": 0.008591683747228851,
+      "max_change_mean_difference_in_numba_sd": 0.008362210730301597,
+      "max_change_sd_relative_difference": 0.01490397960711376
+    },
+    {
+      "panel": "p16-lat11",
+      "pressure_hpa": 6.812919616699219,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0011726112346979178,
+      "max_mean_difference_in_numba_sd": 0.038140022240980814,
+      "max_absolute_sd_relative_difference": 0.01976758305185844,
+      "max_change_mean_difference_in_numba_sd": 0.038246135622608285,
+      "max_change_sd_relative_difference": 0.023762763505003948
+    },
+    {
+      "panel": "p17-lat00",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0005517837672552872,
+      "max_mean_difference_in_numba_sd": 0.015829527419250176,
+      "max_absolute_sd_relative_difference": 0.011106487047349178,
+      "max_change_mean_difference_in_numba_sd": 0.020410706139595714,
+      "max_change_sd_relative_difference": 0.017399263021370737
+    },
+    {
+      "panel": "p17-lat01",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0002877200771598254,
+      "max_mean_difference_in_numba_sd": 0.006951794931796654,
+      "max_absolute_sd_relative_difference": 0.004072488828764875,
+      "max_change_mean_difference_in_numba_sd": 0.006511693024009948,
+      "max_change_sd_relative_difference": 0.008172296542148016
+    },
+    {
+      "panel": "p17-lat02",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0004883461444897819,
+      "max_mean_difference_in_numba_sd": 0.009291918646937887,
+      "max_absolute_sd_relative_difference": 0.0036405834951538374,
+      "max_change_mean_difference_in_numba_sd": 0.010106401450328328,
+      "max_change_sd_relative_difference": 0.0059466963641272574
+    },
+    {
+      "panel": "p17-lat03",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0005482661606279748,
+      "max_mean_difference_in_numba_sd": 0.014594582133119118,
+      "max_absolute_sd_relative_difference": 0.005707423258464517,
+      "max_change_mean_difference_in_numba_sd": 0.014831245071468166,
+      "max_change_sd_relative_difference": 0.009669828183384466
+    },
+    {
+      "panel": "p17-lat04",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.0017937172820836622,
+      "max_mean_difference_in_numba_sd": 0.017128121038029815,
+      "max_absolute_sd_relative_difference": 0.019135957530933778,
+      "max_change_mean_difference_in_numba_sd": 0.01648268779794863,
+      "max_change_sd_relative_difference": 0.025423005836110235
+    },
+    {
+      "panel": "p17-lat05",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0012914630374059044,
+      "max_mean_difference_in_numba_sd": 0.008491457295403204,
+      "max_absolute_sd_relative_difference": 0.015277492326511544,
+      "max_change_mean_difference_in_numba_sd": 0.009413975933794231,
+      "max_change_sd_relative_difference": 0.02163044877963749
+    },
+    {
+      "panel": "p17-lat06",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.0038471292182968853,
+      "max_mean_difference_in_numba_sd": 0.024413585106086908,
+      "max_absolute_sd_relative_difference": 0.011253961802934365,
+      "max_change_mean_difference_in_numba_sd": 0.02705332511824097,
+      "max_change_sd_relative_difference": 0.028111010580756046
+    },
+    {
+      "panel": "p17-lat07",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.002274514414175144,
+      "max_mean_difference_in_numba_sd": 0.022985420875123362,
+      "max_absolute_sd_relative_difference": 0.011258820972138706,
+      "max_change_mean_difference_in_numba_sd": 0.026207137636412046,
+      "max_change_sd_relative_difference": 0.013685120821171903
+    },
+    {
+      "panel": "p17-lat08",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0018263866049483823,
+      "max_mean_difference_in_numba_sd": 0.029863631988929655,
+      "max_absolute_sd_relative_difference": 0.010146510106092244,
+      "max_change_mean_difference_in_numba_sd": 0.035448230830242046,
+      "max_change_sd_relative_difference": 0.02123873546856836
+    },
+    {
+      "panel": "p17-lat09",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.00014858271349815766,
+      "max_mean_difference_in_numba_sd": 0.00488031020627257,
+      "max_absolute_sd_relative_difference": 0.009462891726766842,
+      "max_change_mean_difference_in_numba_sd": 0.005796798498895882,
+      "max_change_sd_relative_difference": 0.018380079522446024
+    },
+    {
+      "panel": "p17-lat10",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0004483104667070137,
+      "max_mean_difference_in_numba_sd": 0.015940738075903602,
+      "max_absolute_sd_relative_difference": 0.004727387858475485,
+      "max_change_mean_difference_in_numba_sd": 0.020212876280229098,
+      "max_change_sd_relative_difference": 0.009665853665042579
+    },
+    {
+      "panel": "p17-lat11",
+      "pressure_hpa": 5.6234130859375,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0008343027818700222,
+      "max_mean_difference_in_numba_sd": 0.014293983987200018,
+      "max_absolute_sd_relative_difference": 0.011587073986382146,
+      "max_change_mean_difference_in_numba_sd": 0.017190889328349786,
+      "max_change_sd_relative_difference": 0.021800342754139335
+    },
+    {
+      "panel": "p18-lat00",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.000492558690692313,
+      "max_mean_difference_in_numba_sd": 0.013123030530411209,
+      "max_absolute_sd_relative_difference": 0.008973721239540544,
+      "max_change_mean_difference_in_numba_sd": 0.016981214333541692,
+      "max_change_sd_relative_difference": 0.014047714292926838
+    },
+    {
+      "panel": "p18-lat01",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 8.278050852617014e-05,
+      "max_mean_difference_in_numba_sd": 0.003159761700462524,
+      "max_absolute_sd_relative_difference": 0.0034321754091150014,
+      "max_change_mean_difference_in_numba_sd": 0.00383896250637798,
+      "max_change_sd_relative_difference": 0.0029599589982091112
+    },
+    {
+      "panel": "p18-lat02",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0004808313170503453,
+      "max_mean_difference_in_numba_sd": 0.009278705163059828,
+      "max_absolute_sd_relative_difference": 0.010298670081855699,
+      "max_change_mean_difference_in_numba_sd": 0.009875748846591707,
+      "max_change_sd_relative_difference": 0.010719689591016435
+    },
+    {
+      "panel": "p18-lat03",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0002473836516436734,
+      "max_mean_difference_in_numba_sd": 0.005505452118645038,
+      "max_absolute_sd_relative_difference": 0.007217916271885505,
+      "max_change_mean_difference_in_numba_sd": 0.005731577488884219,
+      "max_change_sd_relative_difference": 0.01279039835862894
+    },
+    {
+      "panel": "p18-lat04",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.001058920047972478,
+      "max_mean_difference_in_numba_sd": 0.013645168584428737,
+      "max_absolute_sd_relative_difference": 0.003557689039530132,
+      "max_change_mean_difference_in_numba_sd": 0.013245258547690666,
+      "max_change_sd_relative_difference": 0.006470458059636641
+    },
+    {
+      "panel": "p18-lat05",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.003942237560904616,
+      "max_mean_difference_in_numba_sd": 0.0270816181872712,
+      "max_absolute_sd_relative_difference": 0.00909936456756455,
+      "max_change_mean_difference_in_numba_sd": 0.030102179900895178,
+      "max_change_sd_relative_difference": 0.02359580983099563
+    },
+    {
+      "panel": "p18-lat06",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.00036228805696225663,
+      "max_mean_difference_in_numba_sd": 0.002831651406792592,
+      "max_absolute_sd_relative_difference": 0.008253627478689962,
+      "max_change_mean_difference_in_numba_sd": 0.0027957316969106955,
+      "max_change_sd_relative_difference": 0.009533528575208061
+    },
+    {
+      "panel": "p18-lat07",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00042962284093128744,
+      "max_mean_difference_in_numba_sd": 0.006552295853457749,
+      "max_absolute_sd_relative_difference": 0.003944882701127694,
+      "max_change_mean_difference_in_numba_sd": 0.006425348797173153,
+      "max_change_sd_relative_difference": 0.005491173250456449
+    },
+    {
+      "panel": "p18-lat08",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.00020249208470524138,
+      "max_mean_difference_in_numba_sd": 0.004520620293380031,
+      "max_absolute_sd_relative_difference": 0.006759525524058674,
+      "max_change_mean_difference_in_numba_sd": 0.004891276029031758,
+      "max_change_sd_relative_difference": 0.014840219488138517
+    },
+    {
+      "panel": "p18-lat09",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0006695935166929345,
+      "max_mean_difference_in_numba_sd": 0.01764133366426274,
+      "max_absolute_sd_relative_difference": 0.005348285731572533,
+      "max_change_mean_difference_in_numba_sd": 0.018371769658025273,
+      "max_change_sd_relative_difference": 0.012758479451719928
+    },
+    {
+      "panel": "p18-lat10",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0010440513274145857,
+      "max_mean_difference_in_numba_sd": 0.03270970991171663,
+      "max_absolute_sd_relative_difference": 0.010570061066639713,
+      "max_change_mean_difference_in_numba_sd": 0.038290539031946035,
+      "max_change_sd_relative_difference": 0.02099268415554456
+    },
+    {
+      "panel": "p18-lat11",
+      "pressure_hpa": 4.641589641571045,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0005104135809030907,
+      "max_mean_difference_in_numba_sd": 0.015667323825619008,
+      "max_absolute_sd_relative_difference": 0.004738418539352196,
+      "max_change_mean_difference_in_numba_sd": 0.016242996658377452,
+      "max_change_sd_relative_difference": 0.007629523074951239
+    },
+    {
+      "panel": "p19-lat00",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.000501510496594193,
+      "max_mean_difference_in_numba_sd": 0.012441383201997306,
+      "max_absolute_sd_relative_difference": 0.003720452578790834,
+      "max_change_mean_difference_in_numba_sd": 0.015456871893214187,
+      "max_change_sd_relative_difference": 0.007396017041998437
+    },
+    {
+      "panel": "p19-lat01",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.00039665909039232616,
+      "max_mean_difference_in_numba_sd": 0.009475749400571214,
+      "max_absolute_sd_relative_difference": 0.0036778391046520253,
+      "max_change_mean_difference_in_numba_sd": 0.011820937452926727,
+      "max_change_sd_relative_difference": 0.008111619351449662
+    },
+    {
+      "panel": "p19-lat02",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.00036362966933634056,
+      "max_mean_difference_in_numba_sd": 0.008990107115766073,
+      "max_absolute_sd_relative_difference": 0.0036891835854406807,
+      "max_change_mean_difference_in_numba_sd": 0.010941005125691424,
+      "max_change_sd_relative_difference": 0.005292738506376793
+    },
+    {
+      "panel": "p19-lat03",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0004057393587793001,
+      "max_mean_difference_in_numba_sd": 0.00885940551493491,
+      "max_absolute_sd_relative_difference": 0.010438482230954338,
+      "max_change_mean_difference_in_numba_sd": 0.010998435746731197,
+      "max_change_sd_relative_difference": 0.011586883236395895
+    },
+    {
+      "panel": "p19-lat04",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.002105983010235235,
+      "max_mean_difference_in_numba_sd": 0.036100238975272425,
+      "max_absolute_sd_relative_difference": 0.006542534288381585,
+      "max_change_mean_difference_in_numba_sd": 0.03869866985752892,
+      "max_change_sd_relative_difference": 0.00900545996210067
+    },
+    {
+      "panel": "p19-lat05",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0009978380914432705,
+      "max_mean_difference_in_numba_sd": 0.00848350266768747,
+      "max_absolute_sd_relative_difference": 0.006883603324068899,
+      "max_change_mean_difference_in_numba_sd": 0.008948864938985765,
+      "max_change_sd_relative_difference": 0.009033228145298278
+    },
+    {
+      "panel": "p19-lat06",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.001898561786303432,
+      "max_mean_difference_in_numba_sd": 0.01815536573775936,
+      "max_absolute_sd_relative_difference": 0.006271987444230964,
+      "max_change_mean_difference_in_numba_sd": 0.018826760182991512,
+      "max_change_sd_relative_difference": 0.014107821974772117
+    },
+    {
+      "panel": "p19-lat07",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 9.814497949811596e-05,
+      "max_mean_difference_in_numba_sd": 0.002179895600721438,
+      "max_absolute_sd_relative_difference": 0.0045266049495558125,
+      "max_change_mean_difference_in_numba_sd": 0.0020615649508299015,
+      "max_change_sd_relative_difference": 0.00562697520672617
+    },
+    {
+      "panel": "p19-lat08",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 5.618649658511998e-05,
+      "max_mean_difference_in_numba_sd": 0.0016597288755691498,
+      "max_absolute_sd_relative_difference": 0.00861174472826809,
+      "max_change_mean_difference_in_numba_sd": 0.001953155741249292,
+      "max_change_sd_relative_difference": 0.009971715176658735
+    },
+    {
+      "panel": "p19-lat09",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0004211016365340825,
+      "max_mean_difference_in_numba_sd": 0.006336456315739113,
+      "max_absolute_sd_relative_difference": 0.010547449223059946,
+      "max_change_mean_difference_in_numba_sd": 0.005052043570649723,
+      "max_change_sd_relative_difference": 0.016604305643405315
+    },
+    {
+      "panel": "p19-lat10",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0005109992032545918,
+      "max_mean_difference_in_numba_sd": 0.008945654747153621,
+      "max_absolute_sd_relative_difference": 0.006187806431326992,
+      "max_change_mean_difference_in_numba_sd": 0.008252916870221968,
+      "max_change_sd_relative_difference": 0.00897686146929777
+    },
+    {
+      "panel": "p19-lat11",
+      "pressure_hpa": 3.831186056137085,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.00034429136816882533,
+      "max_mean_difference_in_numba_sd": 0.0055978773674545575,
+      "max_absolute_sd_relative_difference": 0.0036828432118705123,
+      "max_change_mean_difference_in_numba_sd": 0.004811566188520884,
+      "max_change_sd_relative_difference": 0.003987109130651811
+    },
+    {
+      "panel": "p20-lat00",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0012509401406832765,
+      "max_mean_difference_in_numba_sd": 0.02540389401279578,
+      "max_absolute_sd_relative_difference": 0.007793427362080219,
+      "max_change_mean_difference_in_numba_sd": 0.03216911650238399,
+      "max_change_sd_relative_difference": 0.018173601637855308
+    },
+    {
+      "panel": "p20-lat01",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.002006231085281307,
+      "max_mean_difference_in_numba_sd": 0.037900374550238765,
+      "max_absolute_sd_relative_difference": 0.01538380168839315,
+      "max_change_mean_difference_in_numba_sd": 0.04309512134561107,
+      "max_change_sd_relative_difference": 0.03097284286173374
+    },
+    {
+      "panel": "p20-lat02",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.00018735208452458352,
+      "max_mean_difference_in_numba_sd": 0.005868578261803839,
+      "max_absolute_sd_relative_difference": 0.001785669265245371,
+      "max_change_mean_difference_in_numba_sd": 0.005257364185660709,
+      "max_change_sd_relative_difference": 0.004230722521547214
+    },
+    {
+      "panel": "p20-lat03",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0006319231467077913,
+      "max_mean_difference_in_numba_sd": 0.02634656739099056,
+      "max_absolute_sd_relative_difference": 0.005792538013664084,
+      "max_change_mean_difference_in_numba_sd": 0.029159495442495964,
+      "max_change_sd_relative_difference": 0.015288558433428356
+    },
+    {
+      "panel": "p20-lat04",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.00032268724842943186,
+      "max_mean_difference_in_numba_sd": 0.008035325756541827,
+      "max_absolute_sd_relative_difference": 0.007262859782772857,
+      "max_change_mean_difference_in_numba_sd": 0.00816462804543927,
+      "max_change_sd_relative_difference": 0.008337776169681899
+    },
+    {
+      "panel": "p20-lat05",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.003188939674172886,
+      "max_mean_difference_in_numba_sd": 0.037614898349751964,
+      "max_absolute_sd_relative_difference": 0.009330781943438504,
+      "max_change_mean_difference_in_numba_sd": 0.04101770148981021,
+      "max_change_sd_relative_difference": 0.021942104124221262
+    },
+    {
+      "panel": "p20-lat06",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.0026265885464127336,
+      "max_mean_difference_in_numba_sd": 0.034169290388971686,
+      "max_absolute_sd_relative_difference": 0.005947773857609917,
+      "max_change_mean_difference_in_numba_sd": 0.03701087063543755,
+      "max_change_sd_relative_difference": 0.018160186551987367
+    },
+    {
+      "panel": "p20-lat07",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.0007195825879557916,
+      "max_mean_difference_in_numba_sd": 0.025979642917740062,
+      "max_absolute_sd_relative_difference": 0.009310074130519208,
+      "max_change_mean_difference_in_numba_sd": 0.027376950255348607,
+      "max_change_sd_relative_difference": 0.02111104125392027
+    },
+    {
+      "panel": "p20-lat08",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.00043019882602379766,
+      "max_mean_difference_in_numba_sd": 0.013475872730563387,
+      "max_absolute_sd_relative_difference": 0.0048650151947923215,
+      "max_change_mean_difference_in_numba_sd": 0.015219771141658232,
+      "max_change_sd_relative_difference": 0.013565545650146338
+    },
+    {
+      "panel": "p20-lat09",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0010591526007903695,
+      "max_mean_difference_in_numba_sd": 0.027160879460435796,
+      "max_absolute_sd_relative_difference": 0.005533342559602028,
+      "max_change_mean_difference_in_numba_sd": 0.03045421867893265,
+      "max_change_sd_relative_difference": 0.013022522513072898
+    },
+    {
+      "panel": "p20-lat10",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0003054277702112529,
+      "max_mean_difference_in_numba_sd": 0.007183825391215076,
+      "max_absolute_sd_relative_difference": 0.007114069258520539,
+      "max_change_mean_difference_in_numba_sd": 0.008117707361307845,
+      "max_change_sd_relative_difference": 0.008463508443238954
+    },
+    {
+      "panel": "p20-lat11",
+      "pressure_hpa": 3.1622776985168457,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0006710695593197258,
+      "max_mean_difference_in_numba_sd": 0.019276029494909697,
+      "max_absolute_sd_relative_difference": 0.006229268221337625,
+      "max_change_mean_difference_in_numba_sd": 0.018906790413880045,
+      "max_change_sd_relative_difference": 0.007964060321386857
+    },
+    {
+      "panel": "p21-lat00",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.001324676934340907,
+      "max_mean_difference_in_numba_sd": 0.02409757241350188,
+      "max_absolute_sd_relative_difference": 0.008780994888191063,
+      "max_change_mean_difference_in_numba_sd": 0.025507016027615004,
+      "max_change_sd_relative_difference": 0.018169206636133084
+    },
+    {
+      "panel": "p21-lat01",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.00037958078194666456,
+      "max_mean_difference_in_numba_sd": 0.00523193743943328,
+      "max_absolute_sd_relative_difference": 0.002701487955507398,
+      "max_change_mean_difference_in_numba_sd": 0.006099395787298266,
+      "max_change_sd_relative_difference": 0.0035602837689325817
+    },
+    {
+      "panel": "p21-lat02",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0010951334913418265,
+      "max_mean_difference_in_numba_sd": 0.03555921311032758,
+      "max_absolute_sd_relative_difference": 0.010058398386057599,
+      "max_change_mean_difference_in_numba_sd": 0.03910700910738582,
+      "max_change_sd_relative_difference": 0.02737111326717634
+    },
+    {
+      "panel": "p21-lat03",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.00011578133677225821,
+      "max_mean_difference_in_numba_sd": 0.005296586785957631,
+      "max_absolute_sd_relative_difference": 0.003259161709361358,
+      "max_change_mean_difference_in_numba_sd": 0.0067272072405576595,
+      "max_change_sd_relative_difference": 0.003600652396194892
+    },
+    {
+      "panel": "p21-lat04",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 8.22001596496591e-05,
+      "max_mean_difference_in_numba_sd": 0.001762606418406764,
+      "max_absolute_sd_relative_difference": 0.0022388437515150628,
+      "max_change_mean_difference_in_numba_sd": 0.001368324520291722,
+      "max_change_sd_relative_difference": 0.002320148552408474
+    },
+    {
+      "panel": "p21-lat05",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0012284915582077005,
+      "max_mean_difference_in_numba_sd": 0.02116528036242011,
+      "max_absolute_sd_relative_difference": 0.005354722518722044,
+      "max_change_mean_difference_in_numba_sd": 0.023632046038276663,
+      "max_change_sd_relative_difference": 0.012737109486608444
+    },
+    {
+      "panel": "p21-lat06",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.00018657114914866213,
+      "max_mean_difference_in_numba_sd": 0.005971686028682422,
+      "max_absolute_sd_relative_difference": 0.006601244725032984,
+      "max_change_mean_difference_in_numba_sd": 0.004969105694330802,
+      "max_change_sd_relative_difference": 0.007704505288254504
+    },
+    {
+      "panel": "p21-lat07",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00025270560309387236,
+      "max_mean_difference_in_numba_sd": 0.01286165930626496,
+      "max_absolute_sd_relative_difference": 0.004828441869990652,
+      "max_change_mean_difference_in_numba_sd": 0.014219678716442754,
+      "max_change_sd_relative_difference": 0.00969409583770997
+    },
+    {
+      "panel": "p21-lat08",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.000795554056017167,
+      "max_mean_difference_in_numba_sd": 0.029599478776366473,
+      "max_absolute_sd_relative_difference": 0.006099823911061786,
+      "max_change_mean_difference_in_numba_sd": 0.03498932016893948,
+      "max_change_sd_relative_difference": 0.017676374300880537
+    },
+    {
+      "panel": "p21-lat09",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0004519096965607261,
+      "max_mean_difference_in_numba_sd": 0.013544142126873483,
+      "max_absolute_sd_relative_difference": 0.011081903516282798,
+      "max_change_mean_difference_in_numba_sd": 0.015581338760312851,
+      "max_change_sd_relative_difference": 0.019367584975511498
+    },
+    {
+      "panel": "p21-lat10",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0004030743446561402,
+      "max_mean_difference_in_numba_sd": 0.013058256771633527,
+      "max_absolute_sd_relative_difference": 0.006095170373013659,
+      "max_change_mean_difference_in_numba_sd": 0.017370042123795292,
+      "max_change_sd_relative_difference": 0.012723809366765426
+    },
+    {
+      "panel": "p21-lat11",
+      "pressure_hpa": 2.6101577281951904,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.00046775987523961504,
+      "max_mean_difference_in_numba_sd": 0.01244544074927714,
+      "max_absolute_sd_relative_difference": 0.005561932558695859,
+      "max_change_mean_difference_in_numba_sd": 0.012649852715063881,
+      "max_change_sd_relative_difference": 0.0056378690993489355
+    },
+    {
+      "panel": "p22-lat00",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0001613980598937914,
+      "max_mean_difference_in_numba_sd": 0.0023654358719099166,
+      "max_absolute_sd_relative_difference": 0.0037857424437477416,
+      "max_change_mean_difference_in_numba_sd": 0.0020144783197048608,
+      "max_change_sd_relative_difference": 0.004387342551792406
+    },
+    {
+      "panel": "p22-lat01",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.00015883684137651954,
+      "max_mean_difference_in_numba_sd": 0.004116114513972999,
+      "max_absolute_sd_relative_difference": 0.004091735042569766,
+      "max_change_mean_difference_in_numba_sd": 0.00388083587498381,
+      "max_change_sd_relative_difference": 0.00576633759558387
+    },
+    {
+      "panel": "p22-lat02",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.00033399153841617846,
+      "max_mean_difference_in_numba_sd": 0.010272575546283167,
+      "max_absolute_sd_relative_difference": 0.00947086512167239,
+      "max_change_mean_difference_in_numba_sd": 0.011035754275200566,
+      "max_change_sd_relative_difference": 0.013785261200730758
+    },
+    {
+      "panel": "p22-lat03",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.00023123926909107695,
+      "max_mean_difference_in_numba_sd": 0.005457920122335285,
+      "max_absolute_sd_relative_difference": 0.004178394169754185,
+      "max_change_mean_difference_in_numba_sd": 0.0066033109449506,
+      "max_change_sd_relative_difference": 0.004097495076941682
+    },
+    {
+      "panel": "p22-lat04",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.0001883299396592264,
+      "max_mean_difference_in_numba_sd": 0.0046670890330464555,
+      "max_absolute_sd_relative_difference": 0.0036390134740342805,
+      "max_change_mean_difference_in_numba_sd": 0.004657082577133071,
+      "max_change_sd_relative_difference": 0.003817297284432808
+    },
+    {
+      "panel": "p22-lat05",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0005540154605592207,
+      "max_mean_difference_in_numba_sd": 0.018156309784510202,
+      "max_absolute_sd_relative_difference": 0.0037325728335203534,
+      "max_change_mean_difference_in_numba_sd": 0.018577683525972825,
+      "max_change_sd_relative_difference": 0.012825447691252156
+    },
+    {
+      "panel": "p22-lat06",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.00010833930453291174,
+      "max_mean_difference_in_numba_sd": 0.005098278740653956,
+      "max_absolute_sd_relative_difference": 0.0052401542740632134,
+      "max_change_mean_difference_in_numba_sd": 0.004781130875534567,
+      "max_change_sd_relative_difference": 0.006817300975044072
+    },
+    {
+      "panel": "p22-lat07",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 7.291712691070984e-05,
+      "max_mean_difference_in_numba_sd": 0.0024723787966561325,
+      "max_absolute_sd_relative_difference": 0.0034780675605510236,
+      "max_change_mean_difference_in_numba_sd": 0.002645033861148155,
+      "max_change_sd_relative_difference": 0.004455759003160864
+    },
+    {
+      "panel": "p22-lat08",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.00029717050203625917,
+      "max_mean_difference_in_numba_sd": 0.013249866365593943,
+      "max_absolute_sd_relative_difference": 0.011870975371806702,
+      "max_change_mean_difference_in_numba_sd": 0.014600737295528896,
+      "max_change_sd_relative_difference": 0.010531418557478078
+    },
+    {
+      "panel": "p22-lat09",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.00032586272221912793,
+      "max_mean_difference_in_numba_sd": 0.006118008664628156,
+      "max_absolute_sd_relative_difference": 0.005460452173350783,
+      "max_change_mean_difference_in_numba_sd": 0.005541106310930964,
+      "max_change_sd_relative_difference": 0.005888240015484492
+    },
+    {
+      "panel": "p22-lat10",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0004507743787227625,
+      "max_mean_difference_in_numba_sd": 0.010212506708161324,
+      "max_absolute_sd_relative_difference": 0.0029334928189604925,
+      "max_change_mean_difference_in_numba_sd": 0.01062669681098074,
+      "max_change_sd_relative_difference": 0.0042272601840551705
+    },
+    {
+      "panel": "p22-lat11",
+      "pressure_hpa": 2.1544342041015625,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0003630671187355716,
+      "max_mean_difference_in_numba_sd": 0.007652535323790394,
+      "max_absolute_sd_relative_difference": 0.006235470904832785,
+      "max_change_mean_difference_in_numba_sd": 0.00909450631481634,
+      "max_change_sd_relative_difference": 0.006785410162532202
+    },
+    {
+      "panel": "p23-lat00",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.00019609657439367822,
+      "max_mean_difference_in_numba_sd": 0.004813000960585368,
+      "max_absolute_sd_relative_difference": 0.0031740282644777684,
+      "max_change_mean_difference_in_numba_sd": 0.006020778551994702,
+      "max_change_sd_relative_difference": 0.005398658087331087
+    },
+    {
+      "panel": "p23-lat01",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0003074409706256276,
+      "max_mean_difference_in_numba_sd": 0.004116919763852012,
+      "max_absolute_sd_relative_difference": 0.006560816061270236,
+      "max_change_mean_difference_in_numba_sd": 0.0044292171798854425,
+      "max_change_sd_relative_difference": 0.006781653445438129
+    },
+    {
+      "panel": "p23-lat02",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.000651807039698582,
+      "max_mean_difference_in_numba_sd": 0.013677839465499544,
+      "max_absolute_sd_relative_difference": 0.005108383575880393,
+      "max_change_mean_difference_in_numba_sd": 0.013343280163680523,
+      "max_change_sd_relative_difference": 0.008098819200302643
+    },
+    {
+      "panel": "p23-lat03",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.00035006702996120964,
+      "max_mean_difference_in_numba_sd": 0.009483800972520315,
+      "max_absolute_sd_relative_difference": 0.005885393597284239,
+      "max_change_mean_difference_in_numba_sd": 0.01103934317288742,
+      "max_change_sd_relative_difference": 0.009932166612184767
+    },
+    {
+      "panel": "p23-lat04",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.00044496495198487196,
+      "max_mean_difference_in_numba_sd": 0.01274936876757127,
+      "max_absolute_sd_relative_difference": 0.0023196946219450343,
+      "max_change_mean_difference_in_numba_sd": 0.011402069084140959,
+      "max_change_sd_relative_difference": 0.007147445313762324
+    },
+    {
+      "panel": "p23-lat05",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.00030079599990440187,
+      "max_mean_difference_in_numba_sd": 0.01467115109122873,
+      "max_absolute_sd_relative_difference": 0.014817391862933071,
+      "max_change_mean_difference_in_numba_sd": 0.014870670376355245,
+      "max_change_sd_relative_difference": 0.019274528659674495
+    },
+    {
+      "panel": "p23-lat06",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.0007836903784754767,
+      "max_mean_difference_in_numba_sd": 0.0234424478133715,
+      "max_absolute_sd_relative_difference": 0.00686748445513774,
+      "max_change_mean_difference_in_numba_sd": 0.027893103034024157,
+      "max_change_sd_relative_difference": 0.017023649550152564
+    },
+    {
+      "panel": "p23-lat07",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.0002409244881942385,
+      "max_mean_difference_in_numba_sd": 0.015240260726308819,
+      "max_absolute_sd_relative_difference": 0.009633388887218874,
+      "max_change_mean_difference_in_numba_sd": 0.017256670526923635,
+      "max_change_sd_relative_difference": 0.015505843502437111
+    },
+    {
+      "panel": "p23-lat08",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.0004613151910577429,
+      "max_mean_difference_in_numba_sd": 0.025516325593507964,
+      "max_absolute_sd_relative_difference": 0.006951869582070724,
+      "max_change_mean_difference_in_numba_sd": 0.0252480379598889,
+      "max_change_sd_relative_difference": 0.015572322358222479
+    },
+    {
+      "panel": "p23-lat09",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 7.818134282633338e-05,
+      "max_mean_difference_in_numba_sd": 0.003368592892446204,
+      "max_absolute_sd_relative_difference": 0.004267024918420348,
+      "max_change_mean_difference_in_numba_sd": 0.0030561206986402037,
+      "max_change_sd_relative_difference": 0.0040626067483512385
+    },
+    {
+      "panel": "p23-lat10",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0002534487914385153,
+      "max_mean_difference_in_numba_sd": 0.008873513151369163,
+      "max_absolute_sd_relative_difference": 0.004015520902238334,
+      "max_change_mean_difference_in_numba_sd": 0.00844315656727182,
+      "max_change_sd_relative_difference": 0.0046347096662211484
+    },
+    {
+      "panel": "p23-lat11",
+      "pressure_hpa": 1.778279423713684,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.001633107512751586,
+      "max_mean_difference_in_numba_sd": 0.028931760405290642,
+      "max_absolute_sd_relative_difference": 0.009446630748879414,
+      "max_change_mean_difference_in_numba_sd": 0.03148589509805819,
+      "max_change_sd_relative_difference": 0.02044559756223774
+    },
+    {
+      "panel": "p24-lat00",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.00032253757937450445,
+      "max_mean_difference_in_numba_sd": 0.005992088830445574,
+      "max_absolute_sd_relative_difference": 0.011521586431208042,
+      "max_change_mean_difference_in_numba_sd": 0.0052700585343967085,
+      "max_change_sd_relative_difference": 0.016147170871633976
+    },
+    {
+      "panel": "p24-lat01",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.00021631925469023372,
+      "max_mean_difference_in_numba_sd": 0.006610909469582215,
+      "max_absolute_sd_relative_difference": 0.012368250629133604,
+      "max_change_mean_difference_in_numba_sd": 0.005894134889916773,
+      "max_change_sd_relative_difference": 0.014953016832238708
+    },
+    {
+      "panel": "p24-lat02",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.001086407055809424,
+      "max_mean_difference_in_numba_sd": 0.02698607590459927,
+      "max_absolute_sd_relative_difference": 0.009062178043968583,
+      "max_change_mean_difference_in_numba_sd": 0.026244568731823043,
+      "max_change_sd_relative_difference": 0.011862545699464322
+    },
+    {
+      "panel": "p24-lat03",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.00010658603037416725,
+      "max_mean_difference_in_numba_sd": 0.007102181896962501,
+      "max_absolute_sd_relative_difference": 0.007154402322472553,
+      "max_change_mean_difference_in_numba_sd": 0.009328213377739845,
+      "max_change_sd_relative_difference": 0.005778468303685003
+    },
+    {
+      "panel": "p24-lat04",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.0006619433359187354,
+      "max_mean_difference_in_numba_sd": 0.023287442282304314,
+      "max_absolute_sd_relative_difference": 0.005956593548044675,
+      "max_change_mean_difference_in_numba_sd": 0.024134110264973363,
+      "max_change_sd_relative_difference": 0.015072220097777533
+    },
+    {
+      "panel": "p24-lat05",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0004182429843480051,
+      "max_mean_difference_in_numba_sd": 0.013859679290942617,
+      "max_absolute_sd_relative_difference": 0.009982928986599804,
+      "max_change_mean_difference_in_numba_sd": 0.01463696681997068,
+      "max_change_sd_relative_difference": 0.01703637435030536
+    },
+    {
+      "panel": "p24-lat06",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.0002746852538404454,
+      "max_mean_difference_in_numba_sd": 0.009941707145994913,
+      "max_absolute_sd_relative_difference": 0.00697755787842913,
+      "max_change_mean_difference_in_numba_sd": 0.012733784231733557,
+      "max_change_sd_relative_difference": 0.007725761400037112
+    },
+    {
+      "panel": "p24-lat07",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00025064585954304164,
+      "max_mean_difference_in_numba_sd": 0.01922678298447627,
+      "max_absolute_sd_relative_difference": 0.005509992331529268,
+      "max_change_mean_difference_in_numba_sd": 0.023670222812760308,
+      "max_change_sd_relative_difference": 0.01786420624643814
+    },
+    {
+      "panel": "p24-lat08",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.00037678943153007793,
+      "max_mean_difference_in_numba_sd": 0.01849852052265385,
+      "max_absolute_sd_relative_difference": 0.009966503192282872,
+      "max_change_mean_difference_in_numba_sd": 0.018269055809929245,
+      "max_change_sd_relative_difference": 0.010269184369402717
+    },
+    {
+      "panel": "p24-lat09",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0005830106171078597,
+      "max_mean_difference_in_numba_sd": 0.016484016751541847,
+      "max_absolute_sd_relative_difference": 0.007140458740643618,
+      "max_change_mean_difference_in_numba_sd": 0.017031740151805155,
+      "max_change_sd_relative_difference": 0.01067083577306338
+    },
+    {
+      "panel": "p24-lat10",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.00020558014522276125,
+      "max_mean_difference_in_numba_sd": 0.004529267179654426,
+      "max_absolute_sd_relative_difference": 0.006002033125755313,
+      "max_change_mean_difference_in_numba_sd": 0.0030716662404542774,
+      "max_change_sd_relative_difference": 0.008641704546646922
+    },
+    {
+      "panel": "p24-lat11",
+      "pressure_hpa": 1.4677995443344116,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0003006287394224927,
+      "max_mean_difference_in_numba_sd": 0.004993197318123155,
+      "max_absolute_sd_relative_difference": 0.0016969126492634157,
+      "max_change_mean_difference_in_numba_sd": 0.005167181521980058,
+      "max_change_sd_relative_difference": 0.004673489626768834
+    },
+    {
+      "panel": "p25-lat00",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0007910298473063904,
+      "max_mean_difference_in_numba_sd": 0.026227697146218237,
+      "max_absolute_sd_relative_difference": 0.017111363848550387,
+      "max_change_mean_difference_in_numba_sd": 0.031347706462355004,
+      "max_change_sd_relative_difference": 0.041441514483954056
+    },
+    {
+      "panel": "p25-lat01",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0004519044961721619,
+      "max_mean_difference_in_numba_sd": 0.009770253841123407,
+      "max_absolute_sd_relative_difference": 0.00289738459133293,
+      "max_change_mean_difference_in_numba_sd": 0.010896798833324289,
+      "max_change_sd_relative_difference": 0.0047870429879566245
+    },
+    {
+      "panel": "p25-lat02",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.0002431105493143626,
+      "max_mean_difference_in_numba_sd": 0.014286256020893635,
+      "max_absolute_sd_relative_difference": 0.011898746262231419,
+      "max_change_mean_difference_in_numba_sd": 0.01748513938712638,
+      "max_change_sd_relative_difference": 0.015701221734672144
+    },
+    {
+      "panel": "p25-lat03",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0007246468081025803,
+      "max_mean_difference_in_numba_sd": 0.027858424036729862,
+      "max_absolute_sd_relative_difference": 0.004630818379324553,
+      "max_change_mean_difference_in_numba_sd": 0.027985749651199154,
+      "max_change_sd_relative_difference": 0.01277511845302004
+    },
+    {
+      "panel": "p25-lat04",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 0.0004329068360804378,
+      "max_mean_difference_in_numba_sd": 0.019963925363525033,
+      "max_absolute_sd_relative_difference": 0.0024565575613362256,
+      "max_change_mean_difference_in_numba_sd": 0.0187600527159425,
+      "max_change_sd_relative_difference": 0.005057684257954276
+    },
+    {
+      "panel": "p25-lat05",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.0013568761739986002,
+      "max_mean_difference_in_numba_sd": 0.051277253332706225,
+      "max_absolute_sd_relative_difference": 0.012469860983643333,
+      "max_change_mean_difference_in_numba_sd": 0.05791151942986545,
+      "max_change_sd_relative_difference": 0.03266834169927679
+    },
+    {
+      "panel": "p25-lat06",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 0.0006894529976699815,
+      "max_mean_difference_in_numba_sd": 0.02741220454518959,
+      "max_absolute_sd_relative_difference": 0.00660501412307557,
+      "max_change_mean_difference_in_numba_sd": 0.03260219736181772,
+      "max_change_sd_relative_difference": 0.011953340335633555
+    },
+    {
+      "panel": "p25-lat07",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 7.47807839229786e-05,
+      "max_mean_difference_in_numba_sd": 0.004380233212568504,
+      "max_absolute_sd_relative_difference": 0.003248208815365139,
+      "max_change_mean_difference_in_numba_sd": 0.005185069852980275,
+      "max_change_sd_relative_difference": 0.0035588550164993293
+    },
+    {
+      "panel": "p25-lat08",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 3.5564974116386594e-05,
+      "max_mean_difference_in_numba_sd": 0.0025199057943631415,
+      "max_absolute_sd_relative_difference": 0.004855849891739927,
+      "max_change_mean_difference_in_numba_sd": 0.001820114051164214,
+      "max_change_sd_relative_difference": 0.006970163177987487
+    },
+    {
+      "panel": "p25-lat09",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.0005498625034765503,
+      "max_mean_difference_in_numba_sd": 0.024401518675977008,
+      "max_absolute_sd_relative_difference": 0.008221254364512487,
+      "max_change_mean_difference_in_numba_sd": 0.022740072299732246,
+      "max_change_sd_relative_difference": 0.020240825082036173
+    },
+    {
+      "panel": "p25-lat10",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.00021189548827571514,
+      "max_mean_difference_in_numba_sd": 0.005787811054515054,
+      "max_absolute_sd_relative_difference": 0.004832095218768817,
+      "max_change_mean_difference_in_numba_sd": 0.006162224065188231,
+      "max_change_sd_relative_difference": 0.006379009572237582
+    },
+    {
+      "panel": "p25-lat11",
+      "pressure_hpa": 1.2115273475646973,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0005178500737264002,
+      "max_mean_difference_in_numba_sd": 0.011024452555321059,
+      "max_absolute_sd_relative_difference": 0.005538965753030256,
+      "max_change_mean_difference_in_numba_sd": 0.012517300290898566,
+      "max_change_sd_relative_difference": 0.011484747320312017
+    },
+    {
+      "panel": "p26-lat00",
+      "pressure_hpa": 1.0,
+      "latitude": -55.0,
+      "max_absolute_mean_difference_ppmv": 0.0005535962443579123,
+      "max_mean_difference_in_numba_sd": 0.022827545308455176,
+      "max_absolute_sd_relative_difference": 0.018757616031716662,
+      "max_change_mean_difference_in_numba_sd": 0.025364754277598357,
+      "max_change_sd_relative_difference": 0.03269593960382067
+    },
+    {
+      "panel": "p26-lat01",
+      "pressure_hpa": 1.0,
+      "latitude": -45.0,
+      "max_absolute_mean_difference_ppmv": 0.0015102894154757074,
+      "max_mean_difference_in_numba_sd": 0.0501041822980396,
+      "max_absolute_sd_relative_difference": 0.023356966554474057,
+      "max_change_mean_difference_in_numba_sd": 0.0475214490476591,
+      "max_change_sd_relative_difference": 0.055710039662008604
+    },
+    {
+      "panel": "p26-lat02",
+      "pressure_hpa": 1.0,
+      "latitude": -35.0,
+      "max_absolute_mean_difference_ppmv": 0.00046686757334990503,
+      "max_mean_difference_in_numba_sd": 0.02233435712806962,
+      "max_absolute_sd_relative_difference": 0.010469312156573873,
+      "max_change_mean_difference_in_numba_sd": 0.024800306275190986,
+      "max_change_sd_relative_difference": 0.013683952554219947
+    },
+    {
+      "panel": "p26-lat03",
+      "pressure_hpa": 1.0,
+      "latitude": -25.0,
+      "max_absolute_mean_difference_ppmv": 0.0002577522881423988,
+      "max_mean_difference_in_numba_sd": 0.01710081678906453,
+      "max_absolute_sd_relative_difference": 0.017980847256734878,
+      "max_change_mean_difference_in_numba_sd": 0.02256329555385381,
+      "max_change_sd_relative_difference": 0.01837919766078544
+    },
+    {
+      "panel": "p26-lat04",
+      "pressure_hpa": 1.0,
+      "latitude": -15.0,
+      "max_absolute_mean_difference_ppmv": 5.5648561610777136e-05,
+      "max_mean_difference_in_numba_sd": 0.006394075540018446,
+      "max_absolute_sd_relative_difference": 0.009168539727297143,
+      "max_change_mean_difference_in_numba_sd": 0.0059182127020104905,
+      "max_change_sd_relative_difference": 0.008244820059147617
+    },
+    {
+      "panel": "p26-lat05",
+      "pressure_hpa": 1.0,
+      "latitude": -5.0,
+      "max_absolute_mean_difference_ppmv": 0.00020192129810636672,
+      "max_mean_difference_in_numba_sd": 0.013803839744126568,
+      "max_absolute_sd_relative_difference": 0.008073810464995779,
+      "max_change_mean_difference_in_numba_sd": 0.015256588243663119,
+      "max_change_sd_relative_difference": 0.018780381100453214
+    },
+    {
+      "panel": "p26-lat06",
+      "pressure_hpa": 1.0,
+      "latitude": 5.0,
+      "max_absolute_mean_difference_ppmv": 3.1812181895851666e-05,
+      "max_mean_difference_in_numba_sd": 0.0027430206393301983,
+      "max_absolute_sd_relative_difference": 0.0020787529383994308,
+      "max_change_mean_difference_in_numba_sd": 0.002175837030864437,
+      "max_change_sd_relative_difference": 0.004431776997562364
+    },
+    {
+      "panel": "p26-lat07",
+      "pressure_hpa": 1.0,
+      "latitude": 15.0,
+      "max_absolute_mean_difference_ppmv": 0.00014055121041822716,
+      "max_mean_difference_in_numba_sd": 0.015067099718778697,
+      "max_absolute_sd_relative_difference": 0.007965848332343262,
+      "max_change_mean_difference_in_numba_sd": 0.017603018798988217,
+      "max_change_sd_relative_difference": 0.020765609857004375
+    },
+    {
+      "panel": "p26-lat08",
+      "pressure_hpa": 1.0,
+      "latitude": 25.0,
+      "max_absolute_mean_difference_ppmv": 0.00023734995886126597,
+      "max_mean_difference_in_numba_sd": 0.01660254166433321,
+      "max_absolute_sd_relative_difference": 0.007183439421398985,
+      "max_change_mean_difference_in_numba_sd": 0.02198645116665272,
+      "max_change_sd_relative_difference": 0.023335798634634308
+    },
+    {
+      "panel": "p26-lat09",
+      "pressure_hpa": 1.0,
+      "latitude": 35.0,
+      "max_absolute_mean_difference_ppmv": 0.000573401894069292,
+      "max_mean_difference_in_numba_sd": 0.02554438808166847,
+      "max_absolute_sd_relative_difference": 0.010082829570037699,
+      "max_change_mean_difference_in_numba_sd": 0.029973776236096164,
+      "max_change_sd_relative_difference": 0.013496756088655193
+    },
+    {
+      "panel": "p26-lat10",
+      "pressure_hpa": 1.0,
+      "latitude": 45.0,
+      "max_absolute_mean_difference_ppmv": 0.0002754461804106434,
+      "max_mean_difference_in_numba_sd": 0.009325408701738546,
+      "max_absolute_sd_relative_difference": 0.01135010417100335,
+      "max_change_mean_difference_in_numba_sd": 0.010187096409917381,
+      "max_change_sd_relative_difference": 0.021919032562025764
+    },
+    {
+      "panel": "p26-lat11",
+      "pressure_hpa": 1.0,
+      "latitude": 55.0,
+      "max_absolute_mean_difference_ppmv": 0.0005397773774937775,
+      "max_mean_difference_in_numba_sd": 0.030744638924954257,
+      "max_absolute_sd_relative_difference": 0.022201368356894124,
+      "max_change_mean_difference_in_numba_sd": 0.027778079959752178,
+      "max_change_sd_relative_difference": 0.04117873171936581
+    }
+  ],
+  "frozen_panel_bootstrap": {
+    "replicates": 2000,
+    "seed": 2026112101,
+    "rows": [
+      {
+        "panel": "p05-lat01",
+        "quantity": "sigma_trend",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -9.85144998220033e-07,
+        "difference_in_numba_posterior_sd": -0.02427700305044667,
+        "exploratory_interval95": [
+          -2.446761049207305e-06,
+          4.609840875266772e-07
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 22.279565359389796,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "sigma_seas",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -1.0614708752517332e-05,
+        "difference_in_numba_posterior_sd": -0.020040605031181276,
+        "exploratory_interval95": [
+          -3.514446830465947e-05,
+          1.3885741085973941e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 47.028342604520425,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "sigma_AR",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 5.582906616859867e-05,
+        "difference_in_numba_posterior_sd": 0.026016540865970002,
+        "exploratory_interval95": [
+          -9.471118720498686e-05,
+          0.00020340565689202234
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 87.36542310755449,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "rhoAR1",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 3.513850309477817e-05,
+        "difference_in_numba_posterior_sd": 0.00091304010925876,
+        "exploratory_interval95": [
+          -0.001666336904605059,
+          0.001857585819046644
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 43.74965469845201,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "log_stationary_AR_variance",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.003647211831791175,
+        "difference_in_numba_posterior_sd": 0.02239730070350061,
+        "exploratory_interval95": [
+          -0.0033986557312084328,
+          0.01057880081735418
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 45.77067235493024,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "trend_mean_start",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -0.00040655950580426037,
+        "difference_in_numba_posterior_sd": -0.00949554398322868,
+        "exploratory_interval95": [
+          -0.0010688741837269534,
+          0.00030349365724805405
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.3229720910608456,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "trend_mean_middle",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.0002490084368220735,
+        "difference_in_numba_posterior_sd": 0.011178050568706474,
+        "exploratory_interval95": [
+          4.0745359340921274e-05,
+          0.0004782372344819262
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 1.5267916598722078,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "trend_mean_end",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -0.00040959444051846816,
+        "difference_in_numba_posterior_sd": -0.00947894558211269,
+        "exploratory_interval95": [
+          -0.0011018669018965643,
+          0.0003342412778608682
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.3056464708327291,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "sigma_trend",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -9.85144998220033e-07,
+        "difference_in_numba_posterior_sd": -0.02427700305044667,
+        "exploratory_interval95": [
+          -2.7097231410746296e-06,
+          4.2932767328824105e-07
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 22.279565359389796,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "sigma_seas",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -1.0614708752517332e-05,
+        "difference_in_numba_posterior_sd": -0.020040605031181276,
+        "exploratory_interval95": [
+          -4.062990683105089e-05,
+          1.6187408073059074e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 47.028342604520425,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "sigma_AR",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 5.582906616859867e-05,
+        "difference_in_numba_posterior_sd": 0.026016540865970002,
+        "exploratory_interval95": [
+          -0.0001289720691889087,
+          0.00024552871675070535
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 87.36542310755449,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "rhoAR1",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 3.513850309477817e-05,
+        "difference_in_numba_posterior_sd": 0.00091304010925876,
+        "exploratory_interval95": [
+          -0.001971244029239444,
+          0.0018176925693585504
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 43.74965469845201,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "log_stationary_AR_variance",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.003647211831791175,
+        "difference_in_numba_posterior_sd": 0.02239730070350061,
+        "exploratory_interval95": [
+          -0.004624735375800016,
+          0.011844672552353353
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 45.77067235493024,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "trend_mean_start",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -0.00040655950580426037,
+        "difference_in_numba_posterior_sd": -0.00949554398322868,
+        "exploratory_interval95": [
+          -0.000992798422590302,
+          0.00021437835359405796
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.3229720910608456,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "trend_mean_middle",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.0002490084368220735,
+        "difference_in_numba_posterior_sd": 0.011178050568706474,
+        "exploratory_interval95": [
+          1.4652425124384028e-05,
+          0.0005133561504805261
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 1.5267916598722078,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p05-lat01",
+        "quantity": "trend_mean_end",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -0.00040959444051846816,
+        "difference_in_numba_posterior_sd": -0.00947894558211269,
+        "exploratory_interval95": [
+          -0.0009904268844865838,
+          0.00019819443849620179
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.3056464708327291,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "sigma_trend",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 2.76823857455334e-06,
+        "difference_in_numba_posterior_sd": 0.06546709453458241,
+        "exploratory_interval95": [
+          1.1465731787138187e-06,
+          4.516968969944135e-06
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 19.602227138282267,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "sigma_seas",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 9.420815393828197e-06,
+        "difference_in_numba_posterior_sd": 0.008653065810655317,
+        "exploratory_interval95": [
+          -4.255649273118935e-05,
+          6.0900823215291246e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 36.902897534353855,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "sigma_AR",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 3.3939720071499146e-05,
+        "difference_in_numba_posterior_sd": 0.009405499981832124,
+        "exploratory_interval95": [
+          -0.00011697905274571374,
+          0.0001931776192295956
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 33.78047123114752,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "rhoAR1",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.0003538096522984757,
+        "difference_in_numba_posterior_sd": 0.008722596365002482,
+        "exploratory_interval95": [
+          -0.001177809107002839,
+          0.001846963093355047
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 33.06734694036586,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "log_stationary_AR_variance",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.0023416809071465927,
+        "difference_in_numba_posterior_sd": 0.014728047598183238,
+        "exploratory_interval95": [
+          -0.0038134550076889926,
+          0.008763467563026692
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 28.949757145162128,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "trend_mean_start",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 6.719962659840206e-05,
+        "difference_in_numba_posterior_sd": 0.001322959659202956,
+        "exploratory_interval95": [
+          -7.309170635581009e-05,
+          0.0002228506359990721
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.1551988938956446,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "trend_mean_middle",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -0.0001667190604344171,
+        "difference_in_numba_posterior_sd": -0.006223308600323663,
+        "exploratory_interval95": [
+          -0.0003629293362134911,
+          6.135458707734377e-06
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.8386039504976095,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "trend_mean_end",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -9.296426934568558e-05,
+        "difference_in_numba_posterior_sd": -0.0018116511001634674,
+        "exploratory_interval95": [
+          -0.0003934165339814388,
+          0.00019393470783797266
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.4057042754872322,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "sigma_trend",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 2.76823857455334e-06,
+        "difference_in_numba_posterior_sd": 0.06546709453458241,
+        "exploratory_interval95": [
+          1.0799051418341588e-06,
+          4.6520325580060235e-06
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 19.602227138282267,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "sigma_seas",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 9.420815393828197e-06,
+        "difference_in_numba_posterior_sd": 0.008653065810655317,
+        "exploratory_interval95": [
+          -4.7844353416585186e-05,
+          6.34943591892458e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 36.902897534353855,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "sigma_AR",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 3.3939720071499146e-05,
+        "difference_in_numba_posterior_sd": 0.009405499981832124,
+        "exploratory_interval95": [
+          -0.00012173822514862098,
+          0.00019041857447014244
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 33.78047123114752,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "rhoAR1",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.0003538096522984757,
+        "difference_in_numba_posterior_sd": 0.008722596365002482,
+        "exploratory_interval95": [
+          -0.0016550526695477074,
+          0.002213301367175642
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 33.06734694036586,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "log_stationary_AR_variance",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.0023416809071465927,
+        "difference_in_numba_posterior_sd": 0.014728047598183238,
+        "exploratory_interval95": [
+          -0.004696556275254738,
+          0.009361267949235997
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 28.949757145162128,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "trend_mean_start",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 6.719962659840206e-05,
+        "difference_in_numba_posterior_sd": 0.001322959659202956,
+        "exploratory_interval95": [
+          -4.538735509731495e-05,
+          0.0002005096166262543
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.1551988938956446,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "trend_mean_middle",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -0.0001667190604344171,
+        "difference_in_numba_posterior_sd": -0.006223308600323663,
+        "exploratory_interval95": [
+          -0.00041199966190135217,
+          6.955340172098976e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.8386039504976095,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p10-lat04",
+        "quantity": "trend_mean_end",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -9.296426934568558e-05,
+        "difference_in_numba_posterior_sd": -0.0018116511001634674,
+        "exploratory_interval95": [
+          -0.0003972889691452597,
+          0.00023389225002261543
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.4057042754872322,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "sigma_trend",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 2.2656003019949614e-06,
+        "difference_in_numba_posterior_sd": 0.0519179475517581,
+        "exploratory_interval95": [
+          5.894082189684365e-07,
+          3.8219297162177396e-06
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 20.900372395517874,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "sigma_seas",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -1.3384159131000334e-05,
+        "difference_in_numba_posterior_sd": -0.021399091748531798,
+        "exploratory_interval95": [
+          -3.999021146430451e-05,
+          1.3149058218290495e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 47.31818702241684,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "sigma_AR",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -0.00014264037112443617,
+        "difference_in_numba_posterior_sd": -0.047339256664340905,
+        "exploratory_interval95": [
+          -0.00030201766009348293,
+          2.0211109008667205e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 50.91525919721029,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "rhoAR1",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.0005061575516489558,
+        "difference_in_numba_posterior_sd": 0.01269331443976735,
+        "exploratory_interval95": [
+          -0.001313999009253744,
+          0.002314958498251173
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 33.662979620740415,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "log_stationary_AR_variance",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -0.0024541827945165906,
+        "difference_in_numba_posterior_sd": -0.01520311588098907,
+        "exploratory_interval95": [
+          -0.010266419030092556,
+          0.005330294573436006
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 36.94415587387509,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "trend_mean_start",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.0008334960732678809,
+        "difference_in_numba_posterior_sd": 0.006942698835388078,
+        "exploratory_interval95": [
+          -0.0012766418194997352,
+          0.0030372919125357433
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.019932109336037,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "trend_mean_middle",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -0.0006205781064547722,
+        "difference_in_numba_posterior_sd": -0.009487555829381015,
+        "exploratory_interval95": [
+          -0.002155637309096603,
+          0.0008766465040593636
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.0291014733865143,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "trend_mean_end",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.0007595528898285409,
+        "difference_in_numba_posterior_sd": 0.005978199385273766,
+        "exploratory_interval95": [
+          -0.002606170380623629,
+          0.004236596527608586
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.0513084809360294,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "sigma_trend",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 2.2656003019949614e-06,
+        "difference_in_numba_posterior_sd": 0.0519179475517581,
+        "exploratory_interval95": [
+          5.865376294228211e-07,
+          3.863152210078814e-06
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 20.900372395517874,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "sigma_seas",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -1.3384159131000334e-05,
+        "difference_in_numba_posterior_sd": -0.021399091748531798,
+        "exploratory_interval95": [
+          -4.189924038339284e-05,
+          1.824859010320714e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 47.31818702241684,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "sigma_AR",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -0.00014264037112443617,
+        "difference_in_numba_posterior_sd": -0.047339256664340905,
+        "exploratory_interval95": [
+          -0.0003460343494271316,
+          4.182830963587299e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 50.91525919721029,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "rhoAR1",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.0005061575516489558,
+        "difference_in_numba_posterior_sd": 0.01269331443976735,
+        "exploratory_interval95": [
+          -0.0016125511596846692,
+          0.0025222387284795185
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 33.662979620740415,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "log_stationary_AR_variance",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -0.0024541827945165906,
+        "difference_in_numba_posterior_sd": -0.01520311588098907,
+        "exploratory_interval95": [
+          -0.011889304103024823,
+          0.00691339565094929
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 36.94415587387509,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "trend_mean_start",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.0008334960732678809,
+        "difference_in_numba_posterior_sd": 0.006942698835388078,
+        "exploratory_interval95": [
+          -0.0012542238460592436,
+          0.002989871391095898
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.019932109336037,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "trend_mean_middle",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -0.0006205781064547722,
+        "difference_in_numba_posterior_sd": -0.009487555829381015,
+        "exploratory_interval95": [
+          -0.0021325390968301326,
+          0.0008521918199611
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.0291014733865143,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p16-lat07",
+        "quantity": "trend_mean_end",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.0007595528898285409,
+        "difference_in_numba_posterior_sd": 0.005978199385273766,
+        "exploratory_interval95": [
+          -0.0026499848711687424,
+          0.004255108425613229
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.0513084809360294,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "sigma_trend",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -1.0312633219684484e-06,
+        "difference_in_numba_posterior_sd": -0.029979583522285868,
+        "exploratory_interval95": [
+          -2.447747934287017e-06,
+          3.0429725647319023e-07
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 32.68694248603553,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "sigma_seas",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 9.320457254478366e-06,
+        "difference_in_numba_posterior_sd": 0.01458303784889489,
+        "exploratory_interval95": [
+          -2.26402821024752e-05,
+          4.330779422940082e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 66.82857372997714,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "sigma_AR",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.00010164719859048765,
+        "difference_in_numba_posterior_sd": 0.02991926438554875,
+        "exploratory_interval95": [
+          -3.983924659872462e-05,
+          0.00024684724802073385
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 30.626405107116543,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "rhoAR1",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -0.002263193613603151,
+        "difference_in_numba_posterior_sd": -0.04573302601773678,
+        "exploratory_interval95": [
+          -0.004250677700067798,
+          -0.0004632755250261436
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 48.29626267926914,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "log_stationary_AR_variance",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.002118419352261647,
+        "difference_in_numba_posterior_sd": 0.02658078728041288,
+        "exploratory_interval95": [
+          -0.0013795149085926717,
+          0.0056446532652203
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 31.191701831165297,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "trend_mean_start",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -0.00045004329050879477,
+        "difference_in_numba_posterior_sd": -0.007702068661130818,
+        "exploratory_interval95": [
+          -0.0009181336304923127,
+          6.286661354659611e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.367294935770596,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "trend_mean_middle",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.000292010881020488,
+        "difference_in_numba_posterior_sd": 0.009467348514052688,
+        "exploratory_interval95": [
+          -9.129313820379625e-05,
+          0.0006584365068537763
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.1431773493501063,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "trend_mean_end",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -0.00012819353231741104,
+        "difference_in_numba_posterior_sd": -0.0022321065592644522,
+        "exploratory_interval95": [
+          -0.00023387283166402816,
+          -2.306573048247445e-05
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 1.1203381117505096,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "sigma_trend",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -1.0312633219684484e-06,
+        "difference_in_numba_posterior_sd": -0.029979583522285868,
+        "exploratory_interval95": [
+          -2.3533705520875045e-06,
+          3.0045637174818123e-07
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 32.68694248603553,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "sigma_seas",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 9.320457254478366e-06,
+        "difference_in_numba_posterior_sd": 0.01458303784889489,
+        "exploratory_interval95": [
+          -3.0014673628820928e-05,
+          5.0167743593003086e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 66.82857372997714,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "sigma_AR",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.00010164719859048765,
+        "difference_in_numba_posterior_sd": 0.02991926438554875,
+        "exploratory_interval95": [
+          -5.563845505316446e-05,
+          0.0002527997444553804
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 30.626405107116543,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "rhoAR1",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -0.002263193613603151,
+        "difference_in_numba_posterior_sd": -0.04573302601773678,
+        "exploratory_interval95": [
+          -0.00443845921387566,
+          -9.621451295215925e-05
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 48.29626267926914,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "log_stationary_AR_variance",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.002118419352261647,
+        "difference_in_numba_posterior_sd": 0.02658078728041288,
+        "exploratory_interval95": [
+          -0.0017219751559690577,
+          0.0057014485066500835
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 31.191701831165297,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "trend_mean_start",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -0.00045004329050879477,
+        "difference_in_numba_posterior_sd": -0.007702068661130818,
+        "exploratory_interval95": [
+          -0.0009337983081693979,
+          1.6728406350852065e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.367294935770596,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "trend_mean_middle",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.000292010881020488,
+        "difference_in_numba_posterior_sd": 0.009467348514052688,
+        "exploratory_interval95": [
+          -0.00012342705843879643,
+          0.0006918018256849342
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.1431773493501063,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p22-lat10",
+        "quantity": "trend_mean_end",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -0.00012819353231741104,
+        "difference_in_numba_posterior_sd": -0.0022321065592644522,
+        "exploratory_interval95": [
+          -0.00024051437158074674,
+          -9.130178536764861e-06
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 1.1203381117505096,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "sigma_trend",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 9.145759989580214e-07,
+        "difference_in_numba_posterior_sd": 0.021416726465302988,
+        "exploratory_interval95": [
+          -9.856630369550198e-07,
+          2.8434869565717837e-06
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 29.04652349761966,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "sigma_seas",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -8.448099802104607e-05,
+        "difference_in_numba_posterior_sd": -0.07696534559059053,
+        "exploratory_interval95": [
+          -0.00013762372155460233,
+          -3.379885429743878e-05
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 35.23602482527246,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "sigma_AR",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.00011189825256713998,
+        "difference_in_numba_posterior_sd": 0.040648479327149545,
+        "exploratory_interval95": [
+          -1.3548264164803604e-05,
+          0.0002384459020069613
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 57.33785885812555,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "rhoAR1",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -0.0004155025478239649,
+        "difference_in_numba_posterior_sd": -0.009553872790906134,
+        "exploratory_interval95": [
+          -0.0030683860168139814,
+          0.0020235011948153752
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 67.85856231982801,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "log_stationary_AR_variance",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.0035182656930645706,
+        "difference_in_numba_posterior_sd": 0.021684508317290335,
+        "exploratory_interval95": [
+          -0.004193134086135153,
+          0.011124288693241929
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 60.711771304705074,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "trend_mean_start",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.0001626016186332957,
+        "difference_in_numba_posterior_sd": 0.015409056088975961,
+        "exploratory_interval95": [
+          2.7656451445134955e-05,
+          0.0002901147308041973
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 1.3559335262310959,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "trend_mean_middle",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": -7.423299007980333e-05,
+        "difference_in_numba_posterior_sd": -0.01302815335733947,
+        "exploratory_interval95": [
+          -0.00018620887650682842,
+          4.905881767461999e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.773518888048057,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "trend_mean_end",
+        "block_sweeps": 32,
+        "blocks_per_ensemble": 16,
+        "point_difference": 0.00014555273503635835,
+        "difference_in_numba_posterior_sd": 0.012115510485340843,
+        "exploratory_interval95": [
+          -0.00033719376893153743,
+          0.000572047194769086
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.7200682264648148,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "sigma_trend",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 9.145759989580214e-07,
+        "difference_in_numba_posterior_sd": 0.021416726465302988,
+        "exploratory_interval95": [
+          -1.3648072222067364e-06,
+          3.181904164619124e-06
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 29.04652349761966,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "sigma_seas",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -8.448099802104607e-05,
+        "difference_in_numba_posterior_sd": -0.07696534559059053,
+        "exploratory_interval95": [
+          -0.0001484110579857178,
+          -2.180219958812155e-05
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 35.23602482527246,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "sigma_AR",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.00011189825256713998,
+        "difference_in_numba_posterior_sd": 0.040648479327149545,
+        "exploratory_interval95": [
+          -3.392719141630008e-05,
+          0.0002702752257316551
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 57.33785885812555,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "rhoAR1",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -0.0004155025478239649,
+        "difference_in_numba_posterior_sd": -0.009553872790906134,
+        "exploratory_interval95": [
+          -0.003386815407448965,
+          0.0021358100546770725
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 67.85856231982801,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "log_stationary_AR_variance",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.0035182656930645706,
+        "difference_in_numba_posterior_sd": 0.021684508317290335,
+        "exploratory_interval95": [
+          -0.004490074945174394,
+          0.011142474568197657
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 60.711771304705074,
+        "block_at_least_five_iat": false,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "trend_mean_start",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.0001626016186332957,
+        "difference_in_numba_posterior_sd": 0.015409056088975961,
+        "exploratory_interval95": [
+          4.1388683719315035e-05,
+          0.0002964316550800662
+        ],
+        "interval_excludes_zero": true,
+        "max_iat": 1.3559335262310959,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "trend_mean_middle",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": -7.423299007980333e-05,
+        "difference_in_numba_posterior_sd": -0.01302815335733947,
+        "exploratory_interval95": [
+          -0.0002060200961427297,
+          3.430044173793742e-05
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.773518888048057,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      },
+      {
+        "panel": "p00-lat00",
+        "quantity": "trend_mean_end",
+        "block_sweeps": 64,
+        "blocks_per_ensemble": 8,
+        "point_difference": 0.00014555273503635835,
+        "difference_in_numba_posterior_sd": 0.012115510485340843,
+        "exploratory_interval95": [
+          -0.0002762832556325326,
+          0.0005766059418012142
+        ],
+        "interval_excludes_zero": false,
+        "max_iat": 1.7200682264648148,
+        "block_at_least_five_iat": true,
+        "status": "DESCRIPTIVE_SINGLE_ENSEMBLE_NOT_QUALIFICATION"
+      }
+    ],
+    "method": "Independent nonoverlapping whole-ensemble time-block bootstrap;32/64 sweep sensitivity; walkers never treated as chains",
+    "caution": "512 sweeps and one ensemble are insufficient for four-run practical qualification; short-block intervals may underestimate MC error"
+  },
+  "diagnostics": {
+    "numba": {
+      "flag_counts": {
+        "HALF_FULL_STABILITY_POINT_FLAG": 42,
+        "NOMINAL_MEAN_ESS_BELOW_2000": 287,
+        "SHORT_AUTOCORRELATION_ESTIMATE": 312,
+        "SINGLE_ENSEMBLE_NO_BETWEEN_RUN_RHAT": 312
+      },
+      "min_acceptance": 0.5146484375,
+      "min_nominal_mean_ess": 324.7680585826566
+    },
+    "gpu": {
+      "flag_counts": {
+        "HALF_FULL_STABILITY_POINT_FLAG": 64,
+        "NOMINAL_MEAN_ESS_BELOW_2000": 278,
+        "SHORT_AUTOCORRELATION_ESTIMATE": 312,
+        "SINGLE_ENSEMBLE_NO_BETWEEN_RUN_RHAT": 312
+      },
+      "min_acceptance": 0.50390625,
+      "min_nominal_mean_ess": 318.25197030996486
+    }
+  },
+  "prepared_checksum": "a24858d6320c98f2db920c9175f45c9d8e0c8f052814623067330e9cbd57062c",
+  "gpu_provenance": "fcc8899c0eb6e22def915730d673775fb2c97325eb772b3ec93a6ab45eb32539",
+  "numba_provenance": "6365d83fee143fe3168de0ceccc9f9be7cf74711ccf97da2b145c41d9d2e100b"
+}
