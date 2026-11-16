@@ -1,6 +1,9 @@
 include LICENSE
 include *.md
 include *.ipynb
+include dlm_grid_benchmark.py dlm_lat_alt_mpi_run.py
+include data/BASIC_V1_2017_lotus_seascyc_gcsw2017_fac2.nc
+recursive-include regressors *.txt
 recursive-include vendor *
 recursive-include docs *.md *.json
 recursive-include examples/modernization *
