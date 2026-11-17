@@ -1,12 +1,12 @@
 """Vectorized offline physical parameters for six-model diagnostic records."""
 import numpy as np
 from scipy.special import expit
-from .api import _MODEL_SPECS
+from .components import component_spec
 from .transforms import parameter_names
 
 
 def physical_parameter_draws(model,u,nreg):
-    u=np.asarray(u);names=parameter_names(model,nreg);spec=_MODEL_SPECS[model]
+    u=np.asarray(u);names=parameter_names(model,nreg);spec=component_spec(model)
     if u.shape[-1]!=len(names) or not np.isfinite(u).all():raise ValueError('Finite exact-dimension transformed draws required')
     theta={}
     for j,name in enumerate(names):
@@ -24,7 +24,7 @@ def stationary_ar_variance(model,physical,nreg):
     names=parameter_names(model,nreg);x=np.asarray(physical)
     rho=x[...,names.index('rhoAR1')];sig=x[...,names.index('sigma_AR')]
     denominator=1-rho*rho
-    if _MODEL_SPECS[model]['ar2']:
+    if component_spec(model)['ar2']:
         b=x[...,names.index('rhoAR2')];denominator=denominator-b*b-2*b*rho*rho/(1-b)
     if not np.isfinite(denominator).all() or np.any(denominator<=0):raise ValueError('Invalid stationary AR denominator')
     return sig*sig/denominator

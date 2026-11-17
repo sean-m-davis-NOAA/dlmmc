@@ -11,6 +11,8 @@ from .compute import gpu_arithmetic
 @torch.no_grad()
 def conditional_trend_moments(prepared,parameters,anchor,*,backend='numba',regressors=None,workspace_bytes=1024**3):
     p=prepared;u=parameters
+    from .components import require_level
+    require_level(p.model,p.regressors.shape[-1])
     if not isinstance(u,torch.Tensor) or u.ndim!=3 or u.shape[1:]!=(p.cells,len(p.parameter_names)) or u.dtype!=p.y.dtype or u.device!=p.y.device:
         raise ValueError('Parameters must match prepared dtype/device and model dimension')
     if not len(u) or not 0<=anchor<len(p.time):raise ValueError('Nonempty draws and valid anchor required')

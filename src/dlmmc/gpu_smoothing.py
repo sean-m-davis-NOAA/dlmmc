@@ -12,6 +12,8 @@ from .compute import guarded_gpu_arithmetic
 @torch.no_grad()
 def fixed_cuda_trend_moments(p,u,anchor,*,regressors=None):
     """Portable Torch CUDA implementation; native CUDA qualification pending."""
+    from .components import require_level
+    require_level(p.model,p.regressors.shape[-1])
     from .tensor_target import model_components
     from .precision_prototype import filter_tensor
     from .tensor_smoothing import conditional_moments
@@ -29,6 +31,23 @@ def fixed_cuda_trend_moments(p,u,anchor,*,regressors=None):
     for t in range(anchor+1,n):
         weight=(j[...,t-1,:,:].transpose(-1,-2)@weight.unsqueeze(-1)).squeeze(-1)
         cv[...,t]=variance[...,t]+variance[...,anchor]-2*(weight*c[...,t,:,0]).sum(-1)
+    from .components import compiled_layout
+    if compiled_layout(p.model,p.regressors.shape[-1]).level_kind=='level':
+        # Backward innovations are independent of future states; same target,
+        # stable quadratic forms instead of large covariance subtraction.
+        eye=torch.eye(G.shape[-1],dtype=G.dtype,device=G.device).expand_as(G)
+        A=eye.unsqueeze(-3)-j@G.unsqueeze(-3)
+        noise=A@filtered[2][...,:-1,:,:]@A.transpose(-1,-2)+j@Q.unsqueeze(-3)@j.transpose(-1,-2)
+        H=eye.clone();N=torch.zeros_like(G);e=eye[...,0,:]
+        for t in range(anchor-1,-1,-1):
+            J=j[...,t,:,:];H=J@H;N=noise[...,t,:,:]+J@N@J.transpose(-1,-2)
+            v=H[...,0,:]-e
+            cv[...,t]=N[...,0,0]+(v*(c[...,anchor,:,:]@v.unsqueeze(-1)).squeeze(-1)).sum(-1)
+        H=eye.clone();N=torch.zeros_like(G)
+        for t in range(anchor+1,n):
+            N=N+H@noise[...,t-1,:,:]@H.transpose(-1,-2);H=H@j[...,t-1,:,:]
+            v=H[...,0,:]-e
+            cv[...,t]=N[...,0,0]+(v*(c[...,t,:,:]@v.unsqueeze(-1)).squeeze(-1)).sum(-1)
     result=torch.stack((m[...,0],variance,change,cv),-1)
     if not bool(torch.isfinite(result).all()) or bool((result[...,1::2]<0).any()):raise FloatingPointError('Invalid GPU covariance; no floor')
     scale=u.new_tensor(p.scale)[None,:,None];offset=u.new_tensor(p.offset)[None,:,None]
@@ -65,7 +84,9 @@ def summarize_gpu_trends(fit,*,output_dir,anchor_month='1998-01',selected_walker
     selected,selections,steps,walkers=select_draws(fit,per,seed,retained_sweeps);draws,cells,_=selected.shape;n=len(p.time)
     selection_seconds=time.monotonic()-started
     from .structured_mps import state_layout
-    d,_=state_layout(p.model,p.regressors.shape[-1]);history=2*d*d+d
+    d,_=state_layout(p.model,p.regressors.shape[-1])
+    from .components import compiled_layout
+    history=(3 if compiled_layout(p.model,p.regressors.shape[-1]).level_kind=='level' else 2)*d*d+d
     if p.y.device.type=='mps':
         from .mps_smoothing import fixed_mps_trend_moments,compile_smoother
         scalar_workspace=history+4

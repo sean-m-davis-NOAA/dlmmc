@@ -14,10 +14,13 @@ from .production_trends import _trend_one
 from .production import production_parameter_cache
 from .sampling import _threads
 from .diagnostics import autocorrelation_time
+from .components import compiled_layout
 
 
 def compact_arguments(p, unconstrained, anchor):
     """All selected draws × all panels; only five matrix entries vary by draw."""
+    from .components import require_level
+    require_level(p.model,p.regressors.shape[-1])
     u=torch.as_tensor(np.asarray(unconstrained),dtype=torch.float64)
     if (p.y.device.type!='cpu' or p.y.dtype!=torch.float64
             or u.ndim!=3 or u.shape[1:]!=(p.cells,len(p.parameter_names)) or not len(u)):
@@ -25,33 +28,32 @@ def compact_arguments(p, unconstrained, anchor):
     if not 0<=anchor<len(p.time):raise ValueError('Valid anchor required')
     with torch.no_grad():
         F,G,Q,C,_,_=model_components(u[:1],*p.arguments,p.model,S=p.priors['S'],sampling=p.sampling)
-        if p.model=='vanilla_ar1':
+        if p.regressors.shape[-1]>0 and compiled_layout(p.model,p.regressors.shape[-1])==compiled_layout('vanilla_ar1',p.regressors.shape[-1]):
             sig=torch.exp(u[...,:3]);rho=torch.sigmoid(u[...,3])
             if not bool(torch.isfinite(u).all() and torch.isfinite(sig).all() and (sig>0).all() and (rho>0).all() and (rho<1).all()):
                 raise ValueError('All selected parameters must be valid; no draw removal')
             q=sig*sig;cv=q[...,2]/(1-rho*rho)
             varying=torch.stack((q[...,0],q[...,1],q[...,2],rho,cv),-1).permute(1,0,2).contiguous()
         else:
-            from .api import _MODEL_SPECS
-            spec=_MODEL_SPECS[p.model];names=p.parameter_names;theta={}
+            layout=compiled_layout(p.model,p.regressors.shape[-1]);names=p.parameter_names;theta={}
             valid=torch.isfinite(u).all(-1)
             for j,name in enumerate(names):
                 if name.startswith('sigma'):value=u[...,j].exp();valid=valid&torch.isfinite(value)&(value>0)
                 else:
                     prob=u[...,j].sigmoid();valid=valid&(prob>0)&(prob<1)
-                    value=prob*((.5 if spec['ar2'] else 1.) if name=='rhoAR1' else 1-theta['rhoAR1'])
+                    value=prob*((.5 if layout.ar_order==2 else 1.) if name=='rhoAR1' else 1-theta['rhoAR1'])
                 theta[name]=value
             if not bool(valid.all()):raise ValueError('All selected parameters must be valid; no draw removal')
-            d=G.shape[-1];base=6 if spec['seasonal'] else 2;ar=base+p.regressors.shape[-1]
+            d=layout.dimension;ar=layout.ar_start
             diag=Q[0].diagonal(dim1=-2,dim2=-1).expand(len(u),-1,-1).clone()
-            diag[...,1]=theta['sigma_trend']**2
-            if spec['seasonal']:diag[...,2:6]=theta['sigma_seas'][...,None]**2
-            if spec['regressors']=='dynamic':
-                for j in range(p.regressors.shape[-1]):diag[...,base+j]=theta[f'sigma_reg[{j}]']**2
-            diag[...,ar]=theta['sigma_AR']**2;a=theta['rhoAR1'];b=theta.get('rhoAR2',torch.zeros_like(a))
-            v=theta['sigma_AR']**2/(1-a*a-b*b-2*b*a*a/(1-b)) if spec['ar2'] else theta['sigma_AR']**2/(1-a*a)
-            cross=v*a/(1-b) if spec['ar2'] else torch.zeros_like(v)
-            extra=torch.stack((a,b,v,cross,torch.full_like(a,ar),torch.full_like(a,int(spec['ar2']))),-1)
+            for i,name in layout.diagonal_scales:diag[...,i]=theta[name]**2
+            zero=torch.zeros(u.shape[:-1],dtype=u.dtype,device=u.device)
+            a=theta.get('rhoAR1',zero);b=theta.get('rhoAR2',zero)
+            if layout.ar_order:
+                v=theta['sigma_AR']**2/(1-a*a-b*b-2*b*a*a/(1-b)) if layout.ar_order==2 else theta['sigma_AR']**2/(1-a*a)
+            else:v=zero
+            cross=v*a/(1-b) if layout.ar_order==2 else zero
+            extra=torch.stack((a,b,v,cross,torch.full_like(a,ar),torch.full_like(a,int(layout.ar_order==2))),-1)
             varying=torch.cat((diag,extra),-1).permute(1,0,2).contiguous()
     return tuple(np.ascontiguousarray(z.numpy()) for z in
         (p.y,p.variance,p.observed,F[0],G[0],Q[0],C[0],varying))+(int(anchor),)
@@ -67,7 +69,8 @@ def _matrices(G,Q,C,values):
     else:
         d=len(G);ar=int(values[-2]);ar2=bool(values[-1])
         for i in range(d):q[i,i]=values[i]
-        g[ar,ar]=values[d];c[ar,ar]=values[d+2]
+        if ar>=0:
+            g[ar,ar]=values[d];c[ar,ar]=values[d+2]
         if ar2:
             g[ar,ar+1]=values[d+1];c[ar+1,ar+1]=values[d+2]
             c[ar,ar+1]=values[d+3];c[ar+1,ar]=values[d+3]

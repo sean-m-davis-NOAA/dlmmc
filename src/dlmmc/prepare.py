@@ -28,6 +28,16 @@ class PreparedData:
     input_policy: dict | None = None
 
     @property
+    def model_spec(self):
+        from .components import as_model
+        return as_model(self.model)
+
+    @property
+    def state_layout(self):
+        from .components import compiled_layout
+        return compiled_layout(self.model,self.regressors.shape[-1])
+
+    @property
     def cells(self): return self.y.shape[0]
 
     @property
@@ -90,6 +100,11 @@ def prepare_data(data, regressors=None, *, uncertainty=None, model='vanilla_ar1'
     else:
         values,names=_prepare_regressors(regressors,data.time,spec['regressors'])
         X=np.empty((cells,len(time),0)) if values is None else np.broadcast_to(values,(cells,*values.shape)).copy()
+    from .components import bound_model
+    name=bound_model(name,names)
+    name,spec=_resolve_model(name)
+    if not parameter_names(name,X.shape[-1]):
+        raise ValueError('Model has no sampled parameters; use build_state_space for fixed-parameter calculations')
     prior=_resolve_priors(spec,X.shape[-1],priors,{})
     coordinates={dim:np.asarray(stacked[dim].values) for dim in spatial}
     # Include auxiliary per-panel physical coordinates (e.g. pressure, latitude).

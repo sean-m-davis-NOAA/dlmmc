@@ -1,4 +1,5 @@
 """Fully joint affine moves, bounded checkpoints and explicit spatial scope."""
+from .components import initial_coordinates
 from dataclasses import dataclass,asdict
 from pathlib import Path
 import hashlib,json,time,fcntl
@@ -101,7 +102,7 @@ def sample_spatial(prepared,prior,*,output_dir,backend='numba',half_walkers=64,r
     p=prepared_for_backend(p,backend)
     with _threads(backend,torch_threads,numba_threads):
         target=SpatialTarget(p,prior,backend=backend)
-        default=np.array([-9.2 if n.startswith('sigma_trend') or n.startswith('sigma_reg') else -4.6 if n=='sigma_seas' else -2.3 if n=='sigma_AR' else 0. for n in p.parameter_names])
+        default=initial_coordinates(p.model,p.regressors.shape[-1])
         center=np.broadcast_to(default,(p.cells,len(default))).copy().ravel() if centers is None else np.asarray(centers).reshape(dimension).copy()
         dummy=p.y.new_tensor(center).expand(half_walkers,-1).clone();compile_info={}
         if backend=='numba':

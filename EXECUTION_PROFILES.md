@@ -86,3 +86,7 @@ The measured 312-panel fixed-batch comparison gives 8/10/16-thread likelihood me
 ## Named spatial and lag specifications
 
 See [SPATIAL_API.md](SPATIAL_API.md) for scalar/per-panel Gaussian means and standard deviations, named grid-axis correlation lengths and `lags={"ENSO": LagPrior(...)}` with fixed predictor coverage. These calls dispatch to joint field acceptance, not independent panel acceptance. The new short-budget experiments preserve their INCONCLUSIVE convergence flags; a useful pipeline/recovery check does not replace four-run scientific qualification. Full-grid spatial and lag tests remain outside the currently selected four-panel scope.
+
+## Composed models
+
+The same profiles accept `model=Model(...)`; see [COMPONENTS.md](COMPONENTS.md). Independent batching and joint field acceptance are unchanged. No-AR GPU sampling is available by explicit user decision; failed numerical fixtures remain recorded. Trend summaries require Trend or Level. For an explicitly selected larger production job, serialize a composed selection model with `model.to_dict()`; the supplied selection is checked against the canonical specification. This API update does not itself authorize a larger run.

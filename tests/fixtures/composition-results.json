@@ -1,0 +1,40 @@
+[
+  {
+    "model": "dlmmc-model-v1:{\"components\":[{\"level_variance\":1e-10,\"type\":\"Trend\"},{\"name\":\"seas\",\"periods\":[12.0],\"type\":\"Harmonics\"},{\"dynamic\":[\"SOLAR\"],\"static_variance\":null,\"type\":\"Regression\"}],\"regressor_names\":[\"ENSO\",\"SOLAR\",\"QBO30\"],\"version\":1}",
+    "nreg": 3,
+    "canonical_max_density_error": 1.116417056606224,
+    "input_parameter_rounding": 0.0020213983489156817,
+    "matrix_rounding": 0.0007832451155991293,
+    "filter_arithmetic": 1.1187526556368539,
+    "float32_ulp_max": 0.00048828125,
+    "per_panel_max_density_error": [
+      0.22239752127467227,
+      0.14571169873966028,
+      0.09131051317251604,
+      1.116417056606224,
+      0.026871983350829964
+    ],
+    "gate": 0.01,
+    "status": "FAIL_RETAINED",
+    "all_states": 7
+  },
+  {
+    "model": "dlmmc-model-v1:{\"components\":[{\"type\":\"Level\"}],\"regressor_names\":[],\"version\":1}",
+    "nreg": 0,
+    "canonical_max_density_error": 0.035959487897343934,
+    "input_parameter_rounding": 0.012314584426349029,
+    "matrix_rounding": 0.0012106868671253324,
+    "filter_arithmetic": 0.023113059723982587,
+    "float32_ulp_max": 0.015625,
+    "per_panel_max_density_error": [
+      0.000959044706178247,
+      0.0013331180380191654,
+      0.00029185287121435977,
+      0.035959487897343934,
+      0.00011561394478576403
+    ],
+    "gate": 0.01,
+    "status": "FAIL_RETAINED",
+    "all_states": 1
+  }
+]

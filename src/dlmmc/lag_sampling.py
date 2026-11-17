@@ -1,4 +1,5 @@
 """Bounded two-field joint sampling; stage06 has its own selection contract."""
+from .components import initial_coordinates
 from dataclasses import dataclass,asdict
 from pathlib import Path
 import json,hashlib,time,fcntl
@@ -110,7 +111,7 @@ def sample_enso_lag(prepared,sigma_prior,lag_prior,predictor,*,output_dir,backen
     p=prepared_for_backend(p,backend)
     with _threads(backend,torch_threads,numba_threads):
         target=ENSOLagTarget(p,sigma_prior,lag_prior,predictor,backend=backend)
-        base=[-9.2 if n.startswith('sigma_trend') else -4.6 if n=='sigma_seas' else -2.3 if n=='sigma_AR' else 0. for n in p.parameter_names]
+        base=list(initial_coordinates(p.model,p.regressors.shape[-1]))
         default=np.tile([*base,np.log(2/(lag_prior.upper-2))] if lag_prior.upper>2 else [*base,0.],p.cells)
         initial=np.asarray(default if centers is None else centers,dtype=float)
         if initial.size==dimension:initial=initial.reshape(1,dimension)

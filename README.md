@@ -6,7 +6,7 @@ Start with [installation](INSTALL.md), [testing](TESTING.md), and the [support a
 
 ## Current API
 
-The API selects six registered model presets: `vanilla_ar1`, `vanilla_ar2`, `noregs_ar1`, `dynregs_ar1`, `vanilla_ar1_noseasonal`, and `vanilla_ar2_noseasonal`. Shared matrix construction, priors and backend kernels serve these presets. Arbitrary component composition is future work.
+The affine API now accepts composable models: `Trend() + Harmonics((12, 6)) + Regression(dynamic=("ENSO",)) + AR(2)`. One layout compiler constructs matrices and backend specializations. Optional Level/Trend, harmonic periods, mixed static/dynamic coefficients and optional AR terms are supported. The six historical preset strings remain compatibility shorthands. See [the component API](COMPONENTS.md) and [its validation/timings](COMPOSITION_VALIDATION.md). All implemented component models are selectable on Numba, Torch CPU, MPS and CUDA. Backend access is independent of numerical qualification; retained float32 failures remain documented.
 
 ```python
 from dlmmc import fit_production, diagnose_production, summarize_production_trends
@@ -52,3 +52,5 @@ Defaults run bounded smoke checks on at most five independent panels or four cou
 `dlmmc.fit` remains the optional CmdStan interface; `fit_grid_mpi` remains a legacy workflow. No-seasonal models require declared deseasonalized inputs; the supplied examples use fitted annual and semiannual harmonics. Priors, Jacobians, observation masking and conditional state uncertainty are preserved. [Scientific policy](MODERNIZATION.md) describes precision, practical consistency checks and continuation restrictions.
 
 The original [README](docs/LEGACY_README.md) and [installation guide](docs/LEGACY_INSTALL.md) are retained as historical documentation. Their released-package, PyStan and MPI instructions do not install this modernization branch. Original data, attribution and licenses remain in the repository.
+
+Choose `sampler="affine"` or `sampler="cmdstan"` through the unified `fit` API with `AffineSettings`/`StanSettings`; see [SAMPLERS.md](SAMPLERS.md). The [vanilla AR1 tutorial](dlm_tutorial.ipynb) follows the original data/regressor walkthrough, runs one default Affine panel and includes an explicitly enabled312-panel run with unanchored trend bands.

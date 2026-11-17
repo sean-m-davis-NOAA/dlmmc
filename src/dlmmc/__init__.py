@@ -1,8 +1,10 @@
 """Dynamical linear models with optional affine tensor and Stan backends."""
 
-from .api import compile_models, fit
+from .api import compile_models
+from .fitting import fit, AffineSettings, StanSettings, summarize_trends, summarize_components
 from .mpi import fit_grid_mpi
 from .preprocessing import deseasonalize_harmonics
+from .components import Model, Trend, Level, Harmonics, Regression, AR, build_state_space
 
 def fit_grid(*args, **kwargs):
     """Independent tensorized affine fit; explicit dtype/backend, bounded storage."""
@@ -66,7 +68,7 @@ def conditional_trend_probabilities(*args, **kwargs):
     return implementation(*args, **kwargs)
 
 
-__all__ = ["fit", "fit_grid", "fit_grid_mpi", "compile_models", "prepare_data", "resume_fit", "load_fit", "diagnose_fit", "reconstruct_fit", "fork_cells", "conditional_trend_probabilities", "deseasonalize_harmonics"]
+__all__ = ["fit", "AffineSettings", "StanSettings", "summarize_trends", "summarize_components", "fit_grid", "fit_grid_mpi", "compile_models", "prepare_data", "resume_fit", "load_fit", "diagnose_fit", "reconstruct_fit", "fork_cells", "conditional_trend_probabilities", "deseasonalize_harmonics"]
 
 # Importing the base package must not require Torch, Numba, or affine. Resolve
 # explicit optional APIs only when requested; this changes no model equations.
@@ -82,7 +84,7 @@ _OPTIONAL_APIS = {
     'resume_enso_lag': 'lag_sampling', 'load_enso_lag': 'lag_sampling',
     'diagnose_enso_lag': 'lag_diagnostics', 'reconstruct_enso_lag': 'lag_reconstruction',
 }
-__all__ += list(_OPTIONAL_APIS)
+__all__ += list(_OPTIONAL_APIS) + ["Model","Trend","Level","Harmonics","Regression","AR","build_state_space"]
 
 
 def __getattr__(name):

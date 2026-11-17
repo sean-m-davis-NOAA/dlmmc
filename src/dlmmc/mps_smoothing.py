@@ -134,20 +134,55 @@ kernel void smooth(device const float* y,device const float* variance,device con
 '''
 
 
+def _level_change_source(source):
+    """Avoid subtracting nearly equal large level covariances for differences.
+
+    x_t = J_t x_{t+1} + independent backward innovation. Accumulate its
+    conditional covariance and the endpoint quadratic form, with no floors.
+    This specialization needs one additional covariance history per draw.
+    """
+    source=source.replace('uint stride=times*((D*D)+(D*D)+D)', 'uint stride=times*(3*(D*D)+D)')
+    source=source.replace('device float* result=out+', 'device float* noise=means+times*D;\n device float* result=out+')
+    source=source.replace('  mul(J,next,tmp);', '  for(uint i=0;i<D*D;i++)noise[t*D*D+i]=sc[i];\n  mul(J,next,tmp);')
+    begin=source.index(' for(uint i=0;i<D;i++)v[i]=cov[anchor*')
+    end=source.index(' for(uint t=0;t<times;t++)for',begin)
+    stable=r''' // P maps the anchor endpoint; next is accumulated independent noise.
+ for(uint i=0;i<D;i++)for(uint j=0;j<D;j++){
+  P[i*D+j]=(i==j?1.0f:0.0f);next[i*D+j]=0;G[i*D+j]=cov[anchor*D*D+i*D+j];}
+ for(int t=int(anchor)-1;t>=0;t--){
+  for(uint i=0;i<D*D;i++)J[i]=gainhist[t*D*D+i];
+  mul(J,P,tmp);for(uint i=0;i<D*D;i++)P[i]=tmp[i];
+  mul(J,next,tmp);mult(tmp,J,R);
+  for(uint i=0;i<D*D;i++)next[i]=noise[t*D*D+i]+R[i];
+  for(uint i=0;i<D;i++)v[i]=P[i]-(i==0?1.0f:0.0f);
+  float quad=0;for(uint i=0;i<D;i++){float z=0;for(uint j=0;j<D;j++)z+=G[i*D+j]*v[j];quad+=v[i]*z;}
+  result[t*4+3]=next[0]+quad;
+ }
+ for(uint i=0;i<D;i++)for(uint j=0;j<D;j++){P[i*D+j]=(i==j?1.0f:0.0f);next[i*D+j]=0;}
+ for(uint t=anchor+1;t<times;t++){
+  for(uint i=0;i<D*D;i++){Q[i]=noise[(t-1)*D*D+i];J[i]=gainhist[(t-1)*D*D+i];}
+  mul(P,Q,tmp);mult(tmp,P,R);for(uint i=0;i<D*D;i++)next[i]+=R[i];
+  mul(P,J,tmp);for(uint i=0;i<D*D;i++)P[i]=tmp[i];
+  for(uint i=0;i<D;i++)v[i]=P[i]-(i==0?1.0f:0.0f);
+  float quad=0;for(uint i=0;i<D;i++){float z=0;for(uint j=0;j<D;j++)z+=cov[t*D*D+i*D+j]*v[j];quad+=v[i]*z;}
+  result[t*4+3]=next[0]+quad;
+ }
+'''
+    return source[:begin]+stable+source[end:]
+
+
 def smoother_source(model,nreg):
     d,ar=state_layout(model,nreg)
-    from .api import _MODEL_SPECS
-    spec=_MODEL_SPECS[model];c0=list(range(d));c1=list(range(d));c1[0]=1
-    if spec['seasonal']:
-        for i in (2,4):c0[i]=c0[i+1]=i;c1[i]=c1[i+1]=i+1
-    if spec['ar2']:c0[ar]=c0[ar+1]=ar;c1[ar]=c1[ar+1]=ar+1
+    from .components import compiled_layout
+    c0,c1=compiled_layout(model,nreg).transition_columns
     constants=f"constant uint COL0[{d}]={{"+','.join(map(str,c0))+"};\n"+f"constant uint COL1[{d}]={{"+','.join(map(str,c1))+"};"
     source=SOURCE.replace('constant uint D=12;',f'constant uint D={d};\n'+constants)
     source=source.replace('144','(D*D)').replace('[12]','[D]').replace('+12)', '+D)')
     source=source.replace('uint c0[D],c1[D];','')
     source=source.replace('m[i]=0;c0[i]=i;c1[i]=i;if(i==0)c1[i]=1;', 'm[i]=0;')
     source=source.replace('if(i==2||i==3){c0[i]=2;c1[i]=3;}if(i==4||i==5){c0[i]=4;c1[i]=5;}', '')
-    return source.replace('c0[','COL0[').replace('c1[','COL1[')
+    source=source.replace('c0[','COL0[').replace('c1[','COL1[')
+    return _level_change_source(source) if compiled_layout(model,nreg).level_kind=='level' else source
 
 
 @lru_cache(maxsize=64)
@@ -162,13 +197,17 @@ def compile_smoother(model="vanilla_ar1",nreg=5):
 @torch.no_grad()
 def fixed_mps_trend_moments(p,u,anchor,*,workspace_bytes=1024**3,regressors=None):
     """Physical moments [draw,panel,time,mean/variance/change/change variance]."""
+    from .components import require_level
+    require_level(p.model,p.regressors.shape[-1])
     target=StructuredMPSTarget(p);p=target.prepared
     if u.device.type!='mps' or u.dtype!=torch.float32 or u.ndim!=3 or u.shape[1:]!=(p.cells,len(p.parameter_names)) or not len(u):
         raise ValueError('MPS32 draw/panel/parameter array required')
     n=p.y.shape[1]
     if regressors is not None and (regressors.shape!=(len(u),p.cells,n,p.regressors.shape[-1]) or regressors.dtype!=u.dtype or regressors.device!=u.device):raise ValueError("Per-draw regressors must match draws/panels/time/regressors and dtype/device")
     if not 0<=anchor<n:raise ValueError('Valid anchor index required')
-    d,_=state_layout(p.model,p.regressors.shape[-1]);history=2*d*d+d
+    d,_=state_layout(p.model,p.regressors.shape[-1])
+    from .components import compiled_layout
+    history=(3 if compiled_layout(p.model,p.regressors.shape[-1]).level_kind=='level' else 2)*d*d+d
     per_draw=p.cells*n*(history+4)*4
     tile=min(len(u),int(workspace_bytes)//per_draw)
     if tile<1:raise ValueError('Workspace too small to retain all panels for one draw')

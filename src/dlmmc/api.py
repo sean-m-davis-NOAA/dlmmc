@@ -44,6 +44,10 @@ _DEFAULT_PRIORS = {
 
 
 def _resolve_model(model: str) -> tuple[str, dict[str, Any]]:
+    from .components import Model, PREFIX, model_key, component_spec
+    if isinstance(model,(Model,dict)) or (isinstance(model,str) and model.startswith(PREFIX)):
+        key=model_key(model)
+        return key,component_spec(key)
     name = model.lower().replace("-", "_")
     if name.startswith("dlm_"):
         name = name[4:]
@@ -60,6 +64,10 @@ def _resolve_priors(
     priors: Mapping[str, Any] | None,
     direct_priors: Mapping[str, Any],
 ) -> dict[str, Any]:
+    if "component_model" in spec:
+        from .components import resolve_priors
+        if direct_priors:raise ValueError("Use the priors mapping for composed models")
+        return resolve_priors(spec["component_model"],nreg,priors)
     allowed = {"S", "sigma_trend_prior", "sigma_AR_prior"}
     if spec["seasonal"]:
         allowed.add("sigma_seas_prior")
@@ -189,6 +197,8 @@ def _get_compiled_model(
     spec: Mapping[str, Any],
     cache_dir: str | os.PathLike[str] | None = None,
 ) -> CmdStanModel:
+    if "source" not in spec:
+        raise ValueError("CmdStan supports legacy presets only; use fit_grid/fit_production for composed models")
     source = getattr(_stan_models, spec["source"])
     digest = hashlib.sha256(source.encode("utf-8")).hexdigest()[:12]
     cache_root = Path(cache_dir).expanduser() if cache_dir is not None else Path(user_cache_dir("dlmmc")) / "stan"

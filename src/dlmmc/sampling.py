@@ -1,4 +1,5 @@
 """Public affine fitting with bounded device storage and exact local resume."""
+from .components import initial_coordinates
 from dataclasses import dataclass
 import hashlib
 import json
@@ -58,9 +59,7 @@ def optimized_clouds(prepared,target,*,half_walkers=64,runs=4,seed=20261104,cent
     """Optimize transformed coordinates, then check rank/support in actual dtype."""
     p=prepared;dimension=len(p.parameter_names)
     if half_walkers<dimension+1 or runs<4 or spread<=0:raise ValueError('Full-rank halves and four independent runs required')
-    default=np.array([-9.2 if name.startswith('sigma_trend') or name.startswith('sigma_reg') else
-                      -4.6 if name=='sigma_seas' else -2.3 if name=='sigma_AR' else 0.
-                      for name in p.parameter_names])
+    default=initial_coordinates(p.model,p.regressors.shape[-1])
     centers=np.broadcast_to(default,(p.cells,dimension)).copy() if centers is None else np.asarray(centers,dtype=float).copy()
     if centers.shape!=(p.cells,dimension):raise ValueError('One transformed center per cell required')
     optimization=[]
@@ -115,7 +114,7 @@ def _load_prepared(folder):
 def _source_identity():
     import affine.torch_stream
     paths=[Path(__file__),Path(affine.torch_stream.__file__)]
-    paths.extend(Path(__file__).parent/name for name in ('prepare.py','torch_filter.py','tensor_target.py','numba_prototype.py','transforms.py','api.py','input_contract.py','preprocessing.py','__init__.py','compute.py','structured_mps.py'))
+    paths.extend(Path(__file__).parent/name for name in ('prepare.py','torch_filter.py','tensor_target.py','numba_prototype.py','transforms.py','api.py','input_contract.py','preprocessing.py','__init__.py','compute.py','structured_mps.py','components.py'))
     return {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
 
 
@@ -164,7 +163,7 @@ def _sample_parameters(prepared,*,output_dir,backend='numba',retained_sweeps=100
     from .compute import prepared_for_backend
     prepared=prepared_for_backend(prepared,backend)
     target=make_target(prepared,backend)
-    dummy=prepared.y.new_tensor([-9.2 if n.startswith('sigma_trend') or n.startswith('sigma_reg') else -4.6 if n=='sigma_seas' else -2.3 if n=='sigma_AR' else 0. for n in prepared.parameter_names]).expand(half_walkers,prepared.cells,-1).clone()
+    dummy=prepared.y.new_tensor(initial_coordinates(prepared.model,prepared.regressors.shape[-1])).expand(half_walkers,prepared.cells,-1).clone()
     compile_info={'compilation_or_cache_load_seconds':0.}
     if backend=='numba':
         from .numba_prototype import compile_specialization

@@ -11,6 +11,8 @@ from .numba_conditional import compile_contrasts, positive_trend_probabilities
 
 def _arguments(prepared, unconstrained, contrasts):
     p = prepared
+    from .components import require_level
+    require_level(p.model,p.regressors.shape[-1])
     if p.y.dtype != torch.float64 or p.y.device.type != 'cpu':
         raise ValueError('Conditional probability path requires explicit CPU float64')
     u = np.asarray(unconstrained)

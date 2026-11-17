@@ -8,7 +8,7 @@ import fcntl
 import numpy as np
 import torch
 import xarray as xr
-from .api import _MODEL_SPECS
+from .components import compiled_layout
 from .inference import diagnose_fit, posterior_fingerprint
 from .validation_selection import stratified_indices
 from .tensor_target import model_components
@@ -51,7 +51,8 @@ def conditional_outputs(prepared, unconstrained, *, seed):
         predictive = torch.where(p.observed, predictive, torch.full_like(predictive, torch.nan))
         states = states * scale[..., None]
         mean = mean * scale[..., None]
-        states[..., 0] += offset; mean[..., 0] += offset
+        if compiled_layout(p.model,p.regressors.shape[-1]).level_kind is not None:
+            states[..., 0] += offset; mean[..., 0] += offset
         state_variance = covariance.diagonal(dim1=-2, dim2=-1) * scale[..., None]**2
     return {k: v.cpu().numpy() for k, v in dict(states=states, conditional_mean=mean,
             conditional_variance=state_variance, latent_signal=latent,
@@ -128,24 +129,28 @@ class ReconstructionResult:
             for cell in range(config['cells']):
                 _,theta=physical_parameters(chunk.unconstrained.values[:,cell],config['model'],config['nreg'])
                 states=chunk.states.values[:,cell].copy()
-                states[...,0]-=config['offset'][cell];states/=config['scale'][cell]
-                labels,q,sign_labels,s=scientific_summaries(config['model'],theta[...,:-1],states,
+                if compiled_layout(config['model'],config['nreg']).level_kind is not None:states[...,0]-=config['offset'][cell]
+                states/=config['scale'][cell]
+                labels,q,sign_labels,s=scientific_summaries(config['model'],theta[...,:len(compiled_layout(config['model'],config['nreg']).parameters)],states,
                     nreg=config['nreg'],scale=config['scale'][cell],offset=config['offset'][cell],
                     time_indices=time_indices,contrasts=contrasts,amplitude_times=amplitude_times)
                 block.append(q);positive.append(s)
             values[run].append(np.stack(block,1));signs[run].append(np.stack(positive,1))
         x=np.stack([np.concatenate(values[r]) for r in sorted(values)])
         positive=np.stack([np.concatenate(signs[r]) for r in sorted(signs)]).astype(float)
-        raw_variance=x[...,labels.index('stationary_AR_variance')]
+        raw_variance=x[...,labels.index('stationary_AR_variance')] if 'stationary_AR_variance' in labels else None
         labels,x=finite_moment_summaries(labels,x)
         reports=[]
         for cell in range(config['cells']):
-            d=window_diagnostics(x[:,:,None,cell,:]);s=ensemble_diagnostics(positive[:,:,None,cell,:])
-            rh=split_rhat(positive[:,:,cell]);s['rank_rhat']=rh.tolist()
-            s['eligible']=bool(all(s['iat_length_reliable']) and np.all(np.array(s['mean_ess_estimate'])>=2000)
-                               and np.all(np.isfinite(rh)&(rh<1.05)))
+            d=window_diagnostics(x[:,:,None,cell,:])
+            s={'eligible':True,'status':'NOT_APPLICABLE_NO_TREND_CONTRASTS'}
+            if positive.shape[-1]:
+                s=ensemble_diagnostics(positive[:,:,None,cell,:])
+                rh=split_rhat(positive[:,:,cell]);s['rank_rhat']=rh.tolist()
+                s['eligible']=bool(all(s['iat_length_reliable']) and np.all(np.array(s['mean_ess_estimate'])>=2000)
+                                   and np.all(np.isfinite(rh)&(rh<1.05)))
             reports.append(dict(cell=cell,scalar=d,positive=s,eligible=d['eligible'] and s['eligible'],
-                                raw_stationary_AR_variance=raw_variance_diagnostics(raw_variance[:,:,cell])))
+                                raw_stationary_AR_variance=raw_variance_diagnostics(raw_variance[:,:,cell]) if raw_variance is not None else None))
         return dict(profile=PROFILE,eligible=all(r['eligible'] for r in reports),cells=reports,quantities=labels,
                     positive_quantities=sign_labels,scope='Scientific-output precision; not cross-backend equivalence')
 

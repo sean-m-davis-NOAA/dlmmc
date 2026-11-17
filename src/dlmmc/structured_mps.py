@@ -11,7 +11,7 @@ from functools import lru_cache
 import torch
 from .tensor_target import model_components
 from .torch_filter import TorchTarget
-from .api import _MODEL_SPECS
+from .components import compiled_layout, regressor_count
 
 
 METAL_SOURCE = r'''
@@ -91,27 +91,21 @@ kernel void structured_filter(
 
 
 def state_layout(model,nreg):
-    spec=_MODEL_SPECS[model]
-    if (spec['regressors']=='none' and nreg!=0) or (spec['regressors']!='none' and nreg<1):
-        raise ValueError('Regressor count does not match model')
-    base=6 if spec['seasonal'] else 2
-    return base+nreg+(2 if spec['ar2'] else 1),base+nreg
+    layout=compiled_layout(model,nreg)
+    return layout.dimension,layout.ar_start
 
 
 def transition_code(model,nreg,*,smoother=False):
-    spec=_MODEL_SPECS[model];_,ar=state_layout(model,nreg)
+    layout=compiled_layout(model,nreg)
     a,b=('c0','c1') if smoother else ('col0','col1')
-    lines=[]
-    if spec['seasonal']:
-        for j in (2,4):lines.append(f'if (i=={j} || i=={j+1}) {{ {a}[i]={j}; {b}[i]={j+1}; }}')
-    if spec['ar2']:
-        lines.append(f'if (i=={ar} || i=={ar+1}) {{ {a}[i]={ar}; {b}[i]={ar+1}; }}')
-    return '\n'.join(lines)
+    return '\n'.join(f'if (i=={i}) {{ {a}[i]={x}; {b}[i]={y}; }}'
+                     for i,(x,y) in enumerate(zip(*layout.transition_columns)) if x!=i or y!=i)
 
 
 def specialize_source(source,model,nreg):
     d,_=state_layout(model,nreg)
     source=source.replace('constant uint D = 12;',f'constant uint D = {d};')
+    source=source.replace('if (i == 0) col1[i] = 1;', '')
     old='if (i == 2 || i == 3) { col0[i]=2; col1[i]=3; }\n        if (i == 4 || i == 5) { col0[i]=4; col1[i]=5; }'
     return source.replace(old,transition_code(model,nreg))
 
@@ -142,7 +136,7 @@ def filter_mps(y,variance,observed,F,G,Q,C,*,model="vanilla_ar1"):
     if y.ndim!=2 or y.shape!=variance.shape or y.shape!=observed.shape or G.ndim!=4:
         raise ValueError('Panel/time data and walker/panel matrices required')
     cells,times=y.shape;walkers=G.shape[0]
-    spec=_MODEL_SPECS[model];d=G.shape[-1];nreg=d-(6 if spec['seasonal'] else 2)-(2 if spec['ar2'] else 1)
+    d=G.shape[-1];nreg=regressor_count(model,d)
     state_layout(model,nreg)
     if not times or not walkers or F.shape not in ((cells,times,d),(walkers,cells,times,d)) or G.shape!=(walkers,cells,d,d) or Q.shape!=G.shape or C.shape!=G.shape:
         raise ValueError('Model state dimension and all matrix shapes must match')

@@ -32,14 +32,16 @@ def validate_production_scope(panel_ids, selection, *, model, backend, dtype, pr
         raise ValueError('Invalid production profile')
     if profile.thin != 1:
         raise ValueError('Production monitoring currently requires no thinning')
-    from .api import _MODEL_SPECS
-    if model not in _MODEL_SPECS or (backend,dtype) not in (('numba','float64'),('torch','float64'),('mps','float32'),('cuda','float32')):
+    from .api import _resolve_model
+    model,_=_resolve_model(model)
+    from .components import model_key
+    if (backend,dtype) not in (('numba','float64'),('torch','float64'),('mps','float32'),('cuda','float32')):
         raise ValueError('Production requires a supported DLM model and CPU64 or explicitly selected GPU32')
     if len(ids) <= 5 and selection is None:
         return
     if (not isinstance(selection, dict) or selection.get('scope') != 'independent_production'
             or not selection.get('explicit_user_response')
             or tuple(selection.get('panel_ids', ())) != ids
-            or selection.get('model') != model or selection.get('backend') != backend
+            or model_key(selection.get('model')) != model or selection.get('backend') != backend
             or selection.get('dtype') != dtype or selection.get('profile') != profile.to_dict()):
         raise ValueError('Larger production grid requires matching explicit named selection and settings')

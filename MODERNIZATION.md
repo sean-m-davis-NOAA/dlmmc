@@ -1,6 +1,6 @@
 # API and scientific policy
 
-This candidate keeps six registered model presets and shared model matrices/backend kernels; a fully compositional model API is deferred. [README.md](README.md) lists supported backends; [EXECUTION_PROFILES.md](EXECUTION_PROFILES.md) describes independent production versus qualification; [SPATIAL_API.md](SPATIAL_API.md) defines coupled targets.
+The affine API now composes supported state-space components with one shared layout compiler. Six historical names remain compatible shorthands; the CmdStan API keeps its original six models. See [COMPONENTS.md](COMPONENTS.md) for construction, persistence and restrictions. [README.md](README.md) lists supported backends; [EXECUTION_PROFILES.md](EXECUTION_PROFILES.md) describes independent production versus qualification; [SPATIAL_API.md](SPATIAL_API.md) defines coupled targets.
 
 ## Precision and inference
 

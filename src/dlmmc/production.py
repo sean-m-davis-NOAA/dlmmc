@@ -42,7 +42,7 @@ def prepare_production(data, regressors=None, *, uncertainty, selection=None,
     pieces=[]
     for start in range(0,data.sizes['panel'],5):
         ix=slice(start,start+5)
-        pieces.append(prepare_data(data.isel(panel=ix),(regressors.isel(panel=ix) if regressors is not None and "panel" in regressors.dims else regressors),
+        pieces.append(prepare_data(data.isel(panel=ix),(regressors.isel(panel=ix) if regressors is not None and "panel" in getattr(regressors, "dims", ()) else regressors),
             uncertainty=uncertainty.isel(panel=ix),model=model,dtype=dtype,device=device,priors=priors,sampling=sampling))
     p=pieces[0]
     digest=hashlib.sha256(json.dumps([x.checksum for x in pieces]).encode()).hexdigest()
@@ -52,8 +52,8 @@ def prepare_production(data, regressors=None, *, uncertainty, selection=None,
 
 
 def initial_center(p):
-    return np.array([-9.2 if name=='sigma_trend' or name.startswith('sigma_reg') else
-        -4.6 if name=='sigma_seas' else -2.3 if name=='sigma_AR' else 0. for name in p.parameter_names])
+    from .components import initial_coordinates
+    return initial_coordinates(p.model,p.regressors.shape[-1])
 
 
 def fit_production(data, regressors=None, *, uncertainty, output_dir, selection=None,

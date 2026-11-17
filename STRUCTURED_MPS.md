@@ -11,3 +11,7 @@ The likelihood runs the complete time loop on the Apple GPU, one thread per walk
 Per-draw regressors support ENSO interpolation. Four-cell spatial/lag kernel checks and bounded pipeline/recovery runs have executed; short-run convergence remains inconclusive. CPU/native MPS fixed checks cover all six families, including singleton, permutation, chunking and cross-talk. CUDA uses portable Torch equations and remains native-untested.
 
 User-approved production availability does not imply blanket float32 qualification. Saved adverse likelihood/proposal failures and short-chain posterior discrepancies remain. See [VALIDATION_STATUS.md](VALIDATION_STATUS.md) for measured timing, support limits and evidence. Earlier hybrid CPU-smoother runs are historical results; current MPS production includes GPU smoothing.
+
+## Component compiler
+
+MPS transition columns and state dimensions now come from the shared component layout, including optional level/trend, multiple harmonic pairs, mixed coefficient evolution and AR1/AR2. Level-only baseline change variances use backward-innovation quadratic forms to avoid subtraction cancellation, adding one covariance history per draw; workspace accounting includes it. Legacy trend models retain their arithmetic and memory contract. No-AR GPU sampling is available by explicit user decision, with precision failures retained; [validation](COMPOSITION_VALIDATION.md) distinguishes kernel availability from numerical qualification.

@@ -75,6 +75,7 @@ def sample_spatial_prior(prepared,*,sigma_trend,lags=None,predictors=None,walker
     predictors={'ENSO': MonthlyENSO(...)} with complete pre-observation coverage.
     Separate scope/selection gates and exact prior definitions remain in force.
     """
+    if 'sigma_trend' not in prepared.parameter_names:raise ValueError('Spatial sigma_trend requires a Trend component')
     if not isinstance(sigma_trend,SpatialPrior):raise TypeError('sigma_trend must be a SpatialPrior')
     if sigma_trend.units=='months':raise ValueError('sigma_trend uses normalized or data/month units')
     if not isinstance(walkers,int) or walkers<2 or walkers%2:raise ValueError('walkers is an even total count, not a half-count')

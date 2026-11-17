@@ -1,3 +1,5 @@
+Current component-API update: see [COMPOSITION_VALIDATION.md](COMPOSITION_VALIDATION.md). The historical evidence below retains its original source/settings.
+
 # Validation status for colleague testing
 
 This branch is implementation-complete for the supported local scope. Availability, fixed-kernel correctness and posterior qualification are separate claims. No new scientific sampling was required for packaging cleanup.
@@ -13,7 +15,8 @@ This branch is implementation-complete for the supported local scope. Availabili
 | Independent production batching | Yes | All panels batched in each likelihood call; full 312-panel AR1 run explicitly selected and measured |
 | Spatial positive-Gaussian sigma_trend | Yes | Four-cell joint reference and pipeline checks; new short MPS convergence INCONCLUSIVE |
 | Positive ENSO lag field | Yes | Four-cell joint checks and synthetic recovery in principle; short MPS convergence INCONCLUSIVE |
-| Arbitrary/multiple lag fields; arbitrary model composition | No | Deferred API/research work |
+| Composable supported state-space blocks | Yes | Shared layout compiler; preset-equivalent MPS outputs/replay exact; [current results](COMPOSITION_VALIDATION.md) |
+| Arbitrary/multiple lag fields and new component classes | No | Deferred research/extension work |
 | Large coupled field blocks/streamed qualification diagnostics | No | Needed for a practical 128-walker full-grid coupled run |
 | Full hardware/large-grid qualification and 200-replication calibration | No | Pending, opt-in; no pass inferred from local evidence |
 

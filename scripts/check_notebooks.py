@@ -12,6 +12,10 @@ import time
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
+    names = ("dlm_tutorial.ipynb", "dlm_tensor_grid_tutorial.ipynb",
+             "dlm_spatial_priors_tutorial.ipynb", "dlm_validation_tests.ipynb")
+    parser.add_argument("--notebook", choices=names, action="append",
+                        help="Execute only named notebooks; default is all four")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     out = args.output_dir.resolve()
@@ -24,14 +28,14 @@ def main():
     from nbclient import NotebookClient
     from jupyter_client import KernelManager
     records = []
-    for name in ("dlm_tutorial.ipynb", "dlm_tensor_grid_tutorial.ipynb",
-                 "dlm_spatial_priors_tutorial.ipynb", "dlm_validation_tests.ipynb"):
+    for name in args.notebook or names:
         source = root / name
         nb = nbformat.read(source, 4)
         for cell in nb.cells:
             if cell.cell_type == "code":
                 compact = "".join(cell.source.split())
-                if "RUN_SELECTED_FIT=True" in compact or "RUN_LAG_FIT=True" in compact:
+                if any(flag in compact for flag in ("RUN_SELECTED_FIT=True", "RUN_LAG_FIT=True",
+                                                    "RUN_FULL_GRID=True", "RUN_STAN=True")):
                     raise ValueError("Disable spatial and lag long-fit switches before smoke execution")
         km = KernelManager(kernel_name="python3")
         km.kernel_spec.argv = [sys.executable, "-m", "ipykernel_launcher", "-f", "{connection_file}"]

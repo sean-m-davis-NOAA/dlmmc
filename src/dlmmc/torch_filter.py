@@ -40,12 +40,14 @@ class TorchTarget:
 
     def prior_correction(self,u,valid):
         p=self.prepared;value=torch.zeros_like(u[...,0])
+        from .components import defaults
+        baseline=defaults(p.model,p.regressors.shape[-1])
         for j,name in enumerate(p.parameter_names):
             if not name.startswith('sigma'):continue
             key='sigma_reg_prior' if name.startswith('sigma_reg') else name+'_prior'
             desired=p.priors[key]
             if name.startswith('sigma_reg'):desired=desired[int(name.split('[')[1][:-1])]
-            old=1e-4 if name.startswith('sigma_reg') or name=='sigma_trend' else .01 if name=='sigma_seas' else .5
+            old=baseline[name]
             if float(desired)==old:continue
             theta=torch.exp(torch.where(valid,u[...,j],torch.zeros_like(u[...,j])))
             value=value+torch.log(u.new_tensor(old/float(desired)))+.5*(theta/old)**2-.5*(theta/float(desired))**2

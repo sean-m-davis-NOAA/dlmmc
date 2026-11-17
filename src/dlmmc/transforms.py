@@ -1,19 +1,16 @@
 """Reference transforms with explicit Jacobians for constrained DLM priors."""
 import numpy as np
 from scipy.special import expit
-from .api import _MODEL_SPECS
+from .components import compiled_layout, component_spec
 
 
 def parameter_names(model, nreg):
-    spec=_MODEL_SPECS[model]
-    return (['sigma_trend']+(['sigma_seas'] if spec['seasonal'] else [])+['sigma_AR']
-            +([f'sigma_reg[{i}]' for i in range(nreg)] if spec['regressors']=='dynamic' else [])
-            +['rhoAR1']+(['rhoAR2'] if spec['ar2'] else []))
+    return list(compiled_layout(model,0 if component_spec(model)['regressors']=='none' else nreg).parameters)
 
 
 def unconstrain(model,theta,nreg):
     """Invert the reference transform without clipping support boundaries."""
-    spec=_MODEL_SPECS[model];values=[]
+    spec=component_spec(model);values=[]
     for name in parameter_names(model,nreg):
         if name.startswith('sigma_reg'):
             value=theta['sigma_reg'][int(name.split('[')[1][:-1])]
@@ -31,7 +28,7 @@ def unconstrain(model,theta,nreg):
 
 def constrain(model, u, nreg):
     """Log scales, logit rho1, and conditional logit rho2/(1-rho1)."""
-    spec=_MODEL_SPECS[model];names=parameter_names(model,nreg)
+    spec=component_spec(model);names=parameter_names(model,nreg)
     u=np.asarray(u)
     if u.ndim!=1 or len(u)!=len(names) or not np.isfinite(u).all():
         raise ValueError('Finite parameter vector with exact model dimension required')
@@ -40,11 +37,14 @@ def constrain(model, u, nreg):
         v=u[i]
         if name.startswith('sigma'):
             value=np.exp(v);logj+=v
-            if name.startswith('sigma_reg'):regs.append(value)
+            if name.startswith('sigma_reg'):
+                out[name]=value;regs.append((int(name.split('[')[1][:-1]),value))
             else:out[name]=value
         else:
             width=(.5 if spec['ar2'] else 1.) if name=='rhoAR1' else 1-out['rhoAR1']
             out[name]=width*expit(v)
             logj+=np.log(width)-np.logaddexp(0.,-v)-np.logaddexp(0.,v)
-    if regs:out['sigma_reg']=np.asarray(regs)
+    if regs:
+        out['sigma_reg']=np.zeros(nreg)
+        for j,value in regs:out['sigma_reg'][j]=value
     return out,logj

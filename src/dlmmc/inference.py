@@ -7,7 +7,7 @@ gate is not a posterior-equivalence claim or a guarantee of convergence.
 import hashlib
 import numpy as np
 from scipy.special import expit
-from .api import _MODEL_SPECS
+from .components import component_spec
 from .transforms import parameter_names
 from .diagnostics import ensemble_diagnostics, rank_split_rhat, split_rhat
 from .validation_derived import PROFILE, finite_moment_summaries, raw_variance_diagnostics
@@ -24,14 +24,15 @@ def physical_parameters(u, model, nreg):
         if name.startswith('sigma'):
             value = np.exp(u[..., j])
         elif name == 'rhoAR1':
-            value = expit(u[..., j]) * (.5 if _MODEL_SPECS[model]['ar2'] else 1.)
+            value = expit(u[..., j]) * (.5 if component_spec(model)['ar2'] else 1.)
         else:
             value = expit(u[..., j]) * (1 - values[names.index('rhoAR1')])
         values.append(value)
     x = np.stack(values, -1)
+    if 'rhoAR1' not in names:return names,x
     a = x[..., names.index('rhoAR1')]
     denominator = 1 - a*a
-    if _MODEL_SPECS[model]['ar2']:
+    if component_spec(model)['ar2']:
         b = x[..., names.index('rhoAR2')]
         denominator -= b*b + 2*b*a*a/(1-b)
     if np.any(denominator <= 0) or not np.isfinite(x).all():
@@ -114,12 +115,12 @@ def diagnose_fit(fit, *, trace_review=None):
     posterior = fit.posterior()
     p = fit.prepared
     names, physical = physical_parameters(posterior.unconstrained.values, p.model, p.regressors.shape[-1])
-    raw_variance = physical[..., -1]
+    raw_variance = physical[..., names.index("stationary_AR_variance")] if "stationary_AR_variance" in names else None
     names, physical = finite_moment_summaries(names, physical)
     cells = []
     for cell in range(p.cells):
         report = window_diagnostics(physical[..., cell, :])
-        report['raw_stationary_AR_variance'] = raw_variance_diagnostics(raw_variance[..., cell])
+        if raw_variance is not None:report['raw_stationary_AR_variance'] = raw_variance_diagnostics(raw_variance[..., cell])
         report['cell'] = cell
         report['coordinates'] = {k: str(v[cell]) for k, v in p.cell_coordinates.items()}
         cells.append(report)
