@@ -14,7 +14,7 @@ def test_selected_cell_continuation_preserves_prefix_coordinates_and_parent(tmp_
     rng=torch.Generator().manual_seed(240)
     center=torch.tensor([-9.,-4.6,-2.3,0.],dtype=torch.float64)
     h=[tuple(center+torch.randn((8,3,4),dtype=torch.float64,generator=rng)*.01 for _ in range(2)) for _ in range(4)]
-    parent=sample_parameters(p,output_dir=tmp_path/'parent',backend='torch',retained_sweeps=8,
+    parent=sample_parameters(p,output_dir=tmp_path/'parent',backend='numba',retained_sweeps=8,
         warmup=3,half_walkers=8,chunk_sweeps=4,initial_halves=h,thin=3)
     original=parent.posterior()
     fork=fork_cells(parent,[2,0],output_dir=tmp_path/'subset')

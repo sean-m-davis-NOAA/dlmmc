@@ -67,12 +67,14 @@ def fit_production(data, regressors=None, *, uncertainty, output_dir, selection=
         from .gpu_production import fit_gpu_production
         return fit_gpu_production(data,regressors,uncertainty=uncertainty,output_dir=output_dir,selection=selection,
             profile=profile,seed=seed,wall_seconds=wall_seconds,centers=centers,model=model,backend=backend,
-            device=device,priors=priors,sampling=sampling,numba_threads=numba_threads)
+            device=device,dtype=dtype,priors=priors,sampling=sampling,numba_threads=numba_threads)
     started=time.time();folder=Path(output_dir).resolve()
     if folder.exists() and any(folder.iterdir()):
         raise ValueError('Preserve existing production fit; use explicit resume')
     p=prepare_production(data,regressors,uncertainty=uncertainty,selection=selection,profile=profile,
         model=model,backend=backend,dtype=dtype,device=device,priors=priors,sampling=sampling)
+    from .prior_specification import announce_model
+    announce_model(p.model,p.regressor_names,p.priors,panels=p.cells)
     folder.mkdir(parents=True,exist_ok=True)
     if profile.half_walkers <= len(p.parameter_names):raise ValueError('Full-rank half-cloud required')
     with _threads("numba",1,numba_threads):
@@ -82,8 +84,8 @@ def fit_production(data, regressors=None, *, uncertainty, output_dir, selection=
         if centers.shape!=(p.cells,dimension):raise ValueError('One correctly dimensioned center per cell required')
         from .numba_prototype import compile_specialization, _batch_structured
         before=time.perf_counter()
-        dummy=torch.tensor(np.broadcast_to(centers,(profile.half_walkers,p.cells,dimension)).copy())
-        compile_info=compile_specialization(dummy,*p.arguments,p.model,algorithm='structured',S=p.priors['S'],sampling=p.sampling)
+        dummy=torch.tensor(np.broadcast_to(centers,(profile.half_walkers,p.cells,dimension)).copy(),dtype=p.y.dtype)
+        compile_info=compile_specialization(dummy,*p.arguments,p.model,algorithm='structured',research_float32=True,S=p.priors['S'],sampling=p.sampling)
         compile_info['compilation_or_cache_load_seconds']=time.perf_counter()-before
         before=time.perf_counter();target(dummy);one=make_target(_cell(p,[0]),backend);one(dummy[:1,:1].contiguous())
         disposable=initialize(target,(dummy,dummy.clone()),seed=seed+1,warmup=1)
@@ -95,14 +97,15 @@ def fit_production(data, regressors=None, *, uncertainty, output_dir, selection=
             local=make_target(_cell(p,[g]),"numba")
             def objective(x):
                 if time.time()-started>=wall_seconds:raise TimeoutError('Production initialization cap')
-                return -float(local(torch.tensor(x.reshape(1,1,dimension))).sum())
+                return -float(local(torch.tensor(x.reshape(1,1,dimension),dtype=p.y.dtype)).sum())
             opt=minimize(objective,centers[g],method='Powell',options={'maxiter':60,'maxfev':2000,'xtol':1e-4,'ftol':1e-6})
             if not np.isfinite(opt.fun):raise ValueError('Finite high-density initialization required')
             centers[g]=opt.x;optimizations.append({'cell':g,'success':bool(opt.success),'evaluations':int(opt.nfev),'objective':float(opt.fun)})
             if (g+1)%12==0:print(f'optimized {g+1}/{p.cells} panels',flush=True)
         initialization=dict(method='per-panel Powell; independent full-rank 0.01 transformed-unit clouds',centers=centers.tolist(),optimizations=optimizations)
         _save_prepared(folder,p)
-        config=dict(schema=1,backend=backend,runs=profile.runs,half_walkers=profile.half_walkers,warmup=profile.warmup,thin=profile.thin,
+        config=dict(schema=1,backend=backend,sampling_dtype=dtype,reconstruction_dtype=dtype,compute_validation=compute.validation,
+            precision_gate='RETAINED_FLOAT32_FAILURES' if dtype=='float32' else 'SCOPED_FLOAT64_ORACLE',runs=profile.runs,half_walkers=profile.half_walkers,warmup=profile.warmup,thin=profile.thin,
             seed=seed,chunk_sweeps=profile.chunk_sweeps,input_policy=validate_no_seasonal_input(data,model),source_identity=_source_identity(),production_source_identity=_identity(),
             torch=torch.__version__,runtime=_runtime(backend),threads={'torch':1,'numba':numba_threads},prepared_checksum=p.checksum,
             prepared_file_sha256=hashlib.sha256((folder/'prepared.npz').read_bytes()).hexdigest(),execution_profile=profile.to_dict(),selection=selection)
@@ -110,7 +113,7 @@ def fit_production(data, regressors=None, *, uncertainty, output_dir, selection=
         (folder/'config.json').write_text(json.dumps(config,indent=2)+'\n')
         for run in range(profile.runs):
             rng=np.random.default_rng(seed+run)
-            halves=tuple(torch.tensor(centers+.01*rng.normal(size=(profile.half_walkers,p.cells,dimension))) for _ in range(2))
+            halves=tuple(torch.tensor(centers+.01*rng.normal(size=(profile.half_walkers,p.cells,dimension)),dtype=p.y.dtype) for _ in range(2))
             for half in halves:
                 for g in range(p.cells):
                     x=half[:,g].numpy()
@@ -175,7 +178,7 @@ def production_parameter_cache(fit):
     key=hashlib.sha256(json.dumps(latest['iterations']).encode()+fit.config['provenance'].encode()).hexdigest()[:16]
     path=folder/f'parameters-{key}.npy';r=fit.config['runs'];n=latest['target_iteration']-fit.config['warmup'];w=fit.config['half_walkers']*2
     if not path.exists():
-        tmp=path.with_suffix('.tmp.npy');values=np.lib.format.open_memmap(tmp,mode='w+',dtype=np.float64,shape=(r,n,w,fit.prepared.cells,len(fit.prepared.parameter_names)))
+        tmp=path.with_suffix('.tmp.npy');values=np.lib.format.open_memmap(tmp,mode='w+',dtype=fit.prepared.y.cpu().numpy().dtype,shape=(r,n,w,fit.prepared.cells,len(fit.prepared.parameter_names)))
         for run in range(r):
             offset=0
             for file in sorted((folder/f'run-{run}').glob('block-*.npz')):

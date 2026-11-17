@@ -28,12 +28,12 @@ For local code development use `pip install -e '.[cpu,notebooks,diagnostics,test
 
 ## Compute backends
 
-Numba CPU float64 is the production default; eight threads are used unless overridden. Torch CPU float64 is also supported. Native MPS requires Apple Silicon and a Torch build with `torch.mps.compile_shader`; **Torch 2.15.0 was tested**. The broad base Torch dependency does not promise that older builds provide this MPS feature. Launch MPS work with:
+Automatic backend selection prefers CUDA, then MPS, then Numba CPU. Numba defaults to float64 and also accepts float32; eight threads are used unless overridden. Torch CPU is retained only as an internal numerical oracle. Native MPS requires Apple Silicon and a Torch build with `torch.mps.compile_shader`; **Torch 2.15.0 was tested**. The broad base Torch dependency does not promise that older builds provide this MPS feature. Launch MPS work with:
 
 ```sh
 PYTORCH_ENABLE_MPS_FALLBACK=0 PYTORCH_MPS_FAST_MATH=0 python your_script.py
 ```
 
-For CUDA, install the appropriate CUDA-enabled Torch build before DLMMC. CUDA is implemented but has not been validated on native hardware. Backend unavailability raises an error, and GPU arithmetic is float32 without an automatic CPU or mixed-precision fallback.
+For CUDA, install the appropriate CUDA-enabled Torch build before DLMMC. CUDA is implemented but has not been validated on native hardware. Backend unavailability raises an error, and GPU arithmetic defaults to float32; CUDA also accepts explicit float64. MPS cannot use float64. There is no automatic CPU or mixed-precision fallback.
 
 CmdStan is optional: install `'.[stan]'` and a compatible local CmdStan toolchain only when using the legacy fitting API or reference integration test. PyStan is not required. See [TESTING.md](TESTING.md) for bounded checks and current limitations.

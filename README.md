@@ -6,7 +6,7 @@ Start with [installation](INSTALL.md), [testing](TESTING.md), and the [support a
 
 ## Current API
 
-The affine API now accepts composable models: `Trend() + Harmonics((12, 6)) + Regression(dynamic=("ENSO",)) + AR(2)`. One layout compiler constructs matrices and backend specializations. Optional Level/Trend, harmonic periods, mixed static/dynamic coefficients and optional AR terms are supported. The six historical preset strings remain compatibility shorthands. See [the component API](COMPONENTS.md) and [its validation/timings](COMPOSITION_VALIDATION.md). All implemented component models are selectable on Numba, Torch CPU, MPS and CUDA. Backend access is independent of numerical qualification; retained float32 failures remain documented.
+The affine API now accepts composable models: `Trend() + Harmonics((12, 6)) + Regression(dynamic=("ENSO",)) + AR(2)`. One layout compiler constructs matrices and backend specializations. Optional Level/Trend, harmonic periods, mixed static/dynamic coefficients and optional AR terms are supported. The six historical preset strings remain compatibility shorthands. See [the component API](COMPONENTS.md) and [its validation/timings](COMPOSITION_VALIDATION.md). All implemented component models are selectable on Numba CPU, MPS and CUDA. Backend access is independent of numerical qualification; retained float32 failures remain documented.
 
 ```python
 from dlmmc import fit_production, diagnose_production, summarize_production_trends
@@ -27,10 +27,9 @@ The production/testing default is one ensemble, **128 walkers, 128 burn-in steps
 
 | Backend | Production precision | Local evidence |
 |---|---|---|
-| `numba` | CPU float64 | All six likelihood and smoother kernels tested; scoped posterior checks |
-| `torch` | CPU float64 | All six likelihood and smoother kernels tested |
+| `numba` / `cpu` | CPU float32 or float64 (default) | Float64 oracle; float32 selectable with retained numerical flags |
 | `mps` | Native Apple GPU float32 | All six kernels tested; measured production sampling and smoothing |
-| `cuda` | GPU float32 | Implemented; native hardware validation pending |
+| `cuda` | GPU float32 (default) or float64 | Implemented; native hardware validation pending |
 
 GPU backends select float32 automatically and never silently fall back. CPU float64 remains the oracle. Historical float32 failures and posterior/convergence flags remain documented. See [MPS implementation](STRUCTURED_MPS.md) and [validation status](VALIDATION_STATUS.md).
 

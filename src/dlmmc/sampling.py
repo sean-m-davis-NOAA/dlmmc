@@ -33,13 +33,13 @@ def _sync(device):
 
 class NumbaTarget:
     def __init__(self,p):
-        if p.y.device.type!='cpu' or p.y.dtype!=torch.float64:raise ValueError('Numba backend requires explicit CPU float64')
+        if p.y.device.type!='cpu' or p.y.dtype not in (torch.float32,torch.float64):raise ValueError('Numba backend requires CPU float32 or float64')
         self.prepared=p;self.correction=TorchTarget(p)
 
     def __call__(self,u):
         from .numba_prototype import target_numba
         p=self.prepared
-        value=target_numba(u,*p.arguments,p.model,S=p.priors['S'],sampling=p.sampling,algorithm='structured')
+        value=target_numba(u,*p.arguments,p.model,S=p.priors['S'],sampling=p.sampling,algorithm='structured',research_float32=True)
         return value+self.correction.prior_correction(u,torch.isfinite(value))
 
 
@@ -48,8 +48,9 @@ def make_target(prepared,backend):
         from .structured_mps import StructuredMPSTarget
         return StructuredMPSTarget(prepared)
     if backend=='cuda':
-        if prepared.y.device.type!='cuda' or prepared.y.dtype!=torch.float32:raise ValueError('CUDA backend requires native float32')
+        if prepared.y.device.type!='cuda' or prepared.y.dtype not in (torch.float32,torch.float64):raise ValueError('CUDA backend requires native float32 or float64')
         return TorchTarget(prepared)
+    # Kept internally as a numerical oracle, not a public sampler backend.
     if backend=='torch':return TorchTarget(prepared)
     if backend=='numba':return NumbaTarget(prepared)
     raise ValueError('Choose numba, torch, mps or cuda backend')
@@ -114,7 +115,7 @@ def _load_prepared(folder):
 def _source_identity():
     import affine.torch_stream
     paths=[Path(__file__),Path(affine.torch_stream.__file__)]
-    paths.extend(Path(__file__).parent/name for name in ('prepare.py','torch_filter.py','tensor_target.py','numba_prototype.py','transforms.py','api.py','input_contract.py','preprocessing.py','__init__.py','compute.py','structured_mps.py','components.py'))
+    paths.extend(Path(__file__).parent/name for name in ('prepare.py','torch_filter.py','tensor_target.py','numba_prototype.py','transforms.py','api.py','input_contract.py','preprocessing.py','__init__.py','compute.py','structured_mps.py','components.py','prior_specification.py'))
     return {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
 
 
@@ -162,12 +163,14 @@ def _sample_parameters(prepared,*,output_dir,backend='numba',retained_sweeps=100
     folder.mkdir(parents=True,exist_ok=True)
     from .compute import prepared_for_backend
     prepared=prepared_for_backend(prepared,backend)
+    from .prior_specification import announce_model
+    announce_model(prepared.model,prepared.regressor_names,prepared.priors,panels=prepared.cells)
     target=make_target(prepared,backend)
     dummy=prepared.y.new_tensor(initial_coordinates(prepared.model,prepared.regressors.shape[-1])).expand(half_walkers,prepared.cells,-1).clone()
     compile_info={'compilation_or_cache_load_seconds':0.}
     if backend=='numba':
         from .numba_prototype import compile_specialization
-        compile_info=compile_specialization(dummy,*prepared.arguments,prepared.model,algorithm='structured',S=prepared.priors['S'],sampling=prepared.sampling)
+        compile_info=compile_specialization(dummy,*prepared.arguments,prepared.model,algorithm='structured',research_float32=True,S=prepared.priors['S'],sampling=prepared.sampling)
     elif backend=='mps':
         from .structured_mps import compile_kernel
         compile_info['compilation_or_cache_load_seconds']=compile_kernel(prepared.model,prepared.regressors.shape[-1])[1]
@@ -284,9 +287,12 @@ def sample_parameters(prepared,*,torch_threads=1,numba_threads=2,**options):
     settings. output_dir is required. A resumed target is an absolute retained
     sweep count; no warmup is repeated and no boundary draws are duplicated.
     """
-    from .compute import select_backend
-    options['backend'] = select_backend(options.get('backend'))
-    select_backend(options['backend'], dtype='float32' if options['backend'] in ('mps','cuda') else prepared.y.dtype, announce=True)
+    from .compute import select_backend, prepared_for_backend
+    requested_dtype=options.pop('dtype',None);requested_device=options.pop('device',None)
+    options['backend'] = select_backend(options.get('backend'),dtype=requested_dtype,device=requested_device)
+    prepared=prepared_for_backend(
+        prepared,options['backend'],dtype=requested_dtype,device=requested_device)
+    select_backend(options['backend'], dtype=prepared.y.dtype, device=prepared.y.device, announce=True)
     with _threads(options['backend'],torch_threads,numba_threads):
         return _sample_parameters(prepared,**options)
 

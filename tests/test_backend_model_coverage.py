@@ -88,7 +88,7 @@ def test_short_profile_and_no_seasonal_guards(tmp_path):
  with pytest.raises(ValueError,match='deseasonalised'):fit_production(y,x,uncertainty=s,model='vanilla_ar1_noseasonal',output_dir=tmp_path/'invalid')
  assert not (tmp_path/'invalid').exists()
 
-@pytest.mark.parametrize('backend',['numba','torch','mps'])
+@pytest.mark.parametrize('backend',['numba','cpu','mps'])
 @pytest.mark.parametrize('model,k',[('dynregs_ar1',2),('vanilla_ar2_noseasonal',2),('noregs_ar1',0)])
 def test_production_dimensions_and_output(tmp_path,model,k,backend):
  if backend=='mps' and not torch.backends.mps.is_available():pytest.skip('Native MPS unavailable')

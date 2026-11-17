@@ -62,7 +62,7 @@ def select_draws(fit,per_sweep,seed,retained_sweeps=None):
         u=u[:,:retained_sweeps]
     runs,steps,walkers,cells,_=u.shape
     if runs!=1 or steps<8 or steps%2 or not 1<=per_sweep<=walkers:raise ValueError('One ensemble, at least eight even retained steps and valid draw selection required')
-    selected=np.empty((steps*per_sweep,cells,u.shape[-1]),np.float32);selections=[]
+    selected=np.empty((steps*per_sweep,cells,u.shape[-1]),dtype=u.dtype);selections=[]
     for g in range(cells):
         rng=np.random.default_rng(np.random.SeedSequence([seed,g,0]));count=min(walkers,max(4,per_sweep))
         ww=np.stack([rng.choice(walkers,count,replace=False) for _ in range(steps)])[:,:per_sweep]
@@ -75,7 +75,7 @@ def select_draws(fit,per_sweep,seed,retained_sweeps=None):
 def summarize_gpu_trends(fit,*,output_dir,anchor_month='1998-01',selected_walkers_per_sweep=None,
         seed=20261116,wall_seconds=5400,workspace_bytes=1024**3,retained_sweeps=None):
     started=time.monotonic();deadline=started+wall_seconds;p=fit.prepared;folder=Path(output_dir)
-    if p.y.device.type not in ('mps','cuda') or p.y.dtype!=torch.float32:raise ValueError('Explicit GPU32 fit required')
+    if p.y.device.type not in ('mps','cuda') or p.y.dtype not in (torch.float32,torch.float64):raise ValueError('Explicit native GPU fit required')
     if folder.exists():raise ValueError('Preserve previous output')
     folder.mkdir(parents=True)
     matches=np.flatnonzero(p.time.astype('datetime64[M]')==np.datetime64(anchor_month,'M'))
@@ -94,11 +94,11 @@ def summarize_gpu_trends(fit,*,output_dir,anchor_month='1998-01',selected_walker
     else:
         scalar_workspace=6*d*d+3*d
         operation=lambda u:fixed_cuda_trend_moments(p,u,anchor)
-    tile=min(draws,max(0,int(workspace_bytes)//(cells*n*scalar_workspace*4)))
+    tile=min(draws,max(0,int(workspace_bytes)//(cells*n*scalar_workspace*p.y.element_size())))
     if tile<1:raise ValueError('Workspace must fit at least one draw for all panels')
     # A selected sweep can span several draw tiles without splitting panels.
     tile=tile//per*per if tile>=per else max(d for d in range(1,tile+1) if per%d==0)
-    before=time.perf_counter();z=torch.tensor(selected,device=p.y.device,dtype=torch.float32);_sync(p.y.device)
+    before=time.perf_counter();z=torch.tensor(selected,device=p.y.device,dtype=p.y.dtype);_sync(p.y.device)
     preparation=time.perf_counter()-before
     before=time.perf_counter()
     if p.y.device.type=='mps':_,kernel_seconds=compile_smoother(p.model,p.regressors.shape[-1])
@@ -154,10 +154,10 @@ def summarize_gpu_trends(fit,*,output_dir,anchor_month='1998-01',selected_walker
         (folder/f'cell-{g:04d}.json').write_text(json.dumps(row,indent=2)+'\n');rows.append(row)
     io=time.perf_counter()-before
     record=dict(status='PRODUCTION_TREND_ESTIMATES_WITH_FLAGS',qualification_eligible=False,cells=rows,panels=cells,
-        device=str(p.y.device),dtype='float32',anchor_month=anchor_month,anchor_index=anchor,fit_provenance=fit.config['provenance'],
+        device=str(p.y.device),dtype=str(p.y.dtype).split('.')[-1],anchor_month=anchor_month,anchor_index=anchor,fit_provenance=fit.config['provenance'],
         seed=seed,retained_prefix=retained_sweeps,selected_walkers_per_sweep=per,parameter_iterations=[1,steps,walkers,cells],full_batch_shape=[draws,cells],
         panel_chunking=False,draw_chunking=True,draw_tile=tile,workspace_limit_bytes=workspace_bytes,
-        history_workspace_bytes=tile*cells*n*(history if p.y.device.type=='mps' else scalar_workspace-4)*4,
+        history_workspace_bytes=tile*cells*n*(history if p.y.device.type=='mps' else scalar_workspace-4)*p.y.element_size(),
         selection_seconds=selection_seconds,preparation_seconds=preparation,compilation_or_cache_load_seconds=compilation,
         kernel_compile_seconds=kernel_seconds,disposable_exact_shape_warmup_seconds=warm,warmed_tile_shapes=shapes,
         smoothing_and_reduction_seconds=compute,diagnostics_and_output_io_seconds=io,

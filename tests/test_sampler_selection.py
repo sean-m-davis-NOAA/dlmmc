@@ -38,6 +38,9 @@ def test_stan_dispatch_and_exact_composed_mapping(monkeypatch, sampler):
     dlmmc.fit(y,x,sampler=sampler,settings={'chains':2,'warmup':3,'samples':4},adapt_delta=.95)
     assert calls[-1][1]['adapt_delta'] == .95 and calls[-1][1]['samples'] == 4
     with pytest.raises(ValueError,match='CPU'):dlmmc.fit(y,x,sampler=sampler,backend='mps')
+    with pytest.raises(ValueError,match='float64 only'):dlmmc.fit(y,x,sampler=sampler,dtype='float32')
+    dlmmc.fit(y,x,sampler=sampler,dtype='float64')
+    assert 'dtype' not in calls[-1][1]
     with pytest.raises(ValueError,match='requires sampler'):dlmmc.fit(y,x,sampler=sampler,model=Trend()+Regression())
     with pytest.raises(TypeError):dlmmc.fit(y,x,sampler=sampler,settings=AffineSettings())
     with pytest.raises(ValueError,match='not both'):dlmmc.fit(y,x,sampler=sampler,settings=StanSettings(),samples=2)
@@ -147,3 +150,29 @@ def test_component_mixture_matches_independent_rts(tmp_path):
     np.testing.assert_allclose(output.trend_sd[0],np.sqrt(variance),atol=1e-8,rtol=0)
     assert set(('slope','seasonal','ar','beta')).issubset(output)
     assert np.isfinite(output.beta_sd).all()
+
+
+def test_composite_covariance_and_coefficient_density(tmp_path):
+    import torch
+    from dlmmc.reference import kalman,rts
+    from dlmmc.tensor_target import model_components
+    y,s,x=inputs(24)
+    fit=dlmmc.fit(y,x,uncertainty=s,sampler='affine',backend='numba',
+        settings=AffineSettings(walkers=16,burnin=4,steps=8,output_draws_per_step=2),output_dir=tmp_path/'fit')
+    out=dlmmc.summarize_components(fit,parameter_draws=4,chunk_draws=2)
+    raw=fit.posterior().unconstrained.values.reshape(-1,1,4)
+    ix=np.floor((np.arange(4)+.5)*len(raw)/4).astype(int);p=fit.prepared
+    F,G,Q,C,_,_=model_components(torch.tensor(raw[ix]),*p.arguments,p.model,S=p.priors['S'],sampling=p.sampling)
+    means=[];variances=[]
+    for i in range(4):
+        f=F[i,0].numpy()
+        m,c=rts(kalman(p.y[0].numpy(),p.variance[0].numpy(),p.observed[0].numpy(),
+                      f,G[i,0].numpy(),Q[i,0].numpy(),C[i,0].numpy()),G[i,0].numpy())
+        means.append(np.einsum('ti,ti->t',f,m)*p.scale[0]+p.offset[0])
+        variances.append(np.einsum('ti,tij,tj->t',f,c,f)*p.scale[0]**2)
+    np.testing.assert_allclose(out.fitted[0],np.mean(means,0),atol=1e-8,rtol=0)
+    np.testing.assert_allclose(out.fitted_sd[0],np.sqrt(np.mean(variances,0)+np.var(means,0)),atol=1e-8,rtol=0)
+    np.testing.assert_allclose(out.fitted,out.trend+out.seasonal+out.ar+out.regression,atol=1e-12,rtol=0)
+    grid=out.beta_grid.values;pdf=out.beta_density.values
+    np.testing.assert_allclose(np.trapezoid(pdf,grid,axis=-1),1,atol=1e-5,rtol=0)
+    np.testing.assert_allclose(np.trapezoid(pdf*grid,grid,axis=-1),out.beta.isel(time=12),atol=1e-5,rtol=0)

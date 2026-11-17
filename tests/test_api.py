@@ -27,7 +27,7 @@ def test_prior_defaults_match_current_model_defaults():
     spec = _resolve_model('vanilla_ar1')[1]
     priors = _resolve_priors(spec, 3, None, {})
     assert priors == {
-        'S': 10.0,
+        'S': 9.0,
         'sigma_trend_prior': 1e-4,
         'sigma_seas_prior': 0.01,
         'sigma_AR_prior': 0.5,
@@ -300,3 +300,17 @@ def test_fit_csv_omits_local_kalman_scratch_arrays(tmp_path):
     assert not any(column.startswith(scratch_prefixes) for column in columns)
     assert {'trend.1', 'slope.1', 'seasonal.1', 'ar.1'} <= set(columns)
     assert {'trend', 'slope', 'seasonal', 'ar', 'sigma_trend', 'sigma_seas', 'sigma_AR', 'rhoAR1'} <= set(posterior.data_vars)
+
+
+@pytest.mark.parametrize('options',[
+    {'priors':{'initial_state_prior_width':3,'sigma_AR_prior_width':.3}},
+    {'initial_state_prior_width':3,'sigma_AR_prior_width':.3},
+])
+def test_cmdstan_widths_translate_to_variance_and_print(fake_sampler,capsys,options):
+    api.fit(xr.DataArray(np.arange(5.),dims='time'),model='noregs_ar1',
+            chains=1,warmup=0,samples=2,**options)
+    data=fake_sampler.kwargs['data']
+    assert data['S']==9 and data['sigma_AR_prior']==.3
+    assert 'initial_state_prior_width' not in fake_sampler.kwargs
+    text=capsys.readouterr().out
+    assert text.count('DLMMC model')==1 and 'initial_state_prior_width=3' in text

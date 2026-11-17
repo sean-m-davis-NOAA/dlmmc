@@ -57,7 +57,7 @@ def test_public_conditional_outputs_match_independent_gaussian(model):
     try:out=conditional_outputs(p,np.broadcast_to(u,(count,1,len(u))),seed=870)
     finally:torch.set_num_threads(old)
     assert torch.equal(before,torch.get_rng_state())
-    F,G,Q,C=matrices(model,X,theta)
+    F,G,Q,C=matrices(model,X,theta,S=p.priors["S"])
     _,mean,cov=dense_condition(p.y[0].numpy(),p.variance[0].numpy(),p.observed[0].numpy(),F,G,Q,C)
     dim=len(G);mean=mean.reshape(n,dim)*p.scale[0];mean[:,0]+=p.offset[0]
     cov=cov*p.scale[0]**2
@@ -78,7 +78,7 @@ def test_reconstruction_rejects_short_smoke_before_writing(tmp_path):
     from dlmmc.sampling import sample_parameters
     from test_public_affine_api import setup
     p,h=setup()
-    fit=sample_parameters(p,output_dir=tmp_path/'fit',backend='torch',retained_sweeps=8,
+    fit=sample_parameters(p,output_dir=tmp_path/'fit',backend='numba',retained_sweeps=8,
                           half_walkers=8,initial_halves=h,warmup=0)
     report=diagnose_fit(fit,trace_review='Short smoke traces inspected; inadequate length')
     assert not report['eligible']

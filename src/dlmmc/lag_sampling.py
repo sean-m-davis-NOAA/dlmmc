@@ -91,7 +91,7 @@ def _continue(fit,target,end,started,wall_seconds):
     return fit
 
 
-def sample_enso_lag(prepared,sigma_prior,lag_prior,predictor,*,output_dir,backend=None,half_walkers=64,runs=4,warmup=128,retained_sweeps=256,chunk_sweeps=16,seed=2026113101,wall_seconds=600,phase='pilot',selection=None,reference=False,centers=None,initial_halves=None,torch_threads=1,numba_threads=8):
+def sample_enso_lag(prepared,sigma_prior,lag_prior,predictor,*,output_dir,backend=None,dtype=None,device=None,half_walkers=64,runs=4,warmup=128,retained_sweeps=256,chunk_sweeps=16,seed=2026113101,wall_seconds=600,phase='pilot',selection=None,reference=False,centers=None,initial_halves=None,torch_threads=1,numba_threads=8):
     """Two Gaussian fields with independent priors; explicit stage06 workload.
 
     Default centers optimize the full joint target. For a multimodal investigation
@@ -108,8 +108,11 @@ def sample_enso_lag(prepared,sigma_prior,lag_prior,predictor,*,output_dir,backen
     if half_walkers<max(p.cells,len(p.parameter_names)-1)+1 or runs<4 or min(retained_sweeps,chunk_sweeps)<1 or chunk_sweeps>50 or warmup<0 or wall_seconds<=0:raise ValueError('Full-rank moved blocks,4runs and bounded positive budgets required')
     if folder.exists():raise ValueError('Preserve lag fit; use resume_enso_lag')
     from .compute import prepared_for_backend, select_backend
-    backend = select_backend(backend, announce=True)
-    p=prepared_for_backend(p,backend)
+    backend = select_backend(backend,dtype=dtype,device=device)
+    p=prepared_for_backend(p,backend,dtype=dtype,device=device)
+    select_backend(backend,dtype=p.y.dtype,device=p.y.device,announce=True)
+    from .prior_specification import announce_model
+    announce_model(p.model,p.regressor_names,p.priors,panels=p.cells,fields={'sigma_trend':sigma_prior,'ENSO_lag':lag_prior})
     with _threads(backend,torch_threads,numba_threads):
         target=ENSOLagTarget(p,sigma_prior,lag_prior,predictor,backend=backend)
         base=list(initial_coordinates(p.model,p.regressors.shape[-1]))
@@ -120,7 +123,7 @@ def sample_enso_lag(prepared,sigma_prior,lag_prior,predictor,*,output_dir,backen
         dummy=p.y.new_tensor(initial[0]).expand(half_walkers,-1).clone();u=dummy.reshape(half_walkers,p.cells,target.parameters);compile_info={}
         if backend=='numba':
             from .numba_prototype import compile_specialization
-            compile_info=compile_specialization(u[...,:target.base_parameters],p.y,p.variance,p.observed,target.regressors(u),p.model,algorithm='structured',S=p.priors['S'],sampling=p.sampling)
+            compile_info=compile_specialization(u[...,:target.base_parameters],p.y,p.variance,p.observed,target.regressors(u),p.model,algorithm='structured',research_float32=True,S=p.priors['S'],sampling=p.sampling)
         elif backend=='mps':
             from .structured_mps import compile_kernel
             compile_info['compilation_or_cache_load_seconds']=compile_kernel(p.model,p.regressors.shape[-1])[1]

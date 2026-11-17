@@ -40,8 +40,8 @@ def summarize_production_trends(fit, *, output_dir, anchor_month='1998-01',
 
 @njit(cache=True,fastmath=False)
 def _trend_one(y,variance,observed,F,G,Q,C,anchor):
-    n,d=F.shape;eye=np.eye(d);m=np.zeros(d);P=C.copy()
-    means=np.empty((n,d));covs=np.empty((n,d,d))
+    n,d=F.shape;eye=np.eye(d,dtype=F.dtype);m=np.zeros(d,dtype=F.dtype);P=C.copy()
+    means=np.empty((n,d),dtype=F.dtype);covs=np.empty((n,d,d),dtype=F.dtype)
     for t in range(n):
         m=G@m;P=G@P@G.T+Q
         if observed[t]:
@@ -50,21 +50,21 @@ def _trend_one(y,variance,observed,F,G,Q,C,anchor):
             gain=pf/s;m=m+gain*(y[t]-f@m);A=eye-np.outer(gain,f)
             P=A@P@A.T+np.outer(gain,gain)*variance[t]
         means[t]=m;covs[t]=P
-    sm=means.copy();sc=covs.copy();gains=np.empty((n-1,d,d))
+    sm=means.copy();sc=covs.copy();gains=np.empty((n-1,d,d),dtype=F.dtype)
     for t in range(n-2,-1,-1):
         R=G@covs[t]@G.T+Q;J=np.ascontiguousarray(np.linalg.solve(R,G@covs[t]).T)
         sm[t]=means[t]+J@(sm[t+1]-G@means[t]);A=eye-J@G
         sc[t]=A@covs[t]@A.T+J@Q@J.T+J@sc[t+1]@J.T;gains[t]=J
-    result=np.empty((n,4))
+    result=np.empty((n,4),dtype=F.dtype)
     for t in range(n):
         result[t,0]=sm[t,0];result[t,1]=sc[t,0,0];result[t,2]=sm[t,0]-sm[anchor,0]
     result[anchor,3]=0.
     cross=sc[anchor,:,0].copy()
     for t in range(anchor-1,-1,-1):
-        cross=gains[t]@cross;result[t,3]=sc[t,0,0]+sc[anchor,0,0]-2*cross[0]
-    weight=np.zeros(d);weight[0]=1.
+        cross=gains[t]@cross;result[t,3]=sc[t,0,0]+sc[anchor,0,0]-F.dtype.type(2)*cross[0]
+    weight=np.zeros(d,dtype=F.dtype);weight[0]=1.
     for t in range(anchor+1,n):
-        weight=gains[t-1].T@weight;result[t,3]=sc[t,0,0]+sc[anchor,0,0]-2*(weight@sc[t,:,0])
+        weight=gains[t-1].T@weight;result[t,3]=sc[t,0,0]+sc[anchor,0,0]-F.dtype.type(2)*(weight@sc[t,:,0])
     if not np.isfinite(result).all() or np.any(result[:,1]<0) or np.any(result[:,3]<0):
         raise ValueError('Invalid trend covariance; no clipping or floor')
     return result
@@ -72,7 +72,7 @@ def _trend_one(y,variance,observed,F,G,Q,C,anchor):
 
 @njit(cache=True,parallel=True,fastmath=False)
 def _trend_batch(y,variance,observed,F,G,Q,C,anchor):
-    result=np.empty((len(F),len(y),4))
+    result=np.empty((len(F),len(y),4),dtype=F.dtype)
     for i in prange(len(F)):result[i]=_trend_one(y,variance,observed,F[i],G[i],Q[i],C[i],anchor)
     return result
 

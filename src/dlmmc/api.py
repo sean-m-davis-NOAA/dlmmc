@@ -34,8 +34,10 @@ _MODEL_SPECS = {
     "vanilla_ar1_noseasonal": {"source": "dlm_vanilla_ar1_noseasonal", "regressors": "static", "seasonal": False, "ar2": False},
     "vanilla_ar2_noseasonal": {"source": "dlm_vanilla_ar2_noseasonal", "regressors": "static", "seasonal": False, "ar2": True},
 }
+from .prior_specification import INITIAL_STATE_PRIOR_VARIANCE, combine_priors, announce_model
+
 _DEFAULT_PRIORS = {
-    "S": 10.0,
+    "S": INITIAL_STATE_PRIOR_VARIANCE,
     "sigma_trend_prior": 1e-4,
     "sigma_seas_prior": 0.01,
     "sigma_AR_prior": 0.5,
@@ -64,31 +66,16 @@ def _resolve_priors(
     priors: Mapping[str, Any] | None,
     direct_priors: Mapping[str, Any],
 ) -> dict[str, Any]:
+    supplied = combine_priors(priors, direct_priors)
     if "component_model" in spec:
         from .components import resolve_priors
-        if direct_priors:raise ValueError("Use the priors mapping for composed models")
-        return resolve_priors(spec["component_model"],nreg,priors)
+        return resolve_priors(spec["component_model"],nreg,supplied)
     allowed = {"S", "sigma_trend_prior", "sigma_AR_prior"}
-    if spec["seasonal"]:
-        allowed.add("sigma_seas_prior")
-    if spec["regressors"] == "dynamic":
-        allowed.add("sigma_reg_prior")
-
-    supplied = dict(priors or {})
-    if not isinstance(priors, (Mapping, type(None))):
-        raise TypeError("priors must be a mapping of Stan prior names to values.")
+    if spec["seasonal"]:allowed.add("sigma_seas_prior")
+    if spec["regressors"] == "dynamic":allowed.add("sigma_reg_prior")
     unknown = set(supplied) - allowed
     if unknown:
         raise ValueError(f"Priors not used by this model: {', '.join(sorted(unknown))}.")
-
-    for name, value in direct_priors.items():
-        if value is None:
-            continue
-        if name in supplied:
-            raise ValueError(f"Set {name!r} either directly or in priors, not both.")
-        if name not in allowed:
-            raise ValueError(f"Prior {name!r} is not used by this model.")
-        supplied[name] = value
 
     resolved = {name: _DEFAULT_PRIORS[name] for name in allowed}
     resolved.update(supplied)
@@ -272,7 +259,9 @@ def fit(
     ``uncertainty`` is omitted, a tiny positive measurement uncertainty (1e-20)
     is used and the model's AR component accounts for residual variability.
 
-    Prior scales default to the values used by the current examples and are in
+    Public prior keys use *_prior_width (Gaussian standard deviations);
+    initial_state_prior_width defaults to3 and is squared internally (S=9).
+    Legacy S remains a variance alias. Other prior defaults are unchanged, in
     the normalized units used internally by the Stan models. Priors may be
     overridden individually or through ``priors``; duplicate specifications
     are rejected. ``inits`` supplies sampler starting values and may vary by
@@ -334,7 +323,11 @@ def fit(
         "sigma_AR_prior": sigma_AR_prior,
         "sigma_reg_prior": sigma_reg_prior,
     }
+    for key in list(sampler_options):
+        if key=='initial_state_prior_width' or key.startswith('sigma_') and key.endswith('_prior_width'):
+            direct_priors[key]=sampler_options.pop(key)
     prior_values = _resolve_priors(spec, nreg, priors, direct_priors)
+    announce_model(model_name,regressor_names,prior_values)
 
     if chains < 1 or warmup < 0 or samples < 1:
         raise ValueError("chains and samples must be positive; warmup must be non-negative.")

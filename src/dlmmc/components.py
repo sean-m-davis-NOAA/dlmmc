@@ -248,7 +248,9 @@ def defaults(model,nreg):
 
 
 def resolve_priors(model,nreg,priors=None):
-    l=compiled_layout(model,nreg);result={'S':10.}
+    from .prior_specification import canonical_priors, INITIAL_STATE_PRIOR_VARIANCE
+    priors=canonical_priors(priors)
+    l=compiled_layout(model,nreg);result={'S':INITIAL_STATE_PRIOR_VARIANCE}
     for name,scale in l.scale_defaults:
         result['sigma_reg_prior' if name.startswith('sigma_reg[') else name+'_prior']=scale
     unknown=set(priors or {})-set(result)

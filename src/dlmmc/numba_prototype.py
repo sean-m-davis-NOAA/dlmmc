@@ -1,4 +1,4 @@
-"""Explicit float64 CPU qualification candidate; stock Torch affine callback.
+"""Float64 CPU target with an explicit structured float32 research opt-in.
 
 The dense baseline and optional structured candidate retain both Joseph factors.
 The latter uses exact transition zeros and scalar-observation algebra. Neither
@@ -45,21 +45,21 @@ def _one_structured(y,variance,observed,F,G,Q,C):
     B=(I-k f')P, then P=B(I-f k')+k v k'. No variance floors or
     subtractive P-k p' replacement of the complete Joseph expression.
     """
-    n,d=F.shape;m=np.zeros(d);P=C.copy();total=0.
+    n,d=F.shape;m=np.zeros(d,dtype=F.dtype);P=C.copy();zero=F.dtype.type(0.);total=zero
     columns=np.empty((d,d),dtype=np.int64);counts=np.zeros(d,dtype=np.int64)
     for i in range(d):
         for j in range(d):
             if G[i,j]!=0:
                 columns[i,counts[i]]=j;counts[i]+=1
-    tmp=np.empty((d,d));pred=np.empty((d,d));B=np.empty((d,d))
-    mp=np.empty(d);p=np.empty(d);gain=np.empty(d);bf=np.empty(d)
+    tmp=np.empty((d,d),dtype=F.dtype);pred=np.empty((d,d),dtype=F.dtype);B=np.empty((d,d),dtype=F.dtype)
+    mp=np.empty(d,dtype=F.dtype);p=np.empty(d,dtype=F.dtype);gain=np.empty(d,dtype=F.dtype);bf=np.empty(d,dtype=F.dtype)
     for t in range(n):
         for i in range(d):
-            value=0.
+            value=zero
             for h in range(counts[i]):value+=G[i,columns[i,h]]*m[columns[i,h]]
             mp[i]=value
             for j in range(d):
-                value=0.
+                value=zero
                 for h in range(counts[i]):value+=G[i,columns[i,h]]*P[columns[i,h],j]
                 tmp[i,j]=value
         for i in range(d):
@@ -73,42 +73,49 @@ def _one_structured(y,variance,observed,F,G,Q,C):
             continue
         s=variance[t];residual=y[t]
         for i in range(d):
-            value=0.
+            value=zero
             for j in range(d):value+=pred[i,j]*F[t,j]
             p[i]=value;s+=F[t,i]*value;residual-=F[t,i]*m[i]
-        if not np.isfinite(s) or s<=0:return np.nan,t
+        if not np.isfinite(s) or s<=0:return F.dtype.type(np.nan),t
         for i in range(d):
             gain[i]=p[i]/s;m[i]+=gain[i]*residual
         # Preserve both Joseph factors, allowing nonsymmetric roundoff in pred.
         for j in range(d):
-            value=0.
+            value=zero
             for h in range(d):value+=F[t,h]*pred[h,j]
             for i in range(d):B[i,j]=pred[i,j]-gain[i]*value
         for i in range(d):
-            value=0.
+            value=zero
             for j in range(d):value+=B[i,j]*F[t,j]
             bf[i]=value
         for i in range(d):
             for j in range(d):P[i,j]=B[i,j]-bf[i]*gain[j]+gain[i]*gain[j]*variance[t]
-        total+=-.5*(math.log(2*math.pi*s)+residual*residual/s)
+        total+=F.dtype.type(-.5)*(math.log(F.dtype.type(2*math.pi)*s)+residual*residual/s)
     return total,-1
 
 
 @njit(cache=True,parallel=True,fastmath=False)
 def _batch_structured(y,variance,observed,F,G,Q,C):
-    count=F.shape[0];cells=y.shape[0];values=np.empty(count);failure=np.empty(count,dtype=np.int64)
+    count=F.shape[0];cells=y.shape[0];values=np.empty(count,dtype=F.dtype);failure=np.empty(count,dtype=np.int64)
     for i in prange(count):
         values[i],failure[i]=_one_structured(y[i%cells],variance[i%cells],observed[i%cells],F[i],G[i],Q[i],C[i])
     return values,failure
 
 
-def compile_specialization(u,y,variance,observed,X,model,*,algorithm='dense',**kwargs):
+def _validate_precision(u,algorithm,research_float32):
+    if u.device.type!='cpu' or u.dtype not in (torch.float32,torch.float64):
+        raise ValueError('Numba prototype requires explicit CPU float64, or research float32')
+    if u.dtype==torch.float32 and not (research_float32 and algorithm=='structured'):
+        raise ValueError('Numba prototype requires explicit CPU float64; float32 needs structured research opt-in')
+
+
+def compile_specialization(u,y,variance,observed,X,model,*,algorithm='dense',research_float32=False,**kwargs):
     """Compile/load the exact Numba argument-type specialization, without running it.
 
     Array extents are runtime values for Numba; callers additionally prewarm their
     exact walker/cell/time/state shapes outside performance measurements.
     """
-    if u.dtype!=torch.float64 or u.device.type!='cpu':raise ValueError('Requires CPU float64')
+    _validate_precision(u,algorithm,research_float32)
     F,G,Q,C,_,_=model_components(u,y,variance,observed,X,model,**kwargs)
     n,d=F.shape[-2:]
     yy=torch.where(observed,y,torch.zeros_like(y));vv=torch.where(observed,variance,torch.ones_like(variance))
@@ -119,17 +126,19 @@ def compile_specialization(u,y,variance,observed,X,model,*,algorithm='dense',**k
     return dict(compilation_or_cache_load_seconds=time.perf_counter()-start,signature=str(signature),parameter_shape=list(u.shape),data_shape=list(y.shape),state_dimension=d,fastmath=False)
 
 
-def target_numba(u,y,variance,observed,X,model,*,S=10.,sampling=1.,fixed_variance=None,algorithm='dense'):
-    """CPU float64 target with the original Torch prior/matrix construction.
+def target_numba(u,y,variance,observed,X,model,*,S=10.,sampling=1.,fixed_variance=None,algorithm='dense',research_float32=False):
+    """CPU target with the original Torch prior/matrix construction.
+
+    Float32 requires ``research_float32=True, algorithm="structured"``; this
+    does not change production defaults or certify numerical equivalence.
 
     CPU tensors share NumPy storage at the callback boundary. Observations are
     stored once per cell, never copied once per walker. Compile/prewarm this
     exact callback specialization before measuring a sampling comparison.
     """
-    if u.dtype!=torch.float64 or u.device.type!='cpu':
-        raise ValueError('Numba prototype requires explicit CPU float64')
-    if any(z.device.type!='cpu' or z.dtype!=torch.float64 for z in (y,variance,X)):
-        raise ValueError('Numba prototype inputs require CPU float64')
+    _validate_precision(u,algorithm,research_float32)
+    if any(z.device.type!='cpu' or z.dtype!=u.dtype for z in (y,variance,X)):
+        raise ValueError('Numba inputs require matching CPU dtype')
     if observed.dtype!=torch.bool or observed.device.type!='cpu' or y.shape!=variance.shape or y.shape!=observed.shape or y.ndim not in (1,2):
         raise ValueError('Matching one-panel or cell/time arrays and Boolean mask required')
     if not bool(torch.isfinite(y[observed]).all() and torch.isfinite(variance[observed]).all() and (variance[observed]>=0).all()):

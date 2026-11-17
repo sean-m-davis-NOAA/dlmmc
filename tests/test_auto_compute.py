@@ -22,7 +22,7 @@ def test_priority_and_message(monkeypatch,capsys,cuda,mps,chosen,argument):
     assert msg.count('DLMMC Affine:')==1
 
 
-@pytest.mark.parametrize('backend',['numba','cpu','torch','mps','cuda'])
+@pytest.mark.parametrize('backend',['numba','cpu','mps','cuda'])
 def test_explicit_overrides(monkeypatch,backend):
     devices(monkeypatch,True,True)
     assert resolve_compute(backend).backend==('numba' if backend=='cpu' else backend)
@@ -31,7 +31,8 @@ def test_explicit_overrides(monkeypatch,backend):
 def test_explicit_device_precision_and_missing_hardware(monkeypatch):
     devices(monkeypatch,True,True)
     assert resolve_compute(device='cpu').backend=='numba'
-    assert resolve_compute(dtype='float64').backend=='numba'
+    assert resolve_compute(dtype='float64').backend=='cuda'
+    with pytest.raises(ValueError,match='no longer'):resolve_compute('torch')
     assert resolve_compute(device='cuda:1').device=='cuda:1'
     with pytest.raises(ValueError,match='disagree'):resolve_compute('mps',device='cpu')
     with pytest.raises(ValueError,match='requires'):resolve_compute('mps',dtype='float64')

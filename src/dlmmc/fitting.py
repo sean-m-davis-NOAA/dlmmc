@@ -71,7 +71,7 @@ def fit(data, regressors=None, model='vanilla_ar1', *, sampler=None,
     """Fit using explicit ``sampler='affine'`` or ``'cmdstan'`` (alias ``'stan'``).
 
     Affine returns its checkpointed FitResult and requires output_dir. Backend
-    selects numba/cpu, torch CPU, mps or cuda; GPU precision is float32. CmdStan
+    selects numba/cpu, mps or cuda; explicit precision is supported on capable devices. CmdStan
     runs CPU NUTS and returns an xarray posterior. It accepts StanSettings plus
     CmdStan options such as adapt_delta/inits. Preset-equivalent Model objects
     map exactly to existing Stan sources; other compositions are not translated.
@@ -82,6 +82,10 @@ def fit(data, regressors=None, model='vanilla_ar1', *, sampler=None,
     are bounded to five cells; larger production selection is affine-only.
     """
     from . import api
+    from .prior_specification import combine_priors
+    direct={key:options.pop(key) for key in list(options)
+            if key=='initial_state_prior_width' or key.startswith('sigma_') and key.endswith('_prior_width')}
+    if direct:options['priors']=combine_priors(options.get('priors'),direct)
     if sampler is None:
         if backend is not None or settings is not None:
             raise ValueError('Specify sampler when choosing backend or settings')
@@ -111,6 +115,8 @@ def fit(data, regressors=None, model='vanilla_ar1', *, sampler=None,
         uncertainty = uncertainty.broadcast_like(data).transpose('time', 'panel')
         return fit_production(data, regressors, uncertainty=uncertainty, model=model,
                               backend=backend, profile=config.profile(), **options)
+    stan_dtype=options.pop('dtype','float64')
+    if str(stan_dtype).removeprefix('torch.')!='float64':raise ValueError('CmdStan supports float64 only; use affine for float32')
     if backend not in (None, 'auto', 'cpu', 'cmdstan'):
         raise ValueError('CmdStan NUTS runs on CPU; use backend="cpu". GPU kernels belong to affine.')
     config = _settings(settings, StanSettings)
@@ -178,7 +184,7 @@ def summarize_trends(result, *, output_dir=None, **options):
     return load_trend_summary(output_dir)
 
 
-def summarize_components(result, *, parameter_draws=64, chunk_draws=8):
+def summarize_components(result, *, parameter_draws=64, chunk_draws=8, coefficient_time_index=None):
     """Small-panel deterministic state summaries for tutorial component plots.
 
     Explicit CPU64 conditional moments, no sampled state trajectories or GPU
@@ -221,6 +227,13 @@ def summarize_components(result, *, parameter_draws=64, chunk_draws=8):
     if layout.ar_order:add('ar',[layout.ar_start])
     for j,n in enumerate(p.regressor_names):add('beta:'+n,[layout.regressor_start+j])
     weights = torch.tensor(np.asarray(weights),dtype=torch.float64)
+    beta_indices=[j for j,n in enumerate(labels) if n.startswith('beta:')]
+    coefficient_time_index=len(p.time)//2 if coefficient_time_index is None else coefficient_time_index
+    if type(coefficient_time_index) is not int or not 0<=coefficient_time_index<len(p.time):
+        raise ValueError('coefficient_time_index must select one observation time')
+    beta_means=[];beta_variances=[]
+    # Extra time-dependent projections retain ALL cross-component covariance.
+    labels += ['regression','fitted']
     mean_sum = second_sum = None
     old_threads = torch.get_num_threads()
     try:
@@ -231,9 +244,18 @@ def summarize_components(result, *, parameter_draws=64, chunk_draws=8):
                 F,G,Q,C,_,valid = model_components(u,*p.arguments,p.model,S=p.priors['S'],sampling=p.sampling)
                 if not bool(valid.all()):raise ValueError('Retained parameters outside support')
                 m,c,_ = conditional_moments(filter_tensor(p.y,p.variance,p.observed,F,G,Q,C),G,Q)
-                means = torch.einsum('...ti,ki->...tk',m,weights).numpy()*p.scale[None,:,None,None]
-                var = torch.einsum('ki,...tij,kj->...tk',weights,c,weights).numpy()*p.scale[None,:,None,None]**2
+                projection=weights.expand(*F.shape[:-1],*weights.shape)
+                regression=torch.zeros_like(F)
+                if layout.regressor_start>=0:
+                    regression[...,layout.regressor_start:layout.regressor_start+len(p.regressor_names)]=F[...,layout.regressor_start:layout.regressor_start+len(p.regressor_names)]
+                projection=torch.cat((projection,regression.unsqueeze(-2),F.unsqueeze(-2)),-2)
+                means = torch.einsum('...ti,...tki->...tk',m,projection).numpy()*p.scale[None,:,None,None]
+                var = torch.einsum('...tki,...tij,...tkj->...tk',projection,c,projection).numpy()*p.scale[None,:,None,None]**2
                 if 'trend' in labels:means[...,labels.index('trend')] += p.offset[None,:,None]
+                means[...,labels.index('fitted')] += p.offset[None,:,None]
+                if beta_indices:
+                    beta_means.append(means[:,:,coefficient_time_index,beta_indices])
+                    beta_variances.append(var[:,:,coefficient_time_index,beta_indices])
                 if not np.isfinite(means).all() or not np.isfinite(var).all() or np.any(var<0):
                     raise ValueError('Invalid conditional component moments; no variance floor')
                 if mean_sum is None:
@@ -256,8 +278,19 @@ def summarize_components(result, *, parameter_draws=64, chunk_draws=8):
     if beta:
         variables['beta']=(('panel','time','regressor'),means[:,:,beta])
         variables['beta_sd']=(('panel','time','regressor'),sd[:,:,beta])
+        bm=np.concatenate(beta_means);bv=np.concatenate(beta_variances)
+        if np.any(bv<=0):raise ValueError('Coefficient density requires positive conditional variances; no floor')
+        # Gaussian mixture over hyperparameter draws, NOT histogram of state means.
+        bm0=means[:,coefficient_time_index,beta];bs0=sd[:,coefficient_time_index,beta]
+        grid=bm0[...,None]+bs0[...,None]*np.linspace(-6,6,241)
+        density=np.mean(np.exp(-.5*(grid[None]-bm[...,None])**2/bv[...,None])/np.sqrt(2*np.pi*bv[...,None]),axis=0)
+        variables['beta_grid']=(('panel','regressor','density_point'),grid)
+        variables['beta_density']=(('panel','regressor','density_point'),density)
     return xr.Dataset(variables,coords={'panel':p.cell_coordinates['panel'],'time':p.time,
                                        'regressor':p.regressor_names},
                       attrs={'sampler':'affine','compute':'explicit CPU64 conditional moments',
-                             'selected_parameter_draws':count,'qualification_status':'PRODUCTION_ESTIMATES_WITH_FLAGS',
+                             'selected_parameter_draws':count,'coefficient_density_time':str(p.time[coefficient_time_index]),
+                             'fitted_band':'latent signal, all component covariances included; excludes new measurement noise',
+                             'coefficient_density':'conditional Gaussian mixture at the selected time, in original response units per supplied predictor unit',
+                             'qualification_status':'PRODUCTION_ESTIMATES_WITH_FLAGS',
                              'uncertainty':'conditional variance plus hyperparameter mixture variance; pointwise SD'})

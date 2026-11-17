@@ -26,9 +26,9 @@ def identity():
         for n in ('structured_mps.py','gpu_production.py','production.py','compute.py','profiles.py')}}
 
 
-def gpu_prepared(p,device):
+def gpu_prepared(p,device,dtype=torch.float32):
     """Explicit round/copy of canonical prepared inputs; no normalization change."""
-    return replace(p, **{n:getattr(p,n).to(device=device,dtype=torch.bool if n=='observed' else torch.float32).contiguous()
+    return replace(p, **{n:getattr(p,n).to(device=device,dtype=torch.bool if n=='observed' else dtype).contiguous()
         for n in ('y','variance','observed','regressors')})
 
 
@@ -64,23 +64,25 @@ def continue_blocks(folder, target, state, *, deadline, end, chunk_sweeps=16):
 @torch.no_grad()
 def fit_gpu_production(data, regressors, *, uncertainty, output_dir, selection=None,
         seed=2026111801,wall_seconds=5400,profile=PRODUCTION_PROFILE,centers=None,
-        model='vanilla_ar1',backend='mps',device=None,priors=None,sampling='monthly',numba_threads=8):
+        model='vanilla_ar1',backend='mps',device=None,dtype=None,priors=None,sampling='monthly',numba_threads=8):
     started=time.monotonic();deadline=started+wall_seconds
-    policy=resolve_compute(backend,device=device)
-    validate_production_scope(data.panel.values,selection,model=model,backend=backend,dtype='float32',profile=profile)
+    policy=resolve_compute(backend,device=device,dtype=dtype)
+    validate_production_scope(data.panel.values,selection,model=model,backend=backend,dtype=policy.dtype,profile=profile)
     if profile.runs!=1:raise ValueError('GPU production currently supports one ensemble; qualification remains separate')
     # Scope was checked in GPU coordinates above; this translated copy is only
     # for canonical CPU64 input preparation and optimized initialization.
     canonical=None if selection is None else dict(selection,backend='numba',dtype='float64')
     p=prepare_production(data,regressors,uncertainty=uncertainty,selection=canonical,profile=profile,
         model=model,priors=priors,sampling=sampling)
+    from .prior_specification import announce_model
+    announce_model(p.model,p.regressor_names,p.priors,panels=p.cells)
     dimension=len(p.parameter_names)
     if profile.half_walkers<=dimension:raise ValueError('Full-rank half-cloud required')
     folder=Path(output_dir).resolve()
     if folder.exists():raise ValueError('Preserve prior fit; use resume or a new path')
     folder.mkdir(parents=True);oracle=folder/'oracle-input';oracle.mkdir();_save_prepared(oracle,p)
     with _threads('numba',1,numba_threads), gpu_arithmetic(policy.device):
-        before=time.perf_counter();pg=gpu_prepared(p,policy.device);target=gpu_target(pg,backend);_sync(pg.y.device)
+        before=time.perf_counter();pg=gpu_prepared(p,policy.device,getattr(torch,policy.dtype));target=gpu_target(pg,backend);_sync(pg.y.device)
         preparation=time.perf_counter()-before
         from .numba_prototype import compile_specialization, _batch_structured
         dummy=torch.tensor(np.broadcast_to(initial_center(p),(profile.half_walkers,p.cells,dimension)).copy())
@@ -88,7 +90,7 @@ def fit_gpu_production(data, regressors, *, uncertainty, output_dir, selection=N
         cpu_info=compile_specialization(dummy,*p.arguments,p.model,algorithm='structured',S=p.priors['S'],sampling=p.sampling)
         compilation=time.perf_counter()-before
         before=time.perf_counter();one=make_target(_cell(p,[0]),'numba');one(dummy[:1,:1].contiguous())
-        dg=dummy.to(policy.device,torch.float32)
+        dg=dummy.to(policy.device,pg.y.dtype)
         target(dg); disposable=initialize(target,(dg,dg.clone()),seed=seed+1,warmup=1)
         advance(target,disposable,2);_sync(pg.y.device);warm=time.perf_counter()-before
         signatures=list(map(str,_batch_structured.signatures));del disposable,dummy,dg
@@ -110,21 +112,21 @@ def fit_gpu_production(data, regressors, *, uncertainty, output_dir, selection=N
             oracle_input_sha256=hashlib.sha256((oracle/'prepared.npz').read_bytes()).hexdigest(),
             execution_profile=profile.to_dict(),selection=selection,qualification_eligible=False,
             seasonal_input_policy=validate_no_seasonal_input(data,model),
-            sampling_dtype='float32',sampling_device=policy.device,reconstruction_dtype='float32',reconstruction_device=policy.device,compute_validation=policy.validation,
-            precision_gate='NUMERICAL_FAIL_RETAINED; user-approved production availability is not qualification',
-            input_policy='Normalize in canonical float64, explicitly cast GPU inputs; GPU32 reconstruction by default; canonical CPU64 inputs retained for explicit oracle comparisons')
+            sampling_dtype=policy.dtype,sampling_device=policy.device,reconstruction_dtype=policy.dtype,reconstruction_device=policy.device,compute_validation=policy.validation,
+            precision_gate=('NUMERICAL_FAIL_RETAINED; user-approved availability is not qualification' if policy.dtype=='float32' else 'CUDA64_NATIVE_VALIDATION_PENDING'),
+            input_policy='Normalize in canonical float64, explicitly cast GPU inputs; native-dtype GPU reconstruction by default; canonical CPU64 inputs retained for explicit oracle comparisons')
         config['provenance']=hashlib.sha256(json.dumps(config,sort_keys=True).encode()).hexdigest()
         (folder/'config.json').write_text(json.dumps(config,indent=2)+'\n')
         rng=np.random.default_rng(seed)
-        halves=tuple(torch.tensor(centers+.01*rng.normal(size=(profile.half_walkers,p.cells,dimension)),dtype=torch.float32,device=policy.device) for _ in range(2))
+        halves=tuple(torch.tensor(centers+.01*rng.normal(size=(profile.half_walkers,p.cells,dimension)),dtype=pg.y.dtype,device=policy.device) for _ in range(2))
         for half in halves:
             actual=half.cpu().numpy()
             for g in range(p.cells):
-                if np.linalg.matrix_rank(actual[:,g]-actual[:,g].mean(0))!=dimension:raise ValueError('Actual float32 cloud rank failure')
+                if np.linalg.matrix_rank(actual[:,g]-actual[:,g].mean(0))!=dimension:raise ValueError('Actual sampling-dtype cloud rank failure')
         state=initialize(target,halves,seed=seed+10000,warmup=profile.warmup,thin=1,provenance=config['provenance'])
         save_state(folder/'run-0'/'initial.npz',state);_sync(state.halves[0].device)
         (folder/'initialization.json').write_text(json.dumps(dict(seconds=time.perf_counter()-begin,
-            method='Fresh CPU64 Powell centers, then actual-MPS32 full-rank/support checks, 0.01 cloud',
+            method='Fresh CPU64 Powell centers, then actual-GPU-dtype full-rank/support checks, 0.01 cloud',
             centers=centers.tolist(),optimizations=optimizations),indent=2)+'\n')
         (folder/'compilation.json').write_text(json.dumps(dict(compilation_or_cache_load_seconds=compilation,
             disposable_exact_shape_warmup_seconds=warm,metal_compile_pipeline_seconds=metal_seconds,

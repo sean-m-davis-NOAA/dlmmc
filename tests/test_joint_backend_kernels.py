@@ -9,13 +9,14 @@ from dlmmc.enso_lag import ENSOLagTarget
 from dlmmc import conditional_trend_moments
 from dlmmc.sampling import _threads
 
-@pytest.mark.parametrize('backend',['torch','mps','cuda'])
+@pytest.mark.parametrize('backend',['torch','numba32','mps','cuda'])
 @pytest.mark.parametrize('model',['vanilla_ar1','vanilla_ar2','dynregs_ar1','vanilla_ar1_noseasonal','vanilla_ar2_noseasonal'])
 def test_coupled_density_and_lag_smoother(backend,model):
  if backend=='mps' and not torch.backends.mps.is_available():pytest.skip('Native MPS unavailable')
  if backend=='cuda' and not torch.cuda.is_available():pytest.skip('Native CUDA unavailable; no pass claim')
  torch.set_num_threads(1);p,sigma,lag,predictor=fixture();p=replace(p,model=model,priors={**p.priors,'sigma_reg_prior':[1e-4]*2})
- pg=p if backend=='torch' else gpu_prepared(p,backend)
+ pg=p if backend=='torch' else gpu_prepared(p,'cpu' if backend=='numba32' else backend)
+ if backend=='numba32':backend='numba'
  u=np.broadcast_to(initial_center(p),(3,4,len(p.parameter_names))).copy()+np.random.default_rng(1702).normal(0,.1,(3,4,len(p.parameter_names)))
  z=torch.tensor(u,dtype=pg.y.dtype,device=pg.y.device);cpu=torch.tensor(u)
  with _threads('numba',1,8):
@@ -53,12 +54,13 @@ def test_no_seasonal_prepared_policy_roundtrip_and_joint_guard(tmp_path):
  with pytest.raises(ValueError,match='deseasonalised'):sample_enso_lag(p,sigma,lag,predictor,output_dir=tmp_path/'bad')
  assert not (tmp_path/'bad').exists()
 
-@pytest.mark.parametrize('backend',['torch','mps','cuda'])
+@pytest.mark.parametrize('backend',['torch','numba32','mps','cuda'])
 def test_no_regressor_spatial_density(backend):
  if backend=='mps' and not torch.backends.mps.is_available():pytest.skip('Native MPS unavailable')
  if backend=='cuda' and not torch.cuda.is_available():pytest.skip('Native CUDA unavailable; no pass claim')
  p,sigma,_,_=fixture();p=replace(p,model='noregs_ar1',regressors=p.regressors[...,:0],regressor_names=[])
- pg=p if backend=='torch' else gpu_prepared(p,backend)
+ pg=p if backend=='torch' else gpu_prepared(p,'cpu' if backend=='numba32' else backend)
+ if backend=='numba32':backend='numba'
  u=np.broadcast_to(initial_center(p),(3,4,len(p.parameter_names))).copy()+np.random.default_rng(1705).normal(0,.1,(3,4,len(p.parameter_names)))
  with _threads('numba',1,8):
   ref=SpatialTarget(p,sigma,backend='numba')(torch.tensor(u).reshape(3,-1))

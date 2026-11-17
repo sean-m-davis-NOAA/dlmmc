@@ -108,8 +108,8 @@ class ENSOLagTarget:
             times=months.astype(np.int64)
         if not np.array_equal(times-predictor.origin_month,predictor.observation_month):raise ValueError('Predictor observation timestamps differ from prepared data')
         if backend not in ('numba','torch','mps','cuda'):raise ValueError('Explicit numba, torch, mps or cuda backend required')
-        if backend in ('mps','cuda') and (p.y.device.type!=backend or p.y.dtype!=torch.float32):raise ValueError('Native GPU32 prepared inputs required')
-        if backend=='numba' and (p.y.device.type!='cpu' or p.y.dtype!=torch.float64):raise ValueError('Numba requires CPU64')
+        if backend in ('mps','cuda') and (p.y.device.type!=backend or (backend=='mps' and p.y.dtype!=torch.float32)):raise ValueError('Native GPU prepared inputs required; MPS uses float32')
+        if backend=='numba' and (p.y.device.type!='cpu' or p.y.dtype not in (torch.float32,torch.float64)):raise ValueError('Numba requires CPU32/64')
         if sigma_prior.lower!=0 or not math.isinf(sigma_prior.upper):raise ValueError('Sigma prior requires strict positive unbounded support')
         if lag_prior.lower!=0 or not np.isfinite(lag_prior.upper) or lag_prior.upper!=predictor.upper_lag:raise ValueError('Lag prior support and predictor coverage must match')
         if lag_prior.field_unit!='months':raise ValueError('Lag prior units must be months')
@@ -141,7 +141,7 @@ class ENSOLagTarget:
         p=self.prepared;base=u[...,:self.base_parameters];_,jac,valid_lag=self.lag_values(u);x=self.regressors(u)
         if self.backend=='numba':
             from .numba_prototype import target_numba
-            value=target_numba(base,p.y,p.variance,p.observed,x,p.model,S=p.priors['S'],sampling=p.sampling,algorithm='structured')
+            value=target_numba(base,p.y,p.variance,p.observed,x,p.model,S=p.priors['S'],sampling=p.sampling,algorithm='structured',research_float32=True)
             value=value+self.correction.prior_correction(base,torch.isfinite(value))
         else:
             F,G,Q,C,lp,valid=model_components(base,p.y,p.variance,p.observed,x,p.model,S=p.priors['S'],sampling=p.sampling)

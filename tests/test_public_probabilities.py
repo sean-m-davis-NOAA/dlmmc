@@ -22,7 +22,7 @@ def test_public_probability_dense_cross_time_oracle(model):
     before=torch.get_rng_state().clone()
     actual=conditional_trend_probabilities(p,u,pairs)[0,0]
     assert torch.equal(before,torch.get_rng_state())
-    F,G,Q,C=matrices(model,X,theta)
+    F,G,Q,C=matrices(model,X,theta,S=p.priors["S"])
     _,m,v=dense_condition(p.y[0].numpy(),p.variance[0].numpy(),p.observed[0].numpy(),F,G,Q,C)
     expected=[]
     for a,b in pairs:

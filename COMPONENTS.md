@@ -33,7 +33,7 @@ The independent default remains 128 walkers /128 burn-in /256 retained with one 
 
 Components can be omitted. Choose at most one Trend or Level, one Regression and one AR. Separate harmonic blocks with distinct names/periods allow different innovation scales, for example `Harmonics((12,), name="annual") + Harmonics((6,), name="semi")`. Repeated periods or names are rejected. Select meaningful periods for the sampling interval: the compiler does not infer scientific identifiability or choose a seasonal model for you.
 
-State order is canonical: trend/level, harmonic blocks sorted by name, coefficients in predictor order, AR. Inferred scale defaults remain 1e-4 for trend/level/coefficient innovations, .01 for harmonic innovations and .5 for AR innovations, in normalized data units. Override using the existing `priors` mapping (`sigma_annual_prior`, `sigma_reg_prior`, etc.). `S=10` is the initial variance of non-AR states. These are statistical assumptions, not numerical stabilization parameters.
+State order is canonical: trend/level, harmonic blocks sorted by name, coefficients in predictor order, AR. Inferred scale defaults remain 1e-4 for trend/level/coefficient innovations, .01 for harmonic innovations and .5 for AR innovations, in normalized data units. Override using the existing `priors` mapping (`sigma_annual_prior_width`, `sigma_reg_prior_width`, etc.). `initial_state_prior_width=3` is the default Gaussian standard deviation of non-AR initial states; the backend receives its square, `S=9`. This intentionally changes the former default variance of10; all innovation-prior defaults are unchanged. These are statistical assumptions, not numerical stabilization parameters.
 
 Static coefficient innovation variance defaults to 1e-20 with AR2 and 1e-10 otherwise, preserving the historical models. `Regression(static_variance=...)`, `Trend(level_variance=...)` and `AR(auxiliary_variance=...)` make changes explicit; choosing different values changes the model. No floor, added jitter or precision fallback is introduced.
 
@@ -41,7 +41,7 @@ Omitting harmonics still requires declared deseasonalized data (or declared synt
 
 ## Compatibility and inspection
 
-`Model.from_preset("vanilla_ar1")` gives `Model(Trend(), Harmonics(), Regression(), AR(1))`. All six existing strings remain accepted. Their priors, fixed variances, parameter ordering and initial-state timing are preserved; they compile through the same component layout. The optional CmdStan API continues to support its six original Stan models only; arbitrary Stan code generation is not part of this change.
+`Model.from_preset("vanilla_ar1")` gives `Model(Trend(), Harmonics(), Regression(), AR(1))`. All six existing strings remain accepted. Their prior families, fixed variances, parameter ordering and initial-state timing are preserved (the user-selected initial variance default is now9); they compile through the same component layout. The optional CmdStan API continues to support its six original Stan models only; arbitrary Stan code generation is not part of this change.
 
 ```python
 from dlmmc import prepare_data, build_state_space
@@ -63,7 +63,7 @@ matrices = build_state_space(
 
 Trend summaries require a Trend or Level component. Other compositions can evaluate likelihoods and reconstruct their full states through the existing diagnosed reconstruction API; no harmonic or AR state is silently mislabeled as a trend. Component slices identify state coordinates. The deterministic centering offset belongs to the baseline/signal, not to harmonic or regression states.
 
-All implemented component models, including no-AR compositions, are selectable on `numba` (or `cpu`), `torch` (CPU), `mps` and `cuda`, per the user’s explicit backend-access decision. There is no model-specific qualification gate. Retained no-AR ozone stress fixtures still fail the unchanged float32 density gate; making the backend available does not change that result. A new level-model cancellation fixture prompted a stable covariance calculation for anchor-relative changes; no tolerance or model was changed.
+All implemented component models, including no-AR compositions, are selectable on `numba` (or `cpu`), `mps` and `cuda`, per the user’s explicit backend-access decision. There is no model-specific qualification gate. Retained no-AR ozone stress fixtures still fail the unchanged float32 density gate; making the backend available does not change that result. A new level-model cancellation fixture prompted a stable covariance calculation for anchor-relative changes; no tolerance or model was changed.
 
 CUDA remains native-untested. Passing representative compositions does not certify every possible model, input or posterior. Scientific consistency, short-run convergence and numerical qualification remain distinct. No new spatial/lag panel selection or full-grid benchmark is authorized by creating a model object.
 

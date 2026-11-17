@@ -21,10 +21,10 @@ def compact_arguments(p, unconstrained, anchor):
     """All selected draws × all panels; only five matrix entries vary by draw."""
     from .components import require_level
     require_level(p.model,p.regressors.shape[-1])
-    u=torch.as_tensor(np.asarray(unconstrained),dtype=torch.float64)
-    if (p.y.device.type!='cpu' or p.y.dtype!=torch.float64
+    u=torch.as_tensor(np.asarray(unconstrained),dtype=p.y.dtype)
+    if (p.y.device.type!='cpu' or p.y.dtype not in (torch.float32,torch.float64)
             or u.ndim!=3 or u.shape[1:]!=(p.cells,len(p.parameter_names)) or not len(u)):
-        raise ValueError('CPU64 draws/panels/model parameter dimension required')
+        raise ValueError('CPU32/64 draws/panels/model parameter dimension required')
     if not 0<=anchor<len(p.time):raise ValueError('Valid anchor required')
     with torch.no_grad():
         F,G,Q,C,_,_=model_components(u[:1],*p.arguments,p.model,S=p.priors['S'],sampling=p.sampling)
@@ -80,7 +80,7 @@ def _matrices(G,Q,C,values):
 @njit(cache=True,parallel=True,fastmath=False)
 def _fixed_grid(y,variance,observed,F,G,Q,C,values,anchor):
     cells,draws=values.shape[:2];n=y.shape[1]
-    out=np.empty((draws,cells,n,4))
+    out=np.empty((draws,cells,n,4),dtype=F.dtype)
     for i in prange(draws*cells):
         s=i//cells;g=i%cells
         gg,qq,cc=_matrices(G[g],Q[g],C[g],values[g,s])
@@ -100,25 +100,25 @@ def fixed_grid_moments(p,u,anchor):
 def _reduce_grid(y,variance,observed,F,G,Q,C,values,anchor,per_sweep):
     """One compiled call for every panel and every selected draw, online moments."""
     cells,draws=values.shape[:2];n=y.shape[1];steps=draws//per_sweep
-    result=np.empty((cells,n,4));halves=np.zeros((cells,2,n))
-    series=np.zeros((cells,steps,3));indices=np.array([0,n//2,n-1])
+    result=np.empty((cells,n,4),dtype=F.dtype);halves=np.zeros((cells,2,n),dtype=F.dtype)
+    series=np.zeros((cells,steps,3),dtype=F.dtype);indices=np.array([0,n//2,n-1])
     for g in prange(cells):
-        mean=np.zeros((n,2));m2=np.zeros((n,2));conditional=np.zeros((n,2))
+        mean=np.zeros((n,2),dtype=F.dtype);m2=np.zeros((n,2),dtype=F.dtype);conditional=np.zeros((n,2),dtype=F.dtype)
         for s in range(draws):
             gg,qq,cc=_matrices(G[g],Q[g],C[g],values[g,s])
             moments=_trend_one(y[g],variance[g],observed[g],F[g],gg,qq,cc,anchor)
             for t in range(n):
                 for k in range(2):
                     delta=moments[t,2*k]-mean[t,k]
-                    mean[t,k]+=delta/(s+1)
+                    mean[t,k]+=delta/F.dtype.type(s+1)
                     m2[t,k]+=delta*(moments[t,2*k]-mean[t,k])
                     conditional[t,k]+=moments[t,2*k+1]
-                halves[g,0 if s<draws//2 else 1,t]+=moments[t,0]/(draws//2)
-            for k in range(3):series[g,s//per_sweep,k]+=moments[indices[k],0]/per_sweep
+                halves[g,0 if s<draws//2 else 1,t]+=moments[t,0]/F.dtype.type(draws//2)
+            for k in range(3):series[g,s//per_sweep,k]+=moments[indices[k],0]/F.dtype.type(per_sweep)
         for t in range(n):
             for k in range(2):
                 result[g,t,2*k]=mean[t,k]
-                v=(conditional[t,k]+m2[t,k])/draws
+                v=(conditional[t,k]+m2[t,k])/F.dtype.type(draws)
                 result[g,t,2*k+1]=v
     return result,halves,series
 
@@ -191,6 +191,6 @@ def summarize_full_batch(fit,*,output_dir,anchor_month='1998-01',selected_walker
         smoothing_and_reduction_seconds=compute,diagnostics_and_output_io_seconds=io,
         post_compile_output_seconds=time.monotonic()-started-compilation-warm,actual_wall_seconds=time.monotonic()-started,
         cap_seconds=wall_seconds,cap_exceeded=time.monotonic()-started>wall_seconds,
-        source_identity={n:hashlib.sha256((Path(__file__).parent/n).read_bytes()).hexdigest() for n in
+        dtype=str(p.y.dtype).split('.')[-1],source_identity={n:hashlib.sha256((Path(__file__).parent/n).read_bytes()).hexdigest() for n in
             ('production_smoothing.py','production_trends.py','production.py','tensor_target.py')})
     (folder/'execution.json').write_text(json.dumps(record,indent=2)+'\n');return record

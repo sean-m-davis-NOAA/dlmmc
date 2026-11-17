@@ -80,7 +80,7 @@ def _continue(folder,p,c,target,end,started,wall_seconds):
     return SpatialFitResult(folder,p,c)
 
 
-def sample_spatial(prepared,prior,*,output_dir,backend=None,half_walkers=64,runs=4,warmup=128,retained_sweeps=256,chunk_sweeps=16,seed=2026112701,wall_seconds=600,phase='pilot',selection=None,reference=False,centers=None,initial_halves=None,torch_threads=1,numba_threads=8,update_schedule='global'):
+def sample_spatial(prepared,prior,*,output_dir,backend=None,dtype=None,device=None,half_walkers=64,runs=4,warmup=128,retained_sweeps=256,chunk_sweeps=16,seed=2026112701,wall_seconds=600,phase='pilot',selection=None,reference=False,centers=None,initial_halves=None,torch_threads=1,numba_threads=8,update_schedule='global'):
     """Stage05 joint fit. Post-pilot calls require a matching explicit selection.
 
     ``prior`` is GaussianSpatialPrior on sigma_trend in normalized model units.
@@ -99,8 +99,11 @@ def sample_spatial(prepared,prior,*,output_dir,backend=None,half_walkers=64,runs
         raise ValueError('Full-rank joint halves,4runs,positive budgets and chunks<=50 required')
     if folder.exists():raise ValueError('Preserve existing joint fit; use resume_spatial')
     from .compute import prepared_for_backend, select_backend
-    backend = select_backend(backend, announce=True)
-    p=prepared_for_backend(p,backend)
+    backend = select_backend(backend,dtype=dtype,device=device)
+    p=prepared_for_backend(p,backend,dtype=dtype,device=device)
+    select_backend(backend,dtype=p.y.dtype,device=p.y.device,announce=True)
+    from .prior_specification import announce_model
+    announce_model(p.model,p.regressor_names,p.priors,panels=p.cells,fields={'sigma_trend':prior})
     with _threads(backend,torch_threads,numba_threads):
         target=SpatialTarget(p,prior,backend=backend)
         default=initial_coordinates(p.model,p.regressors.shape[-1])
@@ -108,7 +111,7 @@ def sample_spatial(prepared,prior,*,output_dir,backend=None,half_walkers=64,runs
         dummy=p.y.new_tensor(center).expand(half_walkers,-1).clone();compile_info={}
         if backend=='numba':
             from .numba_prototype import compile_specialization
-            compile_info=compile_specialization(dummy.reshape(half_walkers,p.cells,-1),*p.arguments,p.model,algorithm='structured',S=p.priors['S'],sampling=p.sampling)
+            compile_info=compile_specialization(dummy.reshape(half_walkers,p.cells,-1),*p.arguments,p.model,algorithm='structured',research_float32=True,S=p.priors['S'],sampling=p.sampling)
         elif backend=='mps':
             from .structured_mps import compile_kernel
             compile_info['compilation_or_cache_load_seconds']=compile_kernel(p.model,p.regressors.shape[-1])[1]

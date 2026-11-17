@@ -35,8 +35,8 @@ def validate_production_scope(panel_ids, selection, *, model, backend, dtype, pr
     from .api import _resolve_model
     model,_=_resolve_model(model)
     from .components import model_key
-    if (backend,dtype) not in (('numba','float64'),('torch','float64'),('mps','float32'),('cuda','float32')):
-        raise ValueError('Production requires a supported DLM model and CPU64 or explicitly selected GPU32')
+    if (backend,dtype) not in (('numba','float64'),('numba','float32'),('mps','float32'),('cuda','float32'),('cuda','float64')):
+        raise ValueError('Production requires a supported DLM model and Numba/CUDA float32/64 or MPS float32')
     if len(ids) <= 5 and selection is None:
         return
     if (not isinstance(selection, dict) or selection.get('scope') != 'independent_production'

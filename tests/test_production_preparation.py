@@ -18,7 +18,7 @@ def test_bounded_target_matches_reference_per_cell(model,dtype):
     X=None if model=='noregs_ar1' else rng.normal(size=(n,2))
     p=prepare_data(data,X,uncertainty=uncertainty,model=model,dtype=dtype)
     u=p.y.new_tensor([-7 if name.startswith('sigma') else -.5 for name in p.parameter_names]).expand(6,g,-1).clone()
-    value=TorchTarget(p)(u);expected=target(u,*p.arguments,model)
+    value=TorchTarget(p)(u);expected=target(u,*p.arguments,model,S=p.priors["S"])
     torch.testing.assert_close(value,expected,atol=1e-8 if dtype=='float64' else 2e-4,rtol=0)
     assert p.cell_coordinates['panel'].tolist()==list('abcde')
     assert bool(torch.isfinite(p.y).all()) and not bool(p.observed[2,4:7].any())

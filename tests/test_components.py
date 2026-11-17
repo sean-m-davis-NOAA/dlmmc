@@ -86,7 +86,7 @@ def test_new_composition_fixed_kernels_and_layouts(model,k,backend,well_conditio
     y,s,x=inputs(model,k)
     if isinstance(model.components[-1],Regression) and model.components[-1].dynamic==('SOLAR',):
         model=Model(Trend(),Harmonics((12,)),Regression(dynamic=(str(x.regressor.values[1]),)))
-    p=prepare_data(y,x,uncertainty=s,model=model)
+    p=prepare_data(y,x,uncertainty=s,model=model,priors={"S":10.})
     u=torch.tensor(initial_coordinates(p.model,k))+torch.tensor(np.random.default_rng(2002).normal(0,.08,(3,5,len(p.parameter_names))))
     if well_conditioned:
         p=replace(p,variance=torch.full_like(p.variance,.1))  # Separate numerical fixture, not an alteration to real inputs.
@@ -156,7 +156,7 @@ def test_composed_joint_targets():
     torch.testing.assert_close(ENSOLagTarget(q,s,l,x)(z.flatten(1)),ENSOLagTarget(p,s,l,x)(z.flatten(1)),rtol=0,atol=0)
 
 
-@pytest.mark.parametrize('backend', ['numba', 'torch', 'mps', 'cuda'])
+@pytest.mark.parametrize('backend', ['numba', 'cpu', 'mps', 'cuda'])
 @pytest.mark.parametrize('model', [Model(Level()), Model(Trend(), Harmonics(), Regression())])
 def test_no_ar_backend_access(tmp_path, backend, model):
     """Bounded execution smoke, not numerical or posterior qualification."""
@@ -177,7 +177,7 @@ def test_no_ar_backend_access(tmp_path, backend, model):
     fit = fit_production(y, x, uncertainty=s, model=model, profile=profile,
                          backend=backend, output_dir=tmp_path/'fit', wall_seconds=120)
     assert fit.posterior().sizes['draw'] == 8
-    assert fit.config['backend'] == backend
+    assert fit.config['backend'] == ('numba' if backend == 'cpu' else backend)
     expected = torch.float32 if backend in ('mps', 'cuda') else torch.float64
     assert fit.prepared.y.dtype == expected
     output = summarize_production_trends(fit, output_dir=tmp_path/'summary',

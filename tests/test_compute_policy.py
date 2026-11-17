@@ -1,13 +1,13 @@
 import pytest
 from dlmmc.compute import resolve_compute
 
-@pytest.mark.parametrize('backend,device,dtype',[('torch','cpu','float64'),('numba','cpu','float64'),('cpu','cpu','float64'),('mps','mps','float32'),('cuda','cuda','float32'),('cuda','cuda:1','float32')])
+@pytest.mark.parametrize('backend,device,dtype',[('numba','cpu','float64'),('cpu','cpu','float64'),('mps','mps','float32'),('cuda','cuda','float32'),('cuda','cuda:1','float32')])
 def test_automatic_dtype(backend,device,dtype):
  p=resolve_compute(backend,device=device,check_available=False)
  assert p.dtype==dtype and p.device==device
  if backend=='cuda':assert p.validation=='CUDA_UNTESTED'
 
-@pytest.mark.parametrize('backend,device,dtype',[('mps',None,'float64'),('cuda',None,'float64'),('numba',None,'float32'),('mps','cpu',None),('numba','cuda',None)])
+@pytest.mark.parametrize('backend,device,dtype',[('mps',None,'float64'),('torch',None,None),('mps','cpu',None),('numba','cuda',None)])
 def test_no_silent_fallback(backend,device,dtype):
  with pytest.raises(ValueError):resolve_compute(backend,device=device,dtype=dtype,check_available=False)
 
