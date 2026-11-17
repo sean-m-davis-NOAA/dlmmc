@@ -284,7 +284,10 @@ def sample_parameters(prepared,*,torch_threads=1,numba_threads=2,**options):
     settings. output_dir is required. A resumed target is an absolute retained
     sweep count; no warmup is repeated and no boundary draws are duplicated.
     """
-    with _threads(options.get('backend','numba'),torch_threads,numba_threads):
+    from .compute import select_backend
+    options['backend'] = select_backend(options.get('backend'))
+    select_backend(options['backend'], dtype='float32' if options['backend'] in ('mps','cuda') else prepared.y.dtype, announce=True)
+    with _threads(options['backend'],torch_threads,numba_threads):
         return _sample_parameters(prepared,**options)
 
 
@@ -302,12 +305,17 @@ def load_fit(output_dir):
     return FitResult(folder,_load_prepared(folder),config)
 
 
-def fit_grid(data,regressors=None,*,uncertainty=None,model='vanilla_ar1',dtype='float64',device='cpu',
+def fit_grid(data,regressors=None,*,uncertainty=None,model='vanilla_ar1',dtype=None,device=None,
              priors=None,sampling='monthly',**options):
     """Labeled independent tensor fit. Parameters first; reconstruct after diagnostics.
 
     Existing dlmmc.fit remains the compatible CmdStan entry point. This API uses
     explicit affine runs/walkers and a bounded checkpoint directory.
     """
+    from .compute import select_backend
+    backend = select_backend(options.get('backend'), device=device, dtype=dtype)
+    options['backend'] = backend
+    device = device or ('cpu' if backend in ('numba','torch') else backend)
+    dtype = dtype or ('float64' if backend in ('numba','torch') else 'float32')
     p=prepare_data(data,regressors,uncertainty=uncertainty,model=model,dtype=dtype,device=device,priors=priors,sampling=sampling)
     return sample_parameters(p,**options)

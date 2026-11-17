@@ -110,8 +110,8 @@ def fit(data, regressors=None, model='vanilla_ar1', *, sampler=None,
         data, uncertainty = xr.align(data, uncertainty, join='exact')
         uncertainty = uncertainty.broadcast_like(data).transpose('time', 'panel')
         return fit_production(data, regressors, uncertainty=uncertainty, model=model,
-                              backend=backend or 'numba', profile=config.profile(), **options)
-    if backend not in (None, 'cpu', 'cmdstan'):
+                              backend=backend, profile=config.profile(), **options)
+    if backend not in (None, 'auto', 'cpu', 'cmdstan'):
         raise ValueError('CmdStan NUTS runs on CPU; use backend="cpu". GPU kernels belong to affine.')
     config = _settings(settings, StanSettings)
     invalid = set(options) & (set(AffineSettings.__dataclass_fields__) | {'selection', 'profile'})

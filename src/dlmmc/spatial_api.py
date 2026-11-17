@@ -67,7 +67,7 @@ class LagPrior:
 
 
 def sample_spatial_prior(prepared,*,sigma_trend,lags=None,predictors=None,walkers=128,
-                         burnin=128,steps=256,ensembles=4,backend='numba',output_dir,**options):
+                         burnin=128,steps=256,ensembles=4,backend=None,output_dir,**options):
     """Joint spatial fit; lag mapping explicitly selects the regressor to shift.
 
     Current scientific contract supports lags={'ENSO': LagPrior(...)} only.

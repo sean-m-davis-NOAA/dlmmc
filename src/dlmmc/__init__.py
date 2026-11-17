@@ -73,6 +73,7 @@ __all__ = ["fit", "AffineSettings", "StanSettings", "summarize_trends", "summari
 # Importing the base package must not require Torch, Numba, or affine. Resolve
 # explicit optional APIs only when requested; this changes no model equations.
 _OPTIONAL_APIS = {
+    'available_compute': 'compute', 'resolve_compute': 'compute',
     'SpatialPrior': 'spatial_api', 'LagPrior': 'spatial_api', 'sample_spatial_prior': 'spatial_api', 'fit_spatial': 'spatial_api',
     'ExecutionProfile': 'profiles', 'TESTING_PROFILE': 'profiles', 'PRODUCTION_PROFILE': 'profiles', 'QUALIFICATION_PROFILE': 'profiles',
     'conditional_trend_moments': 'conditional_trends', 'fit_production': 'production', 'resume_production': 'production',

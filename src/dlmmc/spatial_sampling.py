@@ -80,7 +80,7 @@ def _continue(folder,p,c,target,end,started,wall_seconds):
     return SpatialFitResult(folder,p,c)
 
 
-def sample_spatial(prepared,prior,*,output_dir,backend='numba',half_walkers=64,runs=4,warmup=128,retained_sweeps=256,chunk_sweeps=16,seed=2026112701,wall_seconds=600,phase='pilot',selection=None,reference=False,centers=None,initial_halves=None,torch_threads=1,numba_threads=8,update_schedule='global'):
+def sample_spatial(prepared,prior,*,output_dir,backend=None,half_walkers=64,runs=4,warmup=128,retained_sweeps=256,chunk_sweeps=16,seed=2026112701,wall_seconds=600,phase='pilot',selection=None,reference=False,centers=None,initial_halves=None,torch_threads=1,numba_threads=8,update_schedule='global'):
     """Stage05 joint fit. Post-pilot calls require a matching explicit selection.
 
     ``prior`` is GaussianSpatialPrior on sigma_trend in normalized model units.
@@ -98,7 +98,8 @@ def sample_spatial(prepared,prior,*,output_dir,backend='numba',half_walkers=64,r
     if half_walkers<moved_dimension+1 or runs<4 or min(retained_sweeps,chunk_sweeps)<1 or chunk_sweeps>50 or warmup<0 or wall_seconds<=0:
         raise ValueError('Full-rank joint halves,4runs,positive budgets and chunks<=50 required')
     if folder.exists():raise ValueError('Preserve existing joint fit; use resume_spatial')
-    from .compute import prepared_for_backend
+    from .compute import prepared_for_backend, select_backend
+    backend = select_backend(backend, announce=True)
     p=prepared_for_backend(p,backend)
     with _threads(backend,torch_threads,numba_threads):
         target=SpatialTarget(p,prior,backend=backend)

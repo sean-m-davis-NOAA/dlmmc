@@ -17,3 +17,5 @@ Prepared for colleague testing on the modernization branch; no public release or
 Model composition remains preset-based. Arbitrary component/lag composition is deferred. Native CUDA, broader posterior qualification, long-window joint convergence, scalable full-grid field moves/diagnostics and extended calibration remain pending. Historical float32 failures are preserved; no tolerances, priors or likelihood equations were changed during cleanup. See [VALIDATION_STATUS.md](VALIDATION_STATUS.md).
 
 Sampler dispatch now supports explicit Affine or CmdStan selection, with original-demo CmdStan counts (one chain/1,000 warmup/2,000 retained) and current Affine128/128/256 defaults. Common absolute trend summaries and bounded deterministic component outputs support the rebuilt vanilla AR1 tutorial; full-grid sampling stays explicitly disabled by default. See SAMPLERS.md.
+
+Affine sampler startup now discovers CUDA/MPS/CPU availability, prefers CUDA then MPS then Numba CPU by default, and prints how to override. Explicit choices are retained; CmdStan announces its CPU-only execution.

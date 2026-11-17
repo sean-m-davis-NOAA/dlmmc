@@ -90,3 +90,5 @@ See [SPATIAL_API.md](SPATIAL_API.md) for scalar/per-panel Gaussian means and sta
 ## Composed models
 
 The same profiles accept `model=Model(...)`; see [COMPONENTS.md](COMPONENTS.md). Independent batching and joint field acceptance are unchanged. No-AR GPU sampling is available by explicit user decision; failed numerical fixtures remain recorded. Trend summaries require Trend or Level. For an explicitly selected larger production job, serialize a composed selection model with `model.to_dict()`; the supplied selection is checked against the canonical specification. This API update does not itself authorize a larger run.
+
+Backend discovery happens at sampler startup: omitted/`auto` backend prefers CUDA, then MPS, then Numba CPU and prints selection/override instructions. Explicit backend, CPU device, or float64 requests take precedence. Model mathematics, profile counts, qualification thresholds and panel-selection requirements are unchanged. Resolve auto choices before constructing a larger-grid selection record, as shown in the tutorial.

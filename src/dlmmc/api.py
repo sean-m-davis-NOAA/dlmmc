@@ -286,6 +286,8 @@ def fit(
     manage; that directory is never removed by dlmmc. Set ``TMPDIR`` before
     starting Python to choose temporary storage.
     """
+    from .compute import announce_cmdstan
+    announce_cmdstan()
     model_name, spec = _resolve_model(model)
     from .input_contract import validate_no_seasonal_input
     validate_no_seasonal_input(data, model_name)

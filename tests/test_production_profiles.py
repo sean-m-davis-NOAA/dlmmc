@@ -36,16 +36,16 @@ def test_preparation_identity_and_named_scope(inputs):
 
 def test_single_ensemble_exact_resume_and_warning(inputs,tmp_path):
     y,s,x=inputs;profile=replace(PRODUCTION_PROFILE,half_walkers=8,warmup=16,retained_sweeps=16,chunk_sweeps=8)
-    fit=fit_production(y,x,uncertainty=s,output_dir=tmp_path/'first',profile=profile,seed=901)
+    fit=fit_production(y,x,uncertainty=s,backend="numba",output_dir=tmp_path/'first',profile=profile,seed=901)
     assert fit.config['threads']=={'torch':1,'numba':8}
     u=production_parameter_cache(fit);assert u.shape==(1,16,16,1,4)
     fit=resume_production(fit.path,retained_sweeps=32)
-    fresh=fit_production(y,x,uncertainty=s,output_dir=tmp_path/'fresh',profile=replace(profile,retained_sweeps=32),seed=901)
+    fresh=fit_production(y,x,uncertainty=s,backend="numba",output_dir=tmp_path/'fresh',profile=replace(profile,retained_sweeps=32),seed=901)
     np.testing.assert_array_equal(production_parameter_cache(fit),production_parameter_cache(fresh))
     d=diagnose_production(fit)
     assert not d['qualification_eligible'] and 'SINGLE_ENSEMBLE_NO_BETWEEN_RUN_RHAT' in d['cells'][0]['flags']
     assert d['cells'][0]['between_run_rhat'] is None
-    with pytest.raises(ValueError):fit_production(y,x,uncertainty=s,output_dir=fit.path,profile=profile)
+    with pytest.raises(ValueError):fit_production(y,x,uncertainty=s,backend="numba",output_dir=fit.path,profile=profile)
     from dlmmc import summarize_production_trends
     anchor=str(fresh.prepared.time[0].astype('datetime64[M]'))
     modern=summarize_production_trends(fresh,output_dir=tmp_path/'modern',anchor_month=anchor,seed=901,selected_walkers_per_sweep=4)

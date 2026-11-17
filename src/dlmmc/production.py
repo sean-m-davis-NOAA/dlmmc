@@ -58,10 +58,10 @@ def initial_center(p):
 
 def fit_production(data, regressors=None, *, uncertainty, output_dir, selection=None,
         profile=PRODUCTION_PROFILE, seed=2026111401, wall_seconds=5400,
-        centers=None, model='vanilla_ar1', backend='numba', dtype=None,
+        centers=None, model='vanilla_ar1', backend=None, dtype=None,
         device=None, priors=None, sampling='monthly', numba_threads=8):
     from .compute import resolve_compute
-    compute=resolve_compute(backend,device=device,dtype=dtype)
+    compute=resolve_compute(backend,device=device,dtype=dtype,announce=True)
     backend,dtype,device=compute.backend,compute.dtype,compute.device
     if backend in ('mps','cuda'):
         from .gpu_production import fit_gpu_production

@@ -54,3 +54,5 @@ Defaults run bounded smoke checks on at most five independent panels or four cou
 The original [README](docs/LEGACY_README.md) and [installation guide](docs/LEGACY_INSTALL.md) are retained as historical documentation. Their released-package, PyStan and MPI instructions do not install this modernization branch. Original data, attribution and licenses remain in the repository.
 
 Choose `sampler="affine"` or `sampler="cmdstan"` through the unified `fit` API with `AffineSettings`/`StanSettings`; see [SAMPLERS.md](SAMPLERS.md). The [vanilla AR1 tutorial](dlm_tutorial.ipynb) follows the original data/regressor walkthrough, runs one default Affine panel and includes an explicitly enabled312-panel run with unanchored trend bands.
+
+Affine now automatically selects available compute in order CUDA → MPS → Numba CPU, announcing the selection and override instructions at sampler startup. Omit `backend` or use `backend="auto"`; use `backend="numba"` to force CPU. Explicit backend/device choices are preserved. CmdStan remains CPU-only and announces that distinction.
